@@ -33,7 +33,7 @@ m2bh=cmdstanr::cmdstan_model(file2bh) #compile stan code to C++
 file2cs=file.path(cmdstanr::cmdstan_path(),'sr models', "cush_hier_eca_mod2.stan")
 m2cs=cmdstanr::cmdstan_model(file2cs) #compile stan code to C++
 
-#watershed area interaction models
+#watershed area interaction models (fit set 3)
 file3=file.path(cmdstanr::cmdstan_path(),'sr models', "hier_eca_mod3.stan")
 m3=cmdstanr::cmdstan_model(file3) #compile stan code to C++
 
@@ -143,7 +143,7 @@ fit1bh$save_object('stan models/outs/fits/fit1bh.RDS')
 fit1bh=readRDS('stan models/outs/fits/fit1bh.RDS')
 loo_f1bh=fit1bh$loo()
 
-
+#
 loo::loo_compare(loo_f1,loo_f1bh)
 
 d1bh=fit1bh$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
@@ -223,7 +223,8 @@ plot(e_t~mu1)
 plot(e_t~mu2)
 
 
-loo::loo_compare(loo_f2,loof_f2bh,loo_f2cs)
+loo_summary=loo::loo_compare(loo_f2,loo_f2bh,loo_f2cs)
+saveRDS(loo_summary,'loo_results_fitset2.RDS')
 
 loo::loo_compare(loo_f1bh,loo_f2bh)
 
