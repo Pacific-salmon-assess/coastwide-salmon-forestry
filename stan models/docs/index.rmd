@@ -1,0 +1,188 @@
+---
+title: "Coastwide analsis of forestry on BC Pacific Salmon"
+author: ""
+date: 'Apr. 2024'
+output:
+  html_document:
+    collapsed: no
+    fig_caption: yes
+    highlight: espresso
+    number_sections: yes
+    smooth_scroll: yes
+    theme: sandstone
+    toc: yes
+    toc_float: yes
+---
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+# Intro
+
+We're including here the initial models and outputs in this as a sort of living appendix.
+
+The first set of models includes ECA alone (logit transformed and standardized) with varying effects down to the level individual rivers (subscript r) in either the Ricker, Beverton-Holt, or Cushing structure (see m1_ricker.stan,m1_bh.stan,m1_cush.stan).
+
+Ricker:
+  $log(R_t,r/S_t,r) = \alpha_r - \beta_r*S_t,r + \beta_eca,r*ECA_t,r + w_t,r$
+
+Where residual productivity is autocorrelated by 1-year:
+  $w_1,r ~ N(0,\sigma)$
+  $w_t,r ~ N(\rho_r*w_t-1,r,\sigma*sqrt(1-\rho_r^2))$
+  $\rho ~ U(-1,1)$
+
+And stock-specific parameters are drawn hierarchically for productivity and forestry effects:
+  $\alpha_r ~ N(\alpha_cu, \sigma_ar)$
+  $\alpha_cu ~ N(\alpha, \sigma_acu)$
+  $\alpha ~ N(1.5,2)$
+  
+  $\beta_eca,r ~ N(\beta_eca,cu, \sigma_br)$
+  $\beta_eca,cu ~ N(\beta_eca, \sigma_bcu)$
+  $\beta_eca ~ N(0,1)$
+
+ $\sigma 's ~ N[0,0.5)$
+ 
+Stock-specific density-dependence is estimated independently at the river level, but with informative priors for $S_max$ (=$1/\beta$) based on observed spawner counts ($S_r$):
+
+$\beta ~ lognormal(log(0.5*max(S_r)),log(0.5*max(S_r)))$
+
+For the Beverton Holt model, the linearized form is altered to:
+ $log(R_t,r/S_t,r) = \alpha_r - log(1+(e^\alpha_r)/R_k,r)*S_t,r) + \beta_eca,r*ECA_t,r + w_t,r$
+
+Where the new parameter $R_k,r$ is the stock-specific equibrium recruitment, sampled with informative priors based on observed recruitment ($R$):
+
+$\Rk ~ lognormal(log(0.75*max(R_r)),log(0.75*max(R_r)))$
+
+For the Cushing model, the linearized form is:
+ $log(R_t,r/S_t,r) = \alpha_r + \beta_r*log(S_t,r) + \beta_eca,r*ECA_t,r + w_t,r$
+
+A version of each model was fit to the Chum dataset. The model summaries in CSV form (parameter estimate summaries, model diagnostics etc.) can be found in 'outs/summary'.
+
+```{r load model fits,  include=FALSE}
+ library(here);library(cmdstanr);library(dplyr)
+
+ch20r=ch20r <- read.csv(here('origional-ecofish-data-models','Data','Processed','chum_SR_20_hat_yr_reduced_VRI90.csv'))
+#fit set 2: cu varying effects. Ricker/BH/Cushing form
+f2ric=readRDS(here('stan models','outs','fits','fit2ric.RDS'))
+f2bh= readRDS(here('stan models','outs','fits','fit2bh.RDS'))
+f2cu=readRDS(here('stan models','outs','fits','fit2cs.RDS'))
+    
+```
+
+# Model form comparison
+
+Overall model likelihood across the 3 model forms assessed by approximate leave-one-out cross-validation:
+
+```{r, loo}
+l2ric=f2ric$loo()
+l2bh=f2bh$loo()
+l2cu=f2cu$loo()
+
+
+loo::loo_compare(l2ric,l2bh,l2cu)
+```
+
+From this the Beverton-Holt model appears to have substantially better predictive performance compared to the Ricker/Cushing model forms. We will proceed with results for both BH/Ricker however.
+
+
+# Forestry effects
+
+
+The overall among population effect size for ECA from the Ricker fit:
+
+```{r, b_eca ric}
+summary(f2ric$draws(variable='b_ECA',format='draws_matrix'))
+```
+
+and Beverton Holt (R):
+
+```{r, b_eca bh}
+summary(f2bh$draws(variable='b_ECA',format='draws_matrix'))
+```
+
+Visualized (back converted from logit scale to original ECA) for the Ricker model:
+
+```{r, b_eca plots 1}
+x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
+eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
+
+
+pRS=f2ric$draws(variable='b_ECA',format='draws_matrix')%*%x_n
+m_pred=apply(pRS,2,median)
+l_pred=apply(pRS,2,quantile,0.05)
+u_pred=apply(pRS,2,quantile,0.95)
+
+plot(m_pred~eca_n,bty='l',type='l',ylab='change in log(R/S)',title='Beverton-Holt',ylim=c(-0.5,0.3))
+lines(l_pred~eca_n,lty=5)
+lines(u_pred~eca_n,lty=5)
+
+```
+
+And Beverton-Holt:
+
+```{r, b_eca plots 2}
+pRS=f2bh$draws(variable='b_ECA',format='draws_matrix')%*%x_n
+m_pred=apply(pRS,2,median)
+l_pred=apply(pRS,2,quantile,0.05)
+u_pred=apply(pRS,2,quantile,0.95)
+
+plot(m_pred~eca_n,bty='l',type='l',ylab='change in log(R/S)',title='Beverton-Holt',ylim=c(-0.5,0.3))
+lines(l_pred~eca_n,lty=5)
+lines(u_pred~eca_n,lty=5)
+```
+
+Variation in ECA effect among CUs (Ricker):
+```{r, b_eca plots cu 1}
+d2=f2ric$draws(variable='b_ECA_cu',format='draws_matrix')
+
+plot(c(0,10)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+abline(v=0,lwd=2)
+for(j in 1:ncol(d2)){
+d=density(d2[,j],bw=0.02)
+lines(d$y~d$x)
+}
+
+```
+
+Variation in ECA effect among CUs (BH):
+```{r, b_eca plots cu 2}
+d2=f2bh$draws(variable='b_ECA_cu',format='draws_matrix')
+
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+abline(v=0,lwd=2)
+for(j in 1:ncol(d2)){
+d=density(d2[,j],bw=0.02)
+lines(d$y~d$x)
+}
+
+```
+
