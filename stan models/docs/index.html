@@ -259,8 +259,9 @@ h3 { /* Header 3 */
 <div id="intro" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Intro</h1>
 <p>We’re including here the initial models and outputs in this as a sort of living appendix.</p>
-<p>The first set of models includes ECA alone (logit transformed and standardized) with varying effects down to the level individual rivers (subscript r) in either the Ricker, Beverton-Holt, or Cushing structure (see m1_ricker.stan,m1_bh.stan,m1_cush.stan).</p>
-<p>Ricker: <span class="math inline">\(log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,r}*ECA_{t,r} + w_{t,r}\)</span></p>
+<p>The first set of models includes ECA alone (logit transformed and standardized) with varying effects down to the level individual rivers (subscript r) in either the Ricker, Beverton-Holt, or Cushing structure (see m1_ricker.stan, m1_bh.stan, m1_cush.stan). The second set drops the varying effects for ECA at the River scale (but varying effects for the CU scale remain). The third set includes watershed area and its interaction with the ECA effects.</p>
+<p>Ricker:</p>
+<p><span class="math inline">\(log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,r}*ECA_{t,r} + w_{t,r}\)</span></p>
 <p>Where residual productivity is autocorrelated by 1-year:</p>
 <p><span class="math inline">\(w_{1,r} \sim N(0,\sigma)\)</span></p>
 <p><span class="math inline">\(w_{t,r} \sim N(\rho_r*w_{t-1,r},\sigma*\sqrt(1-\rho_r^2))\)</span></p>
@@ -273,7 +274,7 @@ h3 { /* Header 3 */
 <p><span class="math inline">\(\beta_{eca,cu} \sim N(\beta_{eca}, \sigma_{bcu})\)</span></p>
 <p><span class="math inline">\(\beta_{eca} \sim N(0,1)\)</span></p>
 <p><span class="math inline">\(\sigma s \sim N[0,0.5)\)</span></p>
-<p>Stock-specific density-dependence is estimated independently at the river level, but with informative priors for <span class="math inline">\(S_max\)</span> (=<span class="math inline">\(1/\beta\)</span>) based on observed spawner counts (<span class="math inline">\(S_r\)</span>):</p>
+<p>Stock-specific density-dependence is estimated independently at the river level, but with informative priors for <span class="math inline">\(S_{max}\)</span> (=<span class="math inline">\(1/\beta\)</span>) based on observed spawner counts (<span class="math inline">\(S_r\)</span>):</p>
 <p><span class="math inline">\(\beta \sim lognormal(log(0.5*max(S_r)),log(0.5*max(S_r)))\)</span></p>
 <p>For the Beverton Holt model, the linearized form is altered to:</p>
 <p><span class="math inline">\(log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(e^{\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{eca,r}*ECA_{t,r} + w_{t,r}\)</span></p>
