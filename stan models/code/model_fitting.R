@@ -14,14 +14,14 @@ cmdstanr::set_cmdstan_path(path = NULL)
 
 #basic model excluding watershed areas:
 #random effects for ECA at River level - these probably shouldn't be used...
-file1=file.path(cmdstanr::cmdstan_path(),'sr models', "hier_eca_mod.stan")
-m1=cmdstanr::cmdstan_model(file1) #compile stan code to C++
+#file1=file.path(cmdstanr::cmdstan_path(),'sr models', "hier_eca_mod.stan")
+#m1=cmdstanr::cmdstan_model(file1) #compile stan code to C++
 
-file1bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod.stan")
-m1bh=cmdstanr::cmdstan_model(file1bh) #compile stan code to C++
+#file1bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod.stan")
+#m1bh=cmdstanr::cmdstan_model(file1bh) #compile stan code to C++
 
-file1cs=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod.stan")
-m1csw=cmdstanr::cmdstan_model(file1cs) #compile stan code to C++
+#file1cs=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod.stan")
+#m1csw=cmdstanr::cmdstan_model(file1cs) #compile stan code to C++
 
 #random effects for ECA at the CU but not River level (fit set 2) - main current results
 file2=file.path(cmdstanr::cmdstan_path(),'sr models', "hier_eca_mod2.stan")
@@ -34,8 +34,8 @@ file2cs=file.path(cmdstanr::cmdstan_path(),'sr models', "cush_hier_eca_mod2.stan
 m2cs=cmdstanr::cmdstan_model(file2cs) #compile stan code to C++
 
 #Still needs some tweaks - non linear effect of ECA
-file2bh_gp=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_gp_eca_mod.stan")
-m2bhgp=cmdstanr::cmdstan_model(file2bh_gp) #compile stan code to C++
+#file2bh_gp=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_gp_eca_mod.stan")
+#m2bhgp=cmdstanr::cmdstan_model(file2bh_gp) #compile stan code to C++
 
 #watershed area interaction models (fit set 3)
 file3=file.path(cmdstanr::cmdstan_path(),'sr models', "hier_eca_mod3.stan")
@@ -44,8 +44,6 @@ m3=cmdstanr::cmdstan_model(file3) #compile stan code to C++
 file3bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod3.stan")
 m3bh=cmdstanr::cmdstan_model(file3bh) #compile stan code to C++
 
-file3cs=file.path(cmdstanr::cmdstan_path(),'sr models', "cush_hier_eca_mod3.stan")
-m3cs=cmdstanr::cmdstan_model(file3cs) #compile stan code to C++
 
 
 
@@ -111,8 +109,8 @@ dl=list(N=nrow(ch20r),
 
 
 
-fit2 <- m2$sample(data=dl,
-                  seed = 12345,
+fit1ric <- m2$sample(data=dl,
+                  seed = 123,
                   chains = 8, 
                   iter_warmup = 200,
                   iter_sampling = 800,
@@ -120,21 +118,21 @@ fit2 <- m2$sample(data=dl,
                   adapt_delta = 0.995,
                   max_treedepth = 20)
 
-write.csv(fit2$summary(),'./stan models/outs/summary/fit2ric_summary.csv')
-fit2$save_object('./stan models/outs/fits/fit2ric.RDS')
-fit2=readRDS('stan models/outs/fits/fit2ric.RDS')
-loo_f2=fit2$loo()
+write.csv(fit1ric$summary(),'./stan models/outs/summary/fit1ric_summary.csv')
+fit1ric$save_object('./stan models/outs/fits/fit1ric.RDS')
+fit1ric=readRDS('stan models/outs/fits/fit1ric.RDS')
+loo_f2=fit1ric$loo()
+
+#residual plots to check
+#d2=fit2$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
+#e_t=apply(d2[,grepl('e_t',colnames(d2))],2,median)
+#mu1=apply(d2[,grepl('mu1',colnames(d2))],2,median)
+#mu2=apply(d2[,grepl('mu2',colnames(d2))],2,median)
+#plot(e_t~mu1)
+#plot(e_t~mu2)
 
 
-d2=fit2$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
-e_t=apply(d2[,grepl('e_t',colnames(d2))],2,median)
-mu1=apply(d2[,grepl('mu1',colnames(d2))],2,median)
-mu2=apply(d2[,grepl('mu2',colnames(d2))],2,median)
-plot(e_t~mu1)
-plot(e_t~mu2)
-
-
-fit2cs <- m2cs$sample(data=dl,
+fit1cs <- m2cs$sample(data=dl,
                       seed = 12345,
                       chains = 8, 
                       iter_warmup = 200,
@@ -143,20 +141,20 @@ fit2cs <- m2cs$sample(data=dl,
                       adapt_delta = 0.995,
                       max_treedepth = 20)
 
-write.csv(fit2cs$summary(),'./stan models/outs/summary/fit2cs_summary.csv')
-fit2cs$save_object('./stan models/outs/fits/fit2cs.RDS')
-fit2cs <- readRDS('./stan models/outs/fits/fit2cs.RDS')
-loo_f2cs=fit2cs$loo()
+write.csv(fit1cs$summary(),'./stan models/outs/summary/fit1cs_summary.csv')
+fit1cs$save_object('./stan models/outs/fits/fit1cs.RDS')
+fit1cs <- readRDS('./stan models/outs/fits/fit1cs.RDS')
+loo_f1cs=fit1cs$loo()
 
 
-d2c=fit2cs$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
-e_t=apply(d2c[,grepl('e_t',colnames(d2))],2,median)
-mu1=apply(d2c[,grepl('mu1',colnames(d2))],2,median)
-mu2=apply(d2c[,grepl('mu2',colnames(d2))],2,median)
-plot(e_t~mu1)
-plot(e_t~mu2)
+#d2c=fit1cs$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
+#e_t=apply(d2c[,grepl('e_t',colnames(d2))],2,median)
+#mu1=apply(d2c[,grepl('mu1',colnames(d2))],2,median)
+#mu2=apply(d2c[,grepl('mu2',colnames(d2))],2,median)
+#plot(e_t~mu1)
+#plot(e_t~mu2)
 
-fit2bh <- m2bh$sample(data=dl,
+fit1bh <- m1bh$sample(data=dl,
                   seed = 12345,
                   chains = 8, 
                   iter_warmup = 200,
@@ -165,18 +163,18 @@ fit2bh <- m2bh$sample(data=dl,
                   adapt_delta = 0.995,
                   max_treedepth = 20)
 
-write.csv(fit2bh$summary(),'./stan models/outs/summary/fit2bh_summary2.csv')
-fit2bh$save_object('./stan models/outs/fits/fit2bh.RDS')
-fit2bh <- readRDS('./stan models/outs/fits/fit2bh.RDS')
-loo_f2bh=fit2bh$loo()
+write.csv(fit1bh$summary(),'./stan models/outs/summary/fit1bh_summary.csv')
+fit1bh$save_object('./stan models/outs/fits/fit1bh.RDS')
+fit1bh <- readRDS('./stan models/outs/fits/fit1bh.RDS')
+loo_f1bh=fit1h$loo()
 
 
-d2bh=fit2bh$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
-e_t=apply(d2bh[,grepl('e_t',colnames(d2))],2,median)
-mu1=apply(d2bh[,grepl('mu1',colnames(d2))],2,median)
-mu2=apply(d2bh[,grepl('mu2',colnames(d2))],2,median)
-plot(e_t~mu1)
-plot(e_t~mu2)
+#d2bh=fit2bh$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
+#e_t=apply(d2bh[,grepl('e_t',colnames(d2))],2,median)
+#mu1=apply(d2bh[,grepl('mu1',colnames(d2))],2,median)
+#mu2=apply(d2bh[,grepl('mu2',colnames(d2))],2,median)
+#plot(e_t~mu1)
+#plot(e_t~mu2)
 
 
 loo_summary=loo::loo_compare(loo_f2,loo_f2bh,loo_f2cs)
@@ -184,6 +182,8 @@ saveRDS(loo_summary,'loo_results_fitset2.RDS')
 
 loo::loo_compare(loo_f1bh,loo_f2bh)
 
+
+#eca x watershed
 
 fit3 <- m3$sample(data=dl,
                   seed = 1235,
@@ -217,7 +217,7 @@ loo_f3bh=fit3bh$loo()
 
 
 
-#
+#old models - varying effects to river level (too flexible, likely)
 
 fit1 <- m1$sample(data=dl,
                   seed = 12345,

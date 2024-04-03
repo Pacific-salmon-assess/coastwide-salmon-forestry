@@ -41,8 +41,6 @@ parameters{
 real b_ECA; //global (across stock) mean effect of ECA
 vector[C] b_ECA_cu; //CU-specific ECA effect
 real<lower=0> sd_ECA; //variance in CU-level ECA effect
-vector[J] b_ECA_j; //river-specific ECA effect
-real<lower=0> sd_ECA_cu; //variance within CUs in river-level ECA effect (pooled among CUs)
 
  //variance components
  real<lower=0> mu_sigma; ///mean sigma among all stocks
@@ -65,7 +63,7 @@ transformed parameters{
   
   //residual productivity deviations
    for(j in 1:J){ //for every stock
-	mu1[start_y[j]:end_y[j]]=alpha_j[j] + b[j]*log(S[start_y[j]:end_y[j],j])+b_ECA_j[j]*ECA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
+	mu1[start_y[j]:end_y[j]]=alpha_j[j]+b[j]*log(S[start_y[j]:end_y[j],j]) +b_ECA_cu[C_i[j]]*ECA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
 
 	e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 	
@@ -94,10 +92,8 @@ model{
   //covariate effects
   b_ECA ~ normal(0,1); //standard normal prior
   b_ECA_cu ~ normal(b_ECA,sd_ECA); //CU-specific ECA effect
-  b_ECA_j ~ normal(b_ECA_cu[C_i],sd_ECA_cu); //stock-specific ECA effect
   
   //hierarchical variances
-  sd_ECA_cu ~ normal(0,0.5); //variance in CU-level ECA effects
   sd_ECA ~ normal(0,0.5); //variance in stock-level ECA effects
   
   //variance terms
@@ -120,9 +116,6 @@ model{
 }
 generated quantities{
 vector[N] log_lik; //pointwise log likelihoods
-vector[J] Smax; //Smax - spawners where peak recruitment is achieved
-vector[J] Smsy; //Smsy - spawners for max. sustainable yield
-vector[J] Umsy; //Umsy - harvest rate corresponding to Smsy
 
 for(j in 1:J){
  log_lik[start_y[j]]=normal_lpdf(R_S[start_y[j]]|mu1[start_y[j]],sigma[j]); //pointwise log likelihood calculation - initial estimates
@@ -131,9 +124,6 @@ for(j in 1:J){
  log_lik[start_y[j]+t]=normal_lpdf(R_S[start_y[j]+t]|mu2[start_y[j]+t], sigmaAR[j]); //pointwise log likelihood calculation
  }
  
- Smax[j] = 1/b[j];
- Umsy[j] = 1-lambert_w0(exp(1-alpha_j[j]));
- Smsy[j] = (1-lambert_w0(exp(1-alpha_j[j])))/b[j];
 }
 }
 

@@ -9,8 +9,8 @@ data{
   int C_i[J]; //CU index for each stock
   int ii[N]; //index of brood years
   vector[N] R_S; //matrix of productivity among stocks - log(recruits per spawner)
-  matrix[N,J] S; //design matrix of spawners in time T
-  matrix[N,J] ECA; //design matrix of stock-specific ECA through time
+  matrix[N,J] S; //design matrix of spawners
+  matrix[N,J] ECA; //design matrix of stock-specific ECA 
   int<lower=0> start_y[J];       // ragged start point for observations (N)
   int<lower=0> end_y[J];         // ragged end points for observations (N)
   vector[J] pSmax_mean; //priors on smax - based on observed spawner abundance
@@ -41,8 +41,6 @@ parameters{
 real b_ECA; //global (across stock) mean effect of ECA
 vector[C] b_ECA_cu; //CU-specific ECA effect
 real<lower=0> sd_ECA; //variance in CU-level ECA effect
-vector[J] b_ECA_j; //river-specific ECA effect
-real<lower=0> sd_ECA_cu; //variance within CUs in river-level ECA effect (pooled among CUs)
 
  //variance components
  real<lower=0> mu_sigma; ///mean sigma among all stocks
@@ -65,7 +63,7 @@ transformed parameters{
   
   //residual productivity deviations
    for(j in 1:J){ //for every stock
-	mu1[start_y[j]:end_y[j]]=alpha_j[j] + b[j]*S[start_y[j]:end_y[j],j]+b_ECA_j[j]*ECA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
+	mu1[start_y[j]:end_y[j]]=alpha_j[j] - b[j]*S[start_y[j]:end_y[j],j]+b_ECA_cu[C_i[j]]*ECA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
 
 	e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 	
@@ -94,10 +92,8 @@ model{
   //covariate effects
   b_ECA ~ normal(0,1); //standard normal prior
   b_ECA_cu ~ normal(b_ECA,sd_ECA); //CU-specific ECA effect
-  b_ECA_j ~ normal(b_ECA_cu[C_i],sd_ECA_cu); //stock-specific ECA effect
   
   //hierarchical variances
-  sd_ECA_cu ~ normal(0,0.5); //variance in CU-level ECA effects
   sd_ECA ~ normal(0,0.5); //variance in stock-level ECA effects
   
   //variance terms
@@ -107,7 +103,6 @@ model{
   sd_sigma ~ normal(0,0.5);
   sigma ~ normal(cu_sigma[C_i], sd_sigma);
 
-  
   rho ~ uniform(-1,1); //prior for autocorrelation
  
   //likelihood sampling:

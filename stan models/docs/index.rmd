@@ -56,9 +56,7 @@ This short document provides some details on initial models fit and inferential 
 
 Code and data to reproduce the analyses summarized in this document can be found in [this repository](https://github.com/Pacific-salmon-assess/coastwide-salmon-forestry) which is private for now in case there is anything in the ECA dataset that is not suitable for public consumption. Access can be granted by sending Dan or Brendan your github username.
 
-The first set of models we fit includes a covariate for ECA alone (logit transformed and standardized) which is modeled hierarchically down to the individual river (subscript $r$) level assuming either a Ricker (model 1), Beverton-Holt (model 2), or Cushing type (model 3) spawner-recruitment relationship. The stan models themselves are in the github repo as m1_ricker.stan, m1_bh.stan, m1_cush.stan.
-
-These models relate River-level (subscript $r$) productivity to ECA (logit transformed and standardized) with varying effects of ECA at the CU-level (subscript $c$). We include spawner-recruitment model forms as either the Ricker (model 1), Beverton-Holt (model 2), or Cushing structure (model 3).
+The first set of models we fit includes a covariate for ECA alone (logit transformed and standardized) which is modeled hierarchically down to CU-level for ECA effects and to the individual river (subscript $r$) level for productivity. We test 3 models for the structure of density dependence: either a Ricker (model 1), Beverton-Holt (model 2), or Cushing type (model 3) spawner-recruitment relationship. The stan models themselves are in the github repo as m1_ricker.stan, m1_bh.stan, m1_cush.stan.
 
 # Models
 
@@ -92,7 +90,7 @@ And stock-specific parameters are drawn hierarchically at the River-level for pr
   
   $\sigma_c \sim N(\sigma,\sigma_{\sigma,c})$
   
-  $\sigma ~ N[0.5,0.5)$
+  $\sigma \sim N[0.5,0.5)$
  
 Stock-specific within brood year density-dependence is estimated independently at the river level, but with informative priors for $S_{max}$ (=$1/\beta$; density where total predicted recruitment is maximized) based on observed spawner counts ($S_r$):
 
@@ -123,18 +121,9 @@ f2cu=readRDS(here('stan models','outs','fits','fit2cs.RDS'))
     
 ```
 
-Proposed to do/future tweaks:
-
-1. Shared year effects or shared latent productivity trends
-
-2. Watershed area & interaction with ECA
-
-3. non-linear function for ECA?
-
-
 # Model form comparison
 
-Overall model likelihood across the 3 alternative model forms assessed by approximate leave-one-out cross-validation, is:
+Overall model likelihood across the 3 alternative model (model 1: Ricker, model 2: BH, model 3: Cushing) forms assessed by approximate leave-one-out cross-validation, is:
 
 ```{r, loo}
 loo_comp=readRDS(here('stan models','outs','loo','loo_results_fitset2.RDS'))
@@ -143,7 +132,7 @@ loo_comp[,1:6]
 
 From this the Beverton-Holt model appears to have substantially better predictive performance compared to the Ricker/Cushing model forms. We will proceed with results for both BH/Ricker however.
 
-
+\newpage
 # Forestry effects
 
 
@@ -157,13 +146,15 @@ d2=f2bh$draws(variables=c('b_ECA','b_ECA_cu'),format='draws_matrix')
 
 plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
 d0=density(d2[,1],bw=0.02)
-lines(d0$y~d0$x,col='darkred')
 for(j in 2:ncol(d2)){
 d=density(d2[,j],bw=0.02)
 lines(d$y~d$x)
 }
+lines(d0$y~d0$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 ```
+
+\newpage
 
 and alternatively with the Ricker model form:
 
@@ -172,13 +163,14 @@ as.data.frame(f2ric$summary(variables=c('b_ECA','b_ECA_cu'),"mean","sd","quantil
 
 d2r=f2ric$draws(variables=c('b_ECA','b_ECA_cu'),format='draws_matrix')
 
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+plot(c(0,12)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (Ricker)',ylim=c(0,12),yaxt='n',xlab='Standardized coefficients')
 d0=density(d2r[,1],bw=0.02)
-lines(d0$y~d0$x,col='darkred')
+
 for(j in 2:ncol(d2)){
 d=density(d2r[,j],bw=0.02)
 lines(d$y~d$x)
 }
+lines(d0$y~d0$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 ```
 
@@ -203,6 +195,8 @@ lines(l_pred~eca_n,lty=5)
 lines(u_pred~eca_n,lty=5)
 ```
 
+\newpage
+
 And Ricker model:
 
 ```{r, b_eca plots ric}
@@ -218,10 +212,28 @@ lines(u_pred~eca_n,lty=5)
 ```
 
 
+Proposed to do/future tweaks:
+
+1. Shared year effects or shared latent productivity trends
+
+2. Watershed area & interaction with ECA
+
+3. non-linear function for ECA?
+
+\newpage
+
+Overall distribution of ECA among all observations:
+
+```{r, eca histogram, fig.width=8,fig.height=6}
+hist(ch20r$ECA_age_proxy_forested_only,breaks=30,main='ECA for all observations')
+
+```
+
+\newpage
+
 River-level ECA and effect on productivity through time by CU (BH model):
 
 ```{r, eca time-series, fig.width=8,fig.height=12}
-hist(ch20r$ECA_age_proxy_forested_only,breaks=30,main='ECA for all observations')
 
 for(c in 1:length(unique(ch20r$CU))){
   s=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
@@ -232,7 +244,7 @@ for(c in 1:length(unique(ch20r$CU))){
     lines(r$ECA_age_proxy_forested_only~r$BroodYear,lwd=2,col=adjustcolor('black',alpha.f=0.5))
   }
   s$d_eca=median(d2[,c+1])*s$ECA_age_proxy_forested_only_std
-   plot(c(min(s$d_eca),max(s$d_eca))~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),bty='l',type='n',ylab='Realized ECA effect on productivity',xlab='Brood year')
+   plot(c(-1.5,1.5)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),bty='l',type='n',ylab='Realized ECA effect on productivity',xlab='Brood year')
   for(j in 1:length(unique(s$River))){
     r=subset(s,River==unique(s$River)[j])
     lines(r$d_eca~r$BroodYear,lwd=2,col=adjustcolor('black',alpha.f=0.5))

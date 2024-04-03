@@ -41,8 +41,6 @@ parameters{
 real b_ECA; //global (across stock) mean effect of ECA
 vector[C] b_ECA_cu; //CU-specific ECA effect
 real<lower=0> sd_ECA; //variance in CU-level ECA effect
-vector[J] b_ECA_j; //river-specific ECA effect
-real<lower=0> sd_ECA_cu; //variance within CUs in river-level ECA effect (pooled among CUs)
 
  //variance components
  real<lower=0> mu_sigma; ///mean sigma among all stocks
@@ -53,16 +51,17 @@ real<lower=0> sd_ECA_cu; //variance within CUs in river-level ECA effect (pooled
  vector<lower = -1,upper=1>[J] rho; //autocorrelation parameter
 }
 transformed parameters{
+  
   vector[J] sigmaAR; //sigma - adjusted for rho
 	
   //productivity residuals through time
   vector[N] e_t; //stock residual productivity at time t
   vector[N] mu1; //initial expectation at each time for each stock
   vector[N] mu2; //autocorr. adjusted expectation at each time for each stock
-  
+   
   //residual productivity deviations
    for(j in 1:J){ //for every stock
-	mu1[start_y[j]:end_y[j]]=alpha_j[j]-log(1+(exp(alpha_j[j])/Rk[j])*S[start_y[j]:end_y[j],j]) +b_ECA_j[j]*ECA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
+	mu1[start_y[j]:end_y[j]]=alpha_j[j]-log(1+(exp(alpha_j[j])/Rk[j])*S[start_y[j]:end_y[j],j]) +b_ECA_cu[C_i[j]]*ECA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
 
 	e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 	
@@ -77,7 +76,7 @@ transformed parameters{
 model{
   //priors
   //prod
-  alpha_0 ~ normal(1.5,1); //global intrinsic productivity for all stocks
+  alpha_0 ~ normal(1,4); //global intrinsic productivity for all stocks
   alpha_cu ~ normal(alpha_0,sd_alpha); //CU-specific deviations in intrinsic productivity
   alpha_j ~ normal(alpha_cu[C_i],sd_alpha_cu); //within CU-deviations among stocks
   
@@ -85,16 +84,14 @@ model{
   sd_alpha ~ normal(0,0.5); //among CU variance in productivity
   sd_alpha_cu ~ normal(0,0.5); //within CU variance in productivity
     
-   //capacity for each stock - fit individually with weakly informative priors based on maximum observed spawners
+  //capacity for each stock - fit individually with weakly informative priors based on maximum observed spawners
   for(j in 1:J) Rk[j] ~ lognormal(logRk_pr[j],logRk_pr_sig[j]);
  
   //covariate effects
   b_ECA ~ normal(0,1); //standard normal prior
   b_ECA_cu ~ normal(b_ECA,sd_ECA); //CU-specific ECA effect
-  b_ECA_j ~ normal(b_ECA_cu[C_i],sd_ECA_cu); //stock-specific ECA effect
   
   //hierarchical variances
-  sd_ECA_cu ~ normal(0,0.5); //variance in CU-level ECA effects
   sd_ECA ~ normal(0,0.5); //variance in stock-level ECA effects
   
   //variance terms
