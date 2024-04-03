@@ -17,6 +17,7 @@ output:
   word_document:
     toc: yes
 ---
+
 ```{=html}
 <style type="text/css">
 
@@ -44,7 +45,6 @@ h3 { /* Header 3 */
 }
 </style>
 ```
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
@@ -54,7 +54,7 @@ knitr::opts_chunk$set(warning = FALSE)
 
 This short document provides some details on initial models fit and inferential outputs. It can be treated as a living appendix of sorts, and can be added to and polished over time.
 
-Code and data to reproduce the analyses summarized in this document can be found in [this repository](https://github.com/Pacific-salmon-assess/coastwide-salmon-forestry) which is private for now in case there is anything in the ECA dataset that is not suitable for public consumption. Access can be granted by sending Dan or Brendan your github username.
+Code and data to reproduce the analyses summarized in this document can be found in [**this repository**](https://github.com/Pacific-salmon-assess/coastwide-salmon-forestry) which is private for now in case there is anything in the ECA dataset that is not suitable for public consumption. Access can be granted by sending Dan or Brendan your github username.
 
 The first set of models we fit includes a covariate for ECA alone (logit transformed and standardized) which is modeled hierarchically down to CU-level for ECA effects and to the individual river (subscript $r$) level for productivity. We test 3 models for the structure of density dependence: either a Ricker (model 1), Beverton-Holt (model 2), or Cushing type (model 3) spawner-recruitment relationship. The stan models themselves are in the github repo as m1_ricker.stan, m1_bh.stan, m1_cush.stan.
 
@@ -62,43 +62,43 @@ The first set of models we fit includes a covariate for ECA alone (logit transfo
 
 Ricker formulation:
 
-  $log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,c}*ECA_{t,r} + w_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,c}*ECA_{t,r} + w_{t,r}$
 
 Where residual productivity is autocorrelated by 1-year:
 
-  $w_{1,r} \sim N(0,\sigma_r)$
-  
-  $w_{t,r} \sim N(\rho_r*w_{t-1,r},\sigma_r*\sqrt(1-\rho_r^2))$
-  
-  $\rho \sim U(-1,1)$
+$w_{1,r} \sim N(0,\sigma_r)$
+
+$w_{t,r} \sim N(\rho_r*w_{t-1,r},\sigma_r*\sqrt(1-\rho_r^2))$
+
+$\rho \sim U(-1,1)$
 
 And stock-specific parameters are drawn hierarchically at the River-level for productivity and CU-level for forestry effects:
 
-  $\alpha_r \sim N(\alpha_{c}, \sigma_{ar}^2)$
-  
-  $\alpha_{c} \sim N(\alpha, \sigma_{ac}^2)$
-  
-  $\alpha \sim N(1.5,2)$
-  
-  $\beta_{eca,c} \sim N(\beta_{eca}, \sigma_{eca})$
-  
-  $\beta_{eca} \sim N(0,1)$
+$\alpha_r \sim N(\alpha_{c}, \sigma_{ar}^2)$
 
-  $\sigma_{eca} \sim N[0,0.5)$
-  
-  $\sigma_r \sim N(\sigma_c,\sigma_{\sigma,r})$
-  
-  $\sigma_c \sim N(\sigma,\sigma_{\sigma,c})$
-  
-  $\sigma \sim N[0.5,0.5)$
- 
+$\alpha_{c} \sim N(\alpha, \sigma_{ac}^2)$
+
+$\alpha \sim N(1.5,2)$
+
+$\beta_{eca,c} \sim N(\beta_{eca}, \sigma_{eca})$
+
+$\beta_{eca} \sim N(0,1)$
+
+$\sigma_{eca} \sim N[0,0.5)$
+
+$\sigma_r \sim N(\sigma_c,\sigma_{\sigma,r})$
+
+$\sigma_c \sim N(\sigma,\sigma_{\sigma,c})$
+
+$\sigma \sim N[0.5,0.5)$
+
 Stock-specific within brood year density-dependence is estimated independently at the river level, but with informative priors for $S_{max}$ (=$1/\beta$; density where total predicted recruitment is maximized) based on observed spawner counts ($S_r$):
 
 $\beta \sim lognormal(0.5*max(S_r),max(S_r))$
 
 The Beverton Holt form of this model was the linearized as:
 
- $log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(e^{\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{eca,c}*ECA_{t,r} + w_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(e^{\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{eca,c}*ECA_{t,r} + w_{t,r}$
 
 Where the new parameter $R_{k,r}$ is the stock-specific equilibrium recruitment, sampled with informative priors based on observed recruitment ($R$):
 
@@ -106,7 +106,7 @@ $R_{k,r} \sim lognormal(0.75*max(R_r),max(R_r))$
 
 For the Cushing model, the linearized form is:
 
- $log(R_t,r/S_{t,r}) = \alpha_r + \beta_r*log(S_{t,r}) + \beta_{eca,c}*ECA_{t,r} + w_{t,r}$
+$log(R_t,r/S_{t,r}) = \alpha_r + \beta_r*log(S_{t,r}) + \beta_{eca,c}*ECA_{t,r} + w_{t,r}$
 
 A version of each model was fit to the Chum dataset. Model summaries can be found in the github repository under 'outs/summary' in the 'stan models' subfolder.
 
@@ -133,8 +133,8 @@ loo_comp[,1:6]
 From this the Beverton-Holt model appears to have substantially better predictive performance compared to the Ricker/Cushing model forms. We will proceed with results for both BH/Ricker however.
 
 \newpage
-# Forestry effects
 
+# Forestry effects
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
@@ -211,14 +211,13 @@ lines(u_pred~eca_n,lty=5)
 
 ```
 
-
 Proposed to do/future tweaks:
 
-1. Shared year effects or shared latent productivity trends
+1.  Shared year effects or shared latent productivity trends
 
-2. Watershed area & interaction with ECA
+2.  Watershed area & interaction with ECA
 
-3. non-linear function for ECA?
+3.  non-linear function for ECA?
 
 \newpage
 
