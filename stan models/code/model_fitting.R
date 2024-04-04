@@ -107,8 +107,6 @@ dl=list(N=nrow(ch20r),
         pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
         pRk_sig=smax_prior$m.r)
 
-
-
 fit1ric <- m2$sample(data=dl,
                   seed = 123,
                   chains = 8, 
@@ -215,6 +213,67 @@ loo_f3bh=fit3bh$loo()
 
 
 
+#pink salmon
+
+#data formatting...
+pk10r=pk10r[order(factor(pk10r$River),pk10r$BroodYear),]
+rownames(pk10r)=seq(1:nrow(pk10r))
+
+#normalize ECA - logit transformation (ie. log(x/(1-x)))
+pk10r$logit.ECA=qlogis(pk10r$ECA_age_proxy_forested_only+0.005)
+pk10r$logit.ECA.std=(pk10r$logit.ECA-mean(pk10r$logit.ECA))/sd(pk10r$logit.ECA)
+
+#sparse matrix of spawners
+S_mat=make_design_matrix(pk10r$Spawners,pk10r$River)
+
+#sparse matrix of ECA
+
+#average ECA by stock
+#just to see an overview of ECA by river
+eca_s=pk10r%>%group_by(River)%>%summarize(m=mean(ECA_age_proxy_forested_only*100),m.std=mean(logit.ECA.std),range=max(ECA_age_proxy_forested_only*100)-min(ECA_age_proxy_forested_only*100),cu=unique(CU))
+
+ECA_mat=make_design_matrix(pk10r$logit.ECA.std,pk10r$River)
+
+#watershed area by river
+area_mat=make_design_matrix(pk10r$ln_area_km2_std,pk10r$River)
+
+#interaction matrix
+ExA_mat=ECA_mat*area_mat
+
+#extract max S for priors on capacity & eq. recruitment
+smax_prior=pk10r%>%group_by(River) %>%summarize(m.s=max(Spawners),m.r=max(Recruits))
+
+#ragged start and end points for each SR series
+N_s=rag_n(pk10r$River)
+
+#cus by stock
+cu=distinct(pk10r,River,.keep_all = T)
+summary(factor(cu$CU))
+
+#time points for each series
+L_i=pk10r%>%group_by(River)%>%summarize(l=n(),tmin=min(BroodYear)-1954+1,tmax=max(BroodYear)-1954+1)
+
+
+dl=list(N=nrow(ch20r),
+        L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
+        C=length(unique(ch20r$CU)),
+        J=length(unique(ch20r$River)),
+        N_i=L_i$l,#series lengths
+        C_i=as.numeric(factor(cu$CU)), #CU index
+        ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
+        R_S=ch20r$ln_RS,
+        S=S_mat, #design matrix for spawner counts
+        ECA=ECA_mat, #design matrix for standardized ECA
+        Area=area_mat, #design matrix for watershed area
+        ExA=ExA_mat, #design matrix for std ECA x watershed area
+        start_y=N_s[,1],
+        end_y=N_s[,2],
+        start_t=L_i$tmin,
+        end_t=L_i$tmax,
+        pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
+        pSmax_sig=smax_prior$m.s,
+        pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
+        pRk_sig=smax_prior$m.r)
 
 
 #old models - varying effects to river level (too flexible, likely)
