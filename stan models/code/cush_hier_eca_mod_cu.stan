@@ -9,10 +9,8 @@ data{
   int C_i[J]; //CU index for each stock
   int ii[N]; //index of brood years
   vector[N] R_S; //matrix of productivity among stocks - log(recruits per spawner)
-  matrix[N,J] S; //design matrix of spawners
-  matrix[N,J] ECA; //design matrix of stock-specific ECA 
-  matrix[N,J] Area; //design matrix of stock-specific watershed area
-  matrix[N,J] ExA; //design matrix of stock-specific ECA x watershed area
+  matrix[N,J] S; //design matrix of spawners in time T
+  matrix[N,J] ECA; //design matrix of stock-specific ECA through time
   int<lower=0> start_y[J];       // ragged start point for observations (N)
   int<lower=0> end_y[J];         // ragged end points for observations (N)
   vector[J] pSmax_mean; //priors on smax - based on observed spawner abundance
@@ -43,7 +41,6 @@ parameters{
 real b_ECA; //global (across stock) mean effect of ECA
 vector[C] b_ECA_cu; //CU-specific ECA effect
 real<lower=0> sd_ECA; //variance in CU-level ECA effect
-real b_ECA_Area; //global interaction term for ECA x Area
 
  //variance components
  real<lower=0> mu_sigma; ///mean sigma among all stocks
@@ -54,7 +51,7 @@ real b_ECA_Area; //global interaction term for ECA x Area
  vector<lower = -1,upper=1>[J] rho; //autocorrelation parameter
 }
 transformed parameters{
-  vector[J] b; //capacity rate (untransformed)
+  vector<lower=0>[J] b; //capacity rate (untransformed)
   vector[J] sigmaAR; //sigma - adjusted for rho
 	
   //productivity residuals through time
@@ -66,7 +63,7 @@ transformed parameters{
   
   //residual productivity deviations
    for(j in 1:J){ //for every stock
-	mu1[start_y[j]:end_y[j]]=alpha_j[j] - b[j]*S[start_y[j]:end_y[j],j]+b_ECA_cu[C_i[j]]*ECA[start_y[j]:end_y[j],j]+b_ECA_Area*ExA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
+	mu1[start_y[j]:end_y[j]]=alpha_j[j]+b[j]*log(S[start_y[j]:end_y[j],j]) +b_ECA_cu[C_i[j]]*ECA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
 
 	e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 	
@@ -90,25 +87,17 @@ model{
   sd_alpha_cu ~ normal(0,0.5); //within CU variance in productivity
     
   //capacity for each stock - fit individually with weakly informative priors based on maximum observed spawners
-  for(j in 1:J) log_b[j] ~ normal(logbeta_pr[j],logbeta_pr_sig[j]);
+  for(j in 1:J) log_b[j] ~ normal(0,2);
  
   //covariate effects
   b_ECA ~ normal(0,1); //standard normal prior
   b_ECA_cu ~ normal(b_ECA,sd_ECA); //CU-specific ECA effect
   
-  b_Area ~ normal(0,1); //standard normal prior
-  b_Area_cu ~ normal(b_Area,sd_Area); //CU-specific ECA effect
-  
-  b_ECA_Area ~ normal(0,1); //standard normal prior
-  b_ECA_Area_cu ~ normal(b_ECA_Area,sd_ExA); //CU-specific ECA effect
- 
   //hierarchical variances
   sd_ECA ~ normal(0,0.5); //variance in stock-level ECA effects
-  sd_Area ~ normal(0,0.5); //variance in stock-level ECA effects
-  sd_ExA ~ normal(0,0.5); //variance in stock-level ECA effects
   
   //variance terms
-  mu_sigma ~ normal(0.5,1);
+  mu_sigma ~ normal(0.5,0.5);
   cu_sigma ~ normal(mu_sigma,sd_sigma_cu);
   sd_sigma_cu ~ normal(0,0.5);
   sd_sigma ~ normal(0,0.5);
@@ -127,9 +116,6 @@ model{
 }
 generated quantities{
 vector[N] log_lik; //pointwise log likelihoods
-vector[J] Smax; //Smax - spawners where peak recruitment is achieved
-vector[J] Smsy; //Smsy - spawners for max. sustainable yield
-vector[J] Umsy; //Umsy - harvest rate corresponding to Smsy
 
 for(j in 1:J){
  log_lik[start_y[j]]=normal_lpdf(R_S[start_y[j]]|mu1[start_y[j]],sigma[j]); //pointwise log likelihood calculation - initial estimates
@@ -138,9 +124,6 @@ for(j in 1:J){
  log_lik[start_y[j]+t]=normal_lpdf(R_S[start_y[j]+t]|mu2[start_y[j]+t], sigmaAR[j]); //pointwise log likelihood calculation
  }
  
- Smax[j] = 1/b[j];
- Umsy[j] = 1-lambert_w0(exp(1-alpha_j[j]));
- Smsy[j] = (1-lambert_w0(exp(1-alpha_j[j])))/b[j];
 }
 }
 

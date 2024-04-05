@@ -76,7 +76,7 @@ transformed parameters{
 model{
   //priors
   //prod
-  alpha_0 ~ normal(1,4); //global intrinsic productivity for all stocks
+  alpha_0 ~ normal(4,4); //global intrinsic productivity for all stocks
   alpha_cu ~ normal(alpha_0,sd_alpha); //CU-specific deviations in intrinsic productivity
   alpha_j ~ normal(alpha_cu[C_i],sd_alpha_cu); //within CU-deviations among stocks
   

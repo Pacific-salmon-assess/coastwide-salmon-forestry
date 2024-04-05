@@ -11,7 +11,6 @@ data{
   vector[N] R_S; //matrix of productivity among stocks - log(recruits per spawner)
   matrix[N,J] S; //design matrix of spawners
   matrix[N,J] ECA; //design matrix of stock-specific ECA 
-  matrix[N,J] Area; //design matrix of stock-specific watershed area
   matrix[N,J] ExA; //design matrix of stock-specific ECA x watershed area
   int<lower=0> start_y[J];       // ragged start point for observations (N)
   int<lower=0> end_y[J];         // ragged end points for observations (N)
@@ -42,12 +41,7 @@ parameters{
 real b_ECA; //global (across stock) mean effect of ECA
 vector[C] b_ECA_cu; //CU-specific ECA effect
 real<lower=0> sd_ECA; //variance in CU-level ECA effect
-real b_Area; //global watershed area effect on productivity
-vector[C] b_Area_cu; //CU-specific watershed area effect
-real<lower=0> sd_Area; //variance in CU-level area effect
 real b_ECA_Area; //global interaction term for ECA x Area
-vector[C] b_ECA_Area_cu; //CU-specific watershed ECA x Area effect
-real<lower=0> sd_ExA; //variance in CU-level ECA x Area effect
 
  //variance components
  real<lower=0> mu_sigma; ///mean sigma among all stocks
@@ -68,7 +62,7 @@ transformed parameters{
   
   //residual productivity deviations
    for(j in 1:J){ //for every stock
-	mu1[start_y[j]:end_y[j]]=alpha_j[j]-log(1+(exp(alpha_j[j])/Rk[j])*S[start_y[j]:end_y[j],j]) +b_ECA_cu[C_i[j]]*ECA[start_y[j]:end_y[j],j]+b_Area_cu[C_i[j]]*Area[start_y[j]:end_y[j],j]+b_ECA_Area_cu[C_i[j]]*ExA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
+	mu1[start_y[j]:end_y[j]]=alpha_j[j]-log(1+(exp(alpha_j[j])/Rk[j])*S[start_y[j]:end_y[j],j]) +b_ECA_cu[C_i[j]]*ECA[start_y[j]:end_y[j],j]+b_ECA_Area*ExA[start_y[j]:end_y[j],j]; //expectation (unadjusted for autocorrelated residuals)
 
 	e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 	
@@ -83,7 +77,7 @@ transformed parameters{
 model{
   //priors
   //prod
-  alpha_0 ~ normal(1.5,2); //global intrinsic productivity for all stocks
+  alpha_0 ~ normal(4,4); //global intrinsic productivity for all stocks
   alpha_cu ~ normal(alpha_0,sd_alpha); //CU-specific deviations in intrinsic productivity
   alpha_j ~ normal(alpha_cu[C_i],sd_alpha_cu); //within CU-deviations among stocks
   
@@ -98,16 +92,10 @@ model{
   b_ECA ~ normal(0,1); //standard normal prior
   b_ECA_cu ~ normal(b_ECA,sd_ECA); //CU-specific ECA effect
   
-  b_Area ~ normal(0,1); //standard normal prior
-  b_Area_cu ~ normal(b_Area,sd_Area); //CU-specific ECA effect
-  
   b_ECA_Area ~ normal(0,1); //standard normal prior
-  b_ECA_Area_cu ~ normal(b_ECA_Area,sd_ExA); //CU-specific ECA effect
  
   //hierarchical variances
   sd_ECA ~ normal(0,0.5); //variance in stock-level ECA effects
-  sd_Area ~ normal(0,0.5); //variance in stock-level ECA effects
-  sd_ExA ~ normal(0,0.5); //variance in stock-level ECA effects
   
   //variance terms
   mu_sigma ~ normal(0.5,1);

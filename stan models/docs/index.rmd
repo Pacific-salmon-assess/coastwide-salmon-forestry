@@ -59,9 +59,11 @@ Code and data to reproduce the analyses summarized in this document can be found
 The structure of the document will cover several areas.
 
 
-The first set of models we fit includes a covariate for ECA alone (logit transformed and standardized) which is modeled hierarchically down to CU-level for ECA effects and to the individual river (subscript $r$) level for productivity. We test 3 models for the structure of density dependence: either a Ricker (model 1), Beverton-Holt (model 2), or Cushing type (model 3) spawner-recruitment relationship. The stan models themselves are in the github repo as m1_ricker.stan, m1_bh.stan, m1_cush.stan.
+The first set of models we fit includes a covariate for ECA alone (logit transformed and standardized) which is modeled hierarchically down to CU-level for ECA effects and to the individual river (subscript $r$) level for productivity (m1...). The second set has individual river level effects of ECA (m2...). The third set includes watershed area as a mediator of ECA impacts (ie. an interaction with watershed area and ECA; m3...). 
 
-# Models
+We test 3 models for the structure of density dependence: either a Ricker (model 1), Beverton-Holt (model 2), or Cushing type (model 3) spawner-recruitment relationship. The stan models themselves are in the github repo as m1_ricker.stan, m1_bh.stan, m1_cush.stan.
+
+#Model structure forms
 
 Ricker formulation:
 
