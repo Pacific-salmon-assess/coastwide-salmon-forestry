@@ -3,8 +3,6 @@ title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
 author: ''
 date: "Apr. 2024"
 output:
-  pdf_document:
-    toc: no
   html_document:
     collapsed: no
     fig_caption: yes
@@ -14,6 +12,8 @@ output:
     theme: sandstone
     toc: yes
     toc_float: yes
+  pdf_document:
+    toc: no
   word_document:
     toc: yes
 ---
@@ -54,7 +54,10 @@ knitr::opts_chunk$set(warning = FALSE)
 
 This short document provides some details on initial models fit and inferential outputs. It can be treated as a living appendix of sorts, and can be added to and polished over time.
 
-Code and data to reproduce the analyses summarized in this document can be found in [**this repository**](https://github.com/Pacific-salmon-assess/coastwide-salmon-forestry) which is private for now in case there is anything in the ECA dataset that is not suitable for public consumption. Access can be granted by sending Dan or Brendan your github username.
+Code and data to reproduce the analyses summarized in this document can be found in [**this repository**](https://github.com/Pacific-salmon-assess/coastwide-salmon-forestry).
+
+The structure of the document will cover several areas.
+
 
 The first set of models we fit includes a covariate for ECA alone (logit transformed and standardized) which is modeled hierarchically down to CU-level for ECA effects and to the individual river (subscript $r$) level for productivity. We test 3 models for the structure of density dependence: either a Ricker (model 1), Beverton-Holt (model 2), or Cushing type (model 3) spawner-recruitment relationship. The stan models themselves are in the github repo as m1_ricker.stan, m1_bh.stan, m1_cush.stan.
 
@@ -62,7 +65,7 @@ The first set of models we fit includes a covariate for ECA alone (logit transfo
 
 Ricker formulation:
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,c}*ECA_{t,r} + w_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,r}*ECA_{t,r} + w_{t,r}$
 
 Where residual productivity is autocorrelated by 1-year:
 
@@ -104,9 +107,19 @@ Where the new parameter $R_{k,r}$ is the stock-specific equilibrium recruitment,
 
 $R_{k,r} \sim lognormal(0.75*max(R_r),max(R_r))$
 
+For the Beverton-Holt form the global among-stock productivity ($\alpha$) we use an alternative prior specification since the range of plausible values differ from the Ricker:
+
+$\alpha \sim normal(4,4)$
+
+
 For the Cushing model, the linearized form is:
 
 $log(R_t,r/S_{t,r}) = \alpha_r + \beta_r*log(S_{t,r}) + \beta_{eca,c}*ECA_{t,r} + w_{t,r}$
+
+Where the scaling exponent $\beta_r$ for spawners is sampled with generic priors:
+
+$\beta_r \sim lognormal(0,2)$
+
 
 A version of each model was fit to the Chum dataset. Model summaries can be found in the github repository under 'outs/summary' in the 'stan models' subfolder.
 
@@ -225,6 +238,7 @@ Overall distribution of ECA among all observations:
 
 ```{r, eca histogram, fig.width=8,fig.height=6}
 hist(ch20r$ECA_age_proxy_forested_only,breaks=30,main='ECA for all observations')
+hist(ch20r$logit.ECA,breaks=30,main='Logit transformed ECA for all observations')
 
 ```
 
