@@ -3,8 +3,6 @@ title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
 author: ''
 date: "Apr. 2024"
 output:
-  pdf_document:
-    toc: no
   html_document:
     collapsed: no
     fig_caption: yes
@@ -14,8 +12,6 @@ output:
     theme: sandstone
     toc: yes
     toc_float: yes
-  word_document:
-    toc: yes
 ---
 
 ```{=html}
@@ -45,9 +41,11 @@ h3 { /* Header 3 */
 }
 </style>
 ```
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
+library(cmdstanr)
 ```
 
 # Overview
@@ -57,6 +55,10 @@ This short document provides some details on initial models fit and inferential 
 Code and data to reproduce the analyses summarized in this document can be found in [**this repository**](https://github.com/Pacific-salmon-assess/coastwide-salmon-forestry) which is private for now in case there is anything in the ECA dataset that is not suitable for public consumption. Access can be granted by sending Dan or Brendan your github username.
 
 The first set of models we fit includes a covariate for ECA alone (logit transformed and standardized) which is modeled hierarchically down to CU-level for ECA effects and to the individual river (subscript $r$) level for productivity. We test 3 models for the structure of density dependence: either a Ricker (model 1), Beverton-Holt (model 2), or Cushing type (model 3) spawner-recruitment relationship. The stan models themselves are in the github repo as m1_ricker.stan, m1_bh.stan, m1_cush.stan.
+
+The second set of models fit includes a finer-level of variation in stock responses to ECA - where the effect now varies at the river-level.
+
+The third set of models fit includes an interaction of watershed area with the ECA effect - where the effect now varies according to watershed size.
 
 # Models
 
@@ -116,14 +118,25 @@ A version of each model was fit to the Chum dataset. Model summaries can be foun
  library(here);library(cmdstanr);library(dplyr)
 
 ch20r=ch20r <- read.csv(here('origional-ecofish-data-models','Data','Processed','chum_SR_20_hat_yr_reduced_VRI90.csv'))
+#two rivers named salmon river... recode
+ch20r$River=ifelse(ch20r$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20r$River)
+ch20r$River=ifelse(ch20r$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20r$River)
+
+#create logit transformed and standardized ECA:
+ch20r$logit.ECA=qlogis(ch20r$ECA_age_proxy_forested_only+0.005)
+ch20r$logit.ECA.std=(ch20r$logit.ECA-mean(ch20r$logit.ECA))/sd(ch20r$logit.ECA)
+
 #fit set 2: cu varying effects. Ricker/BH/Cushing form
 f1ric=readRDS(here('stan models','outs','fits','fit1ric.RDS'))
 f1bh= readRDS(here('stan models','outs','fits','fit1bh.RDS'))
+f1cu= readRDS(here('stan models','outs','fits','fit1cs.RDS'))
 
 f2ric=readRDS(here('stan models','outs','fits','fit2ric.RDS'))
 f2bh= readRDS(here('stan models','outs','fits','fit2bh.RDS'))
-f2cu=readRDS(here('stan models','outs','fits','fit2cs.RDS'))
-    
+
+f3ric=readRDS(here('stan models','outs','fits','fit3ric.RDS'))
+f3bh= readRDS(here('stan models','outs','fits','fit3bh.RDS'))
+fit_bh_gam= readRDS(here('stan models','outs','fits','fit_bh_gam.RDS'))
 ```
 
 # Density dependence form comparison
@@ -131,7 +144,7 @@ f2cu=readRDS(here('stan models','outs','fits','fit2cs.RDS'))
 Overall model likelihood across the 3 alternative model (model 1: Ricker, model 2: BH, model 3: Cushing) forms assessed by approximate leave-one-out cross-validation, is:
 
 ```{r, loo}
-loo_comp=readRDS(here('stan models','outs','loo','loo_results_fitset2.RDS'))
+loo_comp=readRDS(here('stan models','outs','loo','loo_results_fitset1.RDS'))
 loo_comp[,1:6]
 ```
 
@@ -145,7 +158,7 @@ From this the Beverton-Holt model appears to have substantially better predictiv
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-```{r, b_eca bh}
+```{r, b_eca bh 1}
 as.data.frame(f2bh$summary(variables=c('b_ECA','b_ECA_cu'),"mean","sd","quantile2","rhat"))
 
 
@@ -163,7 +176,7 @@ abline(v=0,lwd=2)
 
 and alternatively with the Ricker model form:
 
-```{r, b_eca ric}
+```{r, b_eca ric 1}
 as.data.frame(f2ric$summary(variables=c('b_ECA','b_ECA_cu'),"mean","sd","quantile2","rhat"))
 
 d2r=f2ric$draws(variables=c('b_ECA','b_ECA_cu'),format='draws_matrix')
@@ -181,7 +194,7 @@ abline(v=0,lwd=2)
 
 Visualized (back converted from logit scale to original ECA) for the Beverton-Holt model:
 
-```{r, b_eca plots 2}
+```{r, b_eca plots bh 1}
 #create logit transformed and standardized ECA:
 ch20r$logit.ECA=qlogis(ch20r$ECA_age_proxy_forested_only+0.005)
 ch20r$logit.ECA.std=(ch20r$logit.ECA-mean(ch20r$logit.ECA))/sd(ch20r$logit.ECA)
@@ -203,7 +216,7 @@ lines(u_pred~eca_n,lty=5)
 
 And Ricker model:
 
-```{r, b_eca plots ric}
+```{r, b_eca plots ric 1}
 pRS=f2ric$draws(variable='b_ECA',format='draws_matrix')%*%x_n
 m_pred=apply(pRS,2,median)
 l_pred=apply(pRS,2,quantile,0.05)
@@ -215,50 +228,42 @@ lines(u_pred~eca_n,lty=5)
 
 ```
 
-## Fitset 1: CU-level varying effects
+## Fitset 2: River-level varying effects
 
-The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
+The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit. 
 
-```{r, b_eca bh}
-as.data.frame(f2bh$summary(variables=c('b_ECA','b_ECA_cu'),"mean","sd","quantile2","rhat"))
+This plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-
-d2=f2bh$draws(variables=c('b_ECA','b_ECA_cu'),format='draws_matrix')
+```{r, b_eca bh 2c}
+d2b=f2bh$draws(variables=c('b_ECA','b_ECA_cu','b_ECA_j'),format='draws_matrix')
 
 plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
 d0=density(d2[,1],bw=0.02)
-for(j in 2:ncol(d2)){
+for(j in 2:23){ #22 cus
 d=density(d2[,j],bw=0.02)
-lines(d$y~d$x)
+lines(d$y~d$x,col=adjustcolor('black',alpha.f=0.2))
 }
 lines(d0$y~d0$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 ```
 
-and alternatively with the Ricker model form:
+This plot shows density of effect sizes among Rivers and the red line indicates the global effect:
 
-```{r, b_eca ric}
-as.data.frame(f2ric$summary(variables=c('b_ECA','b_ECA_cu'),"mean","sd","quantile2","rhat"))
 
-d2r=f2ric$draws(variables=c('b_ECA','b_ECA_cu'),format='draws_matrix')
-
-plot(c(0,12)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (Ricker)',ylim=c(0,12),yaxt='n',xlab='Standardized coefficients')
-d0=density(d2r[,1],bw=0.02)
-
-for(j in 2:ncol(d2)){
-d=density(d2r[,j],bw=0.02)
-lines(d$y~d$x)
+```{r, b_eca bh 2r}
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0=density(d2b[,1],bw=0.02)
+for(j in 24:ncol(d2b)){
+d=density(d2b[,j],bw=0.02)
+lines(d$y~d$x,col=adjustcolor('black',alpha.f=0.2))
 }
 lines(d0$y~d0$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 ```
 
-Visualized (back converted from logit scale to original ECA) for the Beverton-Holt model:
+The realized function for ECA on productivity (in BH form):
 
-```{r, b_eca plots 2}
-#create logit transformed and standardized ECA:
-ch20r$logit.ECA=qlogis(ch20r$ECA_age_proxy_forested_only+0.005)
-ch20r$logit.ECA.std=(ch20r$logit.ECA-mean(ch20r$logit.ECA))/sd(ch20r$logit.ECA)
+```{r, b_eca plots bh 2}
 
 #predict over standardized values (x_n) and back calculate natural scale ECA (eca_n)
 x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
@@ -275,9 +280,41 @@ lines(u_pred~eca_n,lty=5)
 ```
 
 
+ECA effects with the Ricker model form at each hierarchical level:
+
+```{r, b_eca ric 2c}
+d2r=f2ric$draws(variables=c('b_ECA','b_ECA_cu','b_ECA_j'),format='draws_matrix')
+
+plot(c(0,12)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (Ricker)',ylim=c(0,12),yaxt='n',xlab='Standardized coefficients')
+d0=density(d2r[,1],bw=0.02)
+
+for(j in 2:24){
+d=density(d2r[,j],bw=0.02)
+lines(d$y~d$x,col=adjustcolor('black',alpha.f=0.2))
+}
+lines(d0$y~d0$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+```
+
+```{r, b_eca ric 2r}
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River (Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0=density(d2r[,1],bw=0.02)
+
+for(j in 24:ncol(d2r)){
+d=density(d2r[,j],bw=0.02)
+lines(d$y~d$x,col=adjustcolor('black',alpha.f=0.2))
+}
+lines(d0$y~d0$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+```
+
+Visualized (back converted from logit scale to original ECA) for the Beverton-Holt model:
+
+
+
 And Ricker model:
 
-```{r, b_eca plots ric}
+```{r, b_eca plots ric 2}
 pRS=f2ric$draws(variable='b_ECA',format='draws_matrix')%*%x_n
 m_pred=apply(pRS,2,median)
 l_pred=apply(pRS,2,quantile,0.05)
@@ -289,27 +326,121 @@ lines(u_pred~eca_n,lty=5)
 
 ```
 
-# Proposed to do/future tweaks: ###
+## Fitset 3: Watershed area as a mediator
 
-1.  Shared year effects or shared latent productivity trends
+The third set of models includes watershed area as a mediator of the effect of ECA on productivity:
 
-2.  Watershed area & interaction with ECA
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,c}*ECA_{t,r} + \beta_{eca_x_area,c}*ECA_{t,r}*Area_{r} + w_{t,r}$
 
-3.  non-linear function for ECA?
+This is the distribution of watershed area among 293 rivers included in this analysis:
 
+```{r, watershed area}
+da=distinct(ch20r,River,.keep_all = T)
+hist(log10(da$area_km2),xlab='Watershed area (km2)',xaxt='n',main='',breaks=30,xlim=c(0,log10(1e4)))
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+#da=da[order(da$area_km2),]
+```
+
+An important point to consider is that the range of observed ECAs can vary substantially by rivers, and 
+
+```{r, eca range}
+plot(rep(1,nrow(da))~seq(1,295),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='')
+for(i in 1:nrow(da)){
+ s=subset(ch20r,River==da$River[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
+}
+
+cu=distinct(ch20r,CU,.keep_all = T)
+plot(rep(1,nrow(cu))~seq(1,22),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in CU-level time-series',bty='l',xlab='')
+for(i in 1:nrow(cu)){
+ s=subset(ch20r,CU==cu$CU[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
+}
+
+
+plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
+for(i in 1:nrow(da)){
+ s=subset(ch20r,River==da$River[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(unique(log10(s$area_km2)),2))
+}
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+```
+
+Beverton-Holt model with watershed area as a mediator of ECA:
+
+```{r, b_eca bh 3}
+as.data.frame(f3bh$summary(variables=c('b_ECA','b_ECA_cu','b_ECA_Area'),"mean","sd","quantile2","rhat"))
+
+
+d3=f3bh$draws(variables=c('b_ECA','b_ECA_cu','b_ECA_Area'),format='draws_matrix')
+
+#predict over standardized values (x_n) and back calculate natural scale Area (eca_n)
+x_a=quantile(da$ln_area_km2_std,seq(0,1,by=0.25))
+
+t1=f3bh$draws(variable='b_ECA',format='draws_matrix')%*%x_n+f3bh$draws(variable='b_ECA_Area',format='draws_matrix')%*%x_n*x_a[1]
+
+t3=(f3bh$draws(variable='b_ECA',format='draws_matrix')+f3bh$draws(variable='b_ECA_Area',format='draws_matrix')*x_a[3])%*%x_n
+
+t5=(f3bh$draws(variable='b_ECA',format='draws_matrix')+f3bh$draws(variable='b_ECA_Area',format='draws_matrix')*x_a[5])%*%x_n
+
+m_pred_1=apply(t1,2,median)
+m_pred_3=apply(t3,2,median)
+m_pred_5=apply(t5,2,median)
+lp5=apply(t5,2,quantile,0.025)
+up5=apply(t5,2,quantile,0.975)
+
+
+plot(m_pred_1~eca_n,bty='l',type='l',ylab='Effect on log(R/S)',xlab='ECA',title='Beverton-Holt',ylim=c(-1,1),lwd=2,col='darkred')
+lines(m_pred_3~eca_n,lwd=2,col='goldenrod')
+lines(m_pred_5~eca_n,lwd=2,col='navy')
+text(x=0.7,y=0.1,'1km2',col='darkred')
+text(x=0.7,y=-0.2,'25km2',col='goldenrod')
+text(x=0.7,y=-0.7,'5800km2',col='navy')
+
+```
+
+
+
+## Non-linear effect of ECA
+
+To explore if there were any signs of strong non-linear patterns in how ECA affects forestry we implemented an approach equivalent to a Generalized Additive Model (GAM). We use a matrix of B-splines with 6 knots that subdivide the predictor (ECA), the resulting estimated effect of ECA at any given point is the sum of these smoothed functions. The global function of ECA effects on productivity fit to all rivers/CUs"
+
+```{r, gam fit}
+
+
+d=fit_bh_gam$draws(variables='RS_pred_ECA',format='draws_matrix')
+plot(apply(d,2,median)~seq(min(ch20r$ECA_age_proxy_forested_only),max(ch20r$ECA_age_proxy_forested_only),length.out=100),xlab='ECA',ylab='Marginal effect on productivity',type='l',lwd=3,bty='l',ylim=c(-1.5,-0.2))
+lines(apply(d,2,quantile,0.025)~seq(min(ch20r$ECA_age_proxy_forested_only),max(ch20r$ECA_age_proxy_forested_only),length.out=100),lty=5)
+lines(apply(d,2,quantile,0.975)~seq(min(ch20r$ECA_age_proxy_forested_only),max(ch20r$ECA_age_proxy_forested_only),length.out=100),lty=5)
+
+```
 
 # ECA and effect size time-series - Beverton Holt
 
 Overall distribution of ECA among all observations:
 
 ```{r, eca histogram, fig.width=8,fig.height=6}
-hist(ch20r$ECA_age_proxy_forested_only,breaks=30,main='ECA for all observations')
+hist(ch20r$ECA_age_proxy_forested_only,breaks=30,main='ECA for all observations',xlab='ECA')
 
 ```
 
 River-level ECA and effect on productivity through time by CU (BH model):
 
-```{r, eca time-series, fig.width=8,fig.height=12}
+```{r, eca time-series, fig.width=8,fig.height=12, results="asis"}
 
 for(c in 1:length(unique(ch20r$CU))){
   s=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
@@ -317,7 +448,7 @@ for(c in 1:length(unique(ch20r$CU))){
   plot(c(0,1)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),bty='l',type='n',ylab='ECA',ylim=c(0,1),xlab='',main=unique(s$CU))
   
   cat('\n')  
-  cat("## ", levels(factor(ch20r$CU))[c], "\n") #nested region header
+  cat("## ", levels(factor(ch20r$CU))[c], "\n") #CU header
    
   for(j in 1:length(unique(s$River))){
     r=subset(s,River==unique(s$River)[j])
@@ -329,33 +460,86 @@ for(c in 1:length(unique(ch20r$CU))){
     r=subset(s,River==unique(s$River)[j])
     lines(r$d_eca~r$BroodYear,lwd=2,col=adjustcolor('black',alpha.f=0.5))
   }
-      
+     cat('\n')  
+   
 }
 ```
 
-# River-level Spawner-Recruit fits
+# River-level Spawner-Recruit fits - BH
+```{r, sr time-series, fig.width=12,fig.height=8, results="asis"}
+ch20r$j=as.numeric(factor(ch20r$River))
+cus=distinct(ch20r,River,.keep_all=T)
+cus=cus[order(cus$CU),]
 
-```{r, sr fits, fig.width=8,fig.height=12}
+d_bh1=f1bh$draws(variables=c('alpha_j','Rk','b_ECA_cu'),form='draws_matrix')
+d_ric1=f1ric$draws(variables=c('alpha_j','Smax','b_ECA_cu'),form='draws_matrix')
 
-for(c in 1:length(unique(ch20r$CU))){
-  s=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
-  
-  par(mfrow=c(2,2))
-  plot(s$Recruits~s$Spawners,bty='l',type='n',ylab='Recruits',xlab='Spawners',main='Beverton-Holt')
-  
+for(c in 1:22){
   cat('\n')  
-  cat("## ", levels(factor(ch20r$CU))[c], "\n") #nested region header
+  cat("## ", c, "\n")
+  #CU header
+  cu=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
+  
+  for(j in 1:length(unique(cu$River))){
+  rv.id=unique(cu$River[j])
+  rv=subset(ch20r,River==rv.id)
+  
+  par(mfrow=c(1,2))
+  plot(Recruits~Spawners,data=rv,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv$River),'(BH)',sep=' '))
+  
+  alpha_j=d_bh1[,colnames(d_bh1) %in% paste('alpha_j[',unique(rv$j),']',sep='')]
+  Rk_j=d_bh1[,colnames(d_bh1) %in% paste('Rk[',unique(rv$j),']',sep='')]
+  b_ECA=d_bh1[,colnames(d_bh1) %in% paste('b_ECA_cu[',c,']',sep='')]
+  s_pred=seq(0,max(rv$Spawners),length.out=100)
+  
+  RS_pred_m=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,median))*s_pred
+  RS_pred_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
+  RS_pred_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
+  
+  
+  RS_pred_eca_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$logit.ECA.std),ncol=length(s_pred),nrow=nrow(alpha_j)),2,median))*s_pred
+  
+  RS_pred_eca_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$logit.ECA.std),ncol=length(s_pred),nrow=nrow(alpha_j)),2,median))*s_pred
+  
+  lines(RS_pred_m~s_pred,lwd=3)
+  lines(RS_pred_l~s_pred,lwd=1,lty=5)
+  lines(RS_pred_u~s_pred,lwd=1,lty=5)
+  lines(RS_pred_eca_l~s_pred,col='darkgreen',lwd=3)
+  text(x=max(s_pred)*0.9,y=max(RS_pred_eca_l)*1.08,col='darkgreen','min. obs. ECA')
+  lines(RS_pred_eca_u~s_pred,col='darkorange',lwd=3)
+  text(x=max(s_pred)*0.9,y=max(RS_pred_eca_u)*0.92,col='darkorange','max. obs. ECA')
+  
+  points(Recruits~Spawners,data=rv,bg=adjustcolor('darkgray',alpha.f=0.8),pch=21) 
+  
+  #Ricker
+    plot(Recruits~Spawners,data=rv,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv$River),'(Ricker)',sep=' '))
+  
+  alpha_j=d_ric1[,colnames(d_ric1) %in% paste('alpha_j[',unique(rv$j),']',sep='')]
+  Smax=d_ric1[,colnames(d_ric1) %in% paste('Smax[',unique(rv$j),']',sep='')]
+  b_ECA=d_ric1[,colnames(d_ric1) %in% paste('b_ECA_cu[',c,']',sep='')]
+  s_pred=seq(0,max(rv$Spawners),length.out=100)
+  
+  RS_pred_m=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-(1/Smax)%*%s_pred,2,median))*s_pred
+  RS_pred_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-(1/Smax)%*%s_pred,2,quantile,0.05))*s_pred
+  RS_pred_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-(1/Smax)%*%s_pred,2,quantile,0.95))*s_pred
+  
+  
+  RS_pred_eca_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-(1/Smax)%*%s_pred+matrix(b_ECA*min(rv$logit.ECA.std),ncol=length(s_pred),nrow=nrow(alpha_j)),2,median))*s_pred
+  
+  RS_pred_eca_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-(1/Smax)%*%s_pred+matrix(b_ECA*max(rv$logit.ECA.std),ncol=length(s_pred),nrow=nrow(alpha_j)),2,median))*s_pred
+  
+  lines(RS_pred_m~s_pred,lwd=3)
+  lines(RS_pred_l~s_pred,lwd=1,lty=5)
+  lines(RS_pred_u~s_pred,lwd=1,lty=5)
+  lines(RS_pred_eca_l~s_pred,col='darkgreen',lwd=3)
+  text(x=max(s_pred)*0.9,y=RS_pred_eca_l[100]*1.15,col='darkgreen','min. obs. ECA')
+  lines(RS_pred_eca_u~s_pred,col='darkorange',lwd=3)
+  text(x=max(s_pred)*0.9,y=RS_pred_eca_u[100]*0.92,col='darkorange','max. obs. ECA')
+  
+  points(Recruits~Spawners,data=rv,bg=adjustcolor('darkgray',alpha.f=0.8),pch=21) 
+ 
+  }
    
-  for(j in 1:length(unique(s$River))){
-    r=subset(s,River==unique(s$River)[j])
-    lines(r$ECA_age_proxy_forested_only~r$BroodYear,lwd=2,col=adjustcolor('black',alpha.f=0.5))
-  }
-  s$d_eca=median(d2[,c+1])*s$ECA_age_proxy_forested_only_std
-   plot(c(-1.5,1.5)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),bty='l',type='n',ylab='Realized ECA effect on productivity',xlab='Brood year')
-  for(j in 1:length(unique(s$River))){
-    r=subset(s,River==unique(s$River)[j])
-    lines(r$d_eca~r$BroodYear,lwd=2,col=adjustcolor('black',alpha.f=0.5))
-  }
-      
+   cat('\n')  
 }
 ```

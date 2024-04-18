@@ -64,6 +64,12 @@ m4bh=cmdstanr::cmdstan_model(file4bh) #compile stan code to C++
 #chum salmon####
 
 ##data formatting####
+
+#two rivers with duplicated names:
+ch20r$River=ifelse(ch20r$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20r$River)
+ch20r$River=ifelse(ch20r$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20r$River)
+
+
 ch20r=ch20r[order(factor(ch20r$River),ch20r$BroodYear),]
 rownames(ch20r)=seq(1:nrow(ch20r))
 
@@ -119,8 +125,9 @@ dl=list(N=nrow(ch20r),
         J_ii=ch20r$cu_yr, #index specific to each unique CU-Year combination
         ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
         R_S=ch20r$ln_RS,
-        S=ch20r$Spawners, #design matrix for spawner counts
-        ECA=ch20r$logit.ECA.std, #design matrix for standardized ECA
+        S=S_mat, #design matrix for spawner counts
+        Sv=ch20r$Spawners,
+        ECA=ECA_mat, #design matrix for standardized ECA
    #     ECA_vec=as.matrix(ch20r$logit.ECA.std), #vector of ECA ()
         Area=area_mat, #design matrix for watershed area
         ExA=ExA_mat, #design matrix for std ECA x watershed area
@@ -207,7 +214,7 @@ plot(e_t~mu1)
 #plot(e_t~mu2)
 
 loo_summary=loo::loo_compare(loo_f1ric,loo_f1bh,loo_f1cs)
-saveRDS(loo_summary,'loo_results_fitset1.RDS')
+saveRDS(loo_summary,'stan models/outs/loo/loo_results_fitset1.RDS')
 
 loo::loo_compare(loo_f1bh,loo_f2bh)
 
@@ -253,10 +260,10 @@ loo_f2bh=fit2bh$loo()
 ##Fit set 3: Watershed area as a mediator of clearcut effects ####
 
 fit3ric <- m3ric$sample(data=dl,
-                  seed = 333,
-                  chains = 4, 
-                  iter_warmup = 100,
-                  iter_sampling = 200,
+                  seed = 33366,
+                  chains = 8, 
+                  iter_warmup = 200,
+                  iter_sampling = 800,
                   refresh = 100,
                   adapt_delta = 0.995,
                   max_treedepth = 20)
@@ -281,6 +288,31 @@ fit3bh=readRDS('stan models/outs/fits/fit3bh.RDS')
 loo_f3bh=fit3bh$loo()
 
 ##Fit set 4: Latent productivity trends ####
+dl=list(N=nrow(ch20r),
+        L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
+        C=length(unique(ch20r$CU)),
+        J=length(unique(ch20r$River)),
+        N_i=L_i$l,#series lengths
+        C_i=as.numeric(factor(cu$CU)), #CU index by stock
+        C_j=as.numeric(factor(ch20r$CU)), #CU index by observation
+        C_ii=as.numeric(factor(ch20r$cu_yr)), #CU index by observation
+        J_i=as.numeric(factor(ch20r$River)), #River index by observation
+        J_ii=ch20r$cu_yr, #index specific to each unique CU-Year combination
+        ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
+        R_S=ch20r$ln_RS,
+        S=ch20r$Spawners, 
+        ECA=ch20r$logit.ECA.std, #design matrix for standardized ECA
+        #     ECA_vec=as.matrix(ch20r$logit.ECA.std), #vector of ECA ()
+    #    Area=area_mat, #design matrix for watershed area
+        ExA=ExA_mat, #design matrix for std ECA x watershed area
+        start_y=N_s[,1],
+        end_y=N_s[,2],
+        start_t=L_i$tmin,
+        end_t=L_i$tmax,
+        pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
+        pSmax_sig=smax_prior$m.s,
+        pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
+        pRk_sig=smax_prior$m.r)
 
 fit4ric <- m4ric$sample(data=dl,
                         seed = 333,
@@ -297,7 +329,7 @@ fit4ric=readRDS('stan models/outs/fits/fit4ric.RDS')
 loo_f4ric=fit4ric$loo()
 
 fit4bh <- m4bh$sample(data=dl,
-                        seed = 333,
+                        seed = 33366,
                         chains = 8, 
                         iter_warmup = 200,
                         iter_sampling = 800,
@@ -359,9 +391,9 @@ plot(apply(d,2,median)~seq(min(ch20r$ECA_age_proxy_forested_only),max(ch20r$ECA_
 lines(apply(d,2,quantile,0.025)~seq(min(ch20r$ECA_age_proxy_forested_only),max(ch20r$ECA_age_proxy_forested_only),length.out=100),lty=5)
 lines(apply(d,2,quantile,0.975)~seq(min(ch20r$ECA_age_proxy_forested_only),max(ch20r$ECA_age_proxy_forested_only),length.out=100),lty=5)
 
-write.csv(fit3bh$summary(),'./stan models/outs/summary/fit3bh_summary.csv')
-fit3bh$save_object('./stan models/outs/fits/fit3bh.RDS')
-fit3bh=readRDS('stan models/outs/fits/fit3bh.RDS')
+write.csv(fit_bh_gam$summary(),'./stan models/outs/summary/fit_bh_gam_summary.csv')
+fit_bh_gam$save_object('./stan models/outs/fits/fit_bh_gam.RDS')
+fitfit_bh_gam=readRDS('stan models/outs/fits/fit_bh_gam.RDS')
 loo_f3bh=fit3bh$loo()
 
 #pink salmon####
