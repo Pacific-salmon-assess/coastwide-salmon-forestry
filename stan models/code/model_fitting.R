@@ -146,7 +146,7 @@ dl=list(N=nrow(ch20r),
 
 
 fit1ric <- m1ric$sample(data=dl,
-                  seed = 333,
+                  seed = 33456,
                   chains = 8, 
                   iter_warmup = 200,
                   iter_sampling = 800,
@@ -178,7 +178,7 @@ fit1bh <- m1bh$sample(data=dl,
                       max_treedepth = 20)
 
 write.csv(fit1bh$summary(),'./stan models/outs/summary/fit1bh_summary.csv')
-fit1bh$save_object('./stan models/outs/fits/fit1bh.RDS')
++fit1bh$save_object('./stan models/outs/fits/fit1bh.RDS')
 fit1bh <- readRDS('./stan models/outs/fits/fit1bh.RDS')
 loo_f1bh=fit1bh$loo()
 
@@ -192,12 +192,12 @@ plot(e_t~mu1)
 
 
 fit1cs <- m1cs$sample(data=dl,
-                      seed = 12345,
+                      seed = 1234,
                       chains = 8, 
                       iter_warmup = 200,
                       iter_sampling = 800,
                       refresh = 100,
-                      adapt_delta = 0.995,
+                      adapt_delta = 0.999,
                       max_treedepth = 20)
 
 write.csv(fit1cs$summary(),'./stan models/outs/summary/fit1cs_summary.csv')
@@ -272,6 +272,9 @@ write.csv(fit3ric$summary(),'./stan models/outs/summary/fit3ric_summary.csv')
 fit3ric$save_object('./stan models/outs/fits/fit3ric.RDS')
 fit3ric=readRDS('stan models/outs/fits/fit3ric.RDS')
 loo_f3ric=fit3ric$loo()
+loo_ric_ExA_comp=loo::loo_compare(loo_f1ric,loo_f3ric)
+saveRDS(loo_ric_ExA_comp,'stan models/outs/loo/loo_results_fitset3_ricker.RDS')
+
 
 fit3bh <- m3bh$sample(data=dl,
                   seed = 1235,
@@ -286,6 +289,10 @@ write.csv(fit3bh$summary(),'./stan models/outs/summary/fit3bh_summary.csv')
 fit3bh$save_object('./stan models/outs/fits/fit3bh.RDS')
 fit3bh=readRDS('stan models/outs/fits/fit3bh.RDS')
 loo_f3bh=fit3bh$loo()
+
+loo_bh_ExA_comp=loo::loo_compare(loo_f1bh,loo_f3bh)
+saveRDS(loo_bh_ExA_comp,'stan models/outs/loo/loo_results_fitset3_bh.RDS')
+
 
 ##Fit set 4: Latent productivity trends ####
 dl=list(N=nrow(ch20r),
