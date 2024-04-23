@@ -41,6 +41,7 @@ h3 { /* Header 3 */
 }
 </style>
 ```
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
@@ -251,7 +252,7 @@ lines(d0$y~d0$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 ```
 
-This plot shows density of effect sizes among Rivers and the red line indicates the global effect:
+This plot shows density of effect sizes among Rivers and the red line indicates the global effect. Note that the ridges in the posteriors is a bit of warning sign that the model had difficulty estimating these effects (the ridges result from numerous local maxima in the likelihood), which itself suggests its likely over-parameterized:
 
 ```{r, b_eca bh 2r}
 plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
@@ -264,7 +265,7 @@ lines(d0$y~d0$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 ```
 
-The realized function for ECA on productivity (in BH form):
+The realized global function for ECA on productivity (in BH form):
 
 ```{r, b_eca plots bh 2}
 
@@ -346,7 +347,7 @@ axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
 #da=da[order(da$area_km2),]
 ```
 
-An important point to consider is that the range of observed ECAs can vary substantially by rivers, and among CUs
+An important point to consider is that the range of observed ECAs can vary substantially by rivers, and among CUs:
 
 ```{r, eca range}
 plot(rep(1,nrow(da))~seq(1,295),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='')
@@ -433,6 +434,8 @@ lines(apply(d,2,quantile,0.975)~seq(min(ch20r$ECA_age_proxy_forested_only),max(c
 ```
 
 # River-level Spawner-Recruit fits
+Here is each river-level stock-recruitment curve in both Beverton-Holt and Ricker forms. The observations are shaded according to their ECA level (brown = higher ECA, green = lower ECA; scaled to each S-R series). The median expected recruits and their 90% credible intervals are displayed as black solid and dashed lines. The expected recruits at minimum and maximum observed ECA values for that river are shown in brown and green lines, respectively. The time-series for ECA (bottom-left) is shown with the realized effect on productivity under each model (Ricker = orange; BH = blue; bottom-right).
+
 
 ```{r, sr time-series, fig.width=12,fig.height=8, results="asis"}
 ch20r$cuid=as.numeric(factor(ch20r$CU))
