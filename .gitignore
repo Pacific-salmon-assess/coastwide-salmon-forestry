@@ -3,3 +3,7 @@
 .RData
 .Ruserdata
 .RDS
+
+
+outs/
+outs/*.*

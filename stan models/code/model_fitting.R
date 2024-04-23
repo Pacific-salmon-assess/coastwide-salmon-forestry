@@ -60,6 +60,13 @@ m4ric=cmdstanr::cmdstan_model(file4ric) #compile stan code to C++
 file4bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod.stan")
 m4bh=cmdstanr::cmdstan_model(file4bh) #compile stan code to C++
 
+#null models - no ECA effect - to extract residuals (fit set 5)
+file5bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_null_mod_cu.stan")
+m5bh=cmdstanr::cmdstan_model(file5bh) #compile stan code to C++
+
+file5ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_hier_null_mod_cu.stan")
+m5ric=cmdstanr::cmdstan_model(file5ric) #compile stan code to C++
+
 
 #chum salmon####
 
@@ -336,8 +343,8 @@ fit4ric=readRDS('stan models/outs/fits/fit4ric.RDS')
 loo_f4ric=fit4ric$loo()
 
 fit4bh <- m4bh$sample(data=dl,
-                        seed = 33366,
-                        chains = 8, 
+                        seed = 12345,
+                        chains = 4, 
                         iter_warmup = 200,
                         iter_sampling = 800,
                         refresh = 100,
@@ -403,6 +410,9 @@ fit_bh_gam$save_object('./stan models/outs/fits/fit_bh_gam.RDS')
 fitfit_bh_gam=readRDS('stan models/outs/fits/fit_bh_gam.RDS')
 loo_f3bh=fit3bh$loo()
 
+#null model####
+
+
 #pink salmon####
 
 #data formatting...
@@ -444,14 +454,14 @@ summary(factor(cu$CU))
 L_i=pk10r%>%group_by(River)%>%summarize(l=n(),tmin=min(BroodYear)-1954+1,tmax=max(BroodYear)-1954+1)
 
 
-dl=list(N=nrow(ch20r),
-        L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
-        C=length(unique(ch20r$CU)),
-        J=length(unique(ch20r$River)),
+dl=list(N=nrow(pk10r),
+        L=max(pk10r$BroodYear)-min(pk10r$BroodYear)+1,
+        C=length(unique(pk10r$CU)),
+        J=length(unique(pk10r$River)),
         N_i=L_i$l,#series lengths
         C_i=as.numeric(factor(cu$CU)), #CU index
-        ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
-        R_S=ch20r$ln_RS,
+        ii=as.numeric(factor(pk10r$BroodYear)), #brood year index
+        R_S=pk10r$ln_RS,
         S=S_mat, #design matrix for spawner counts
         ECA=ECA_mat, #design matrix for standardized ECA
         Area=area_mat, #design matrix for watershed area
@@ -481,7 +491,7 @@ fit1ric_pk <- m1ric$sample(data=dl,
 write.csv(fit1ric_pk$summary(),'./stan models/outs/summary/fit1ric_summary_pk.csv')
 fit1ric_pk$save_object('./stan models/outs/fits/fit1ric_pk.RDS')
 fit1ric_pk=readRDS('stan models/outs/fits/fit1ric_pk.RDS')
-loo_f2_pk=fit1ric$loo()
+loo_f1_pk=fit1ric$loo()
 
 #residual plots to check
 d2=fit2$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
@@ -545,7 +555,7 @@ loo::loo_compare(loo_f1bh,loo_f2bh)
 ## Fit set 2: River-level varying effects for ECA effects ####
 
 
-fit2ric <- m2ric$sample(data=dl,
+fit2ric_pk <- m2ric$sample(data=dl,
                         seed = 12345,
                         chains = 8, 
                         iter_warmup = 200,
@@ -554,10 +564,10 @@ fit2ric <- m2ric$sample(data=dl,
                         adapt_delta = 0.995,
                         max_treedepth = 20)
 
-write.csv(fit2ric$summary(),'./stan models/outs/summary/fit2ric_summary.csv')
-fit2ric$save_object('stan models/outs/fits/fit2ric.RDS')
-fit2ric=readRDS('./stan models/outs/fits/fit2ric.RDS')
-loo_f2ric=fit2ric$loo()
+write.csv(fit2ric_pk$summary(),'./stan models/outs/summary/fit2ric_pk_summary.csv')
+fit2ric_pk$save_object('stan models/outs/fits/fit2ric_pk.RDS')
+fit2ric_pk=readRDS('./stan models/outs/fits/fit2ric_pk.RDS')
+loo_f2ric_pk=fit2ric_pk$loo()
 
 d1=fit1$draws(variables=c('e_t','mu1','mu2'),format='draws_matrix')
 e_t=apply(d1[,grepl('e_t',colnames(d1))],2,median)
@@ -566,7 +576,7 @@ mu2=apply(d1[,grepl('mu2',colnames(d1))],2,median)
 plot(e_t~mu1)
 plot(e_t~mu2)
 
-fit2bh <- m2bh$sample(data=dl,
+fit2bh_pk <- m2bh$sample(data=dl,
                       seed = 12345,
                       chains = 8, 
                       iter_warmup = 200,
@@ -575,15 +585,15 @@ fit2bh <- m2bh$sample(data=dl,
                       adapt_delta = 0.995,
                       max_treedepth = 20)
 
-write.csv(fit2bh$summary(),'./stan models/outs/summary/fit2bh_summary.csv')
-fit2bh$save_object('stan models/outs/fits/fit2bh.RDS')
-fit2bh=readRDS('stan models/outs/fits/fit2bh.RDS')
-loo_f2bh=fit2bh$loo()
+write.csv(fit2bh_pk$summary(),'./stan models/outs/summary/fit2bh_pk_summary.csv')
+fit2bh_pk$save_object('stan models/outs/fits/fit2bh_pk.RDS')
+fit2bh_pk=readRDS('stan models/outs/fits/fit2bh_pk.RDS')
+loo_f2bh_pk=fit2bh_pk$loo()
 
 
 ##Fit set 3: Watershed area as a mediator of clearcut effects ####
 
-fit3ric <- m3ric$sample(data=dl,
+fit3ric_pk <- m3ric_pk$sample(data=dl,
                         seed = 333,
                         chains = 8, 
                         iter_warmup = 200,
@@ -592,12 +602,12 @@ fit3ric <- m3ric$sample(data=dl,
                         adapt_delta = 0.995,
                         max_treedepth = 20)
 
-write.csv(fit3ric$summary(),'./stan models/outs/summary/fit3ric_summary.csv')
-fit3ric$save_object('./stan models/outs/fits/fit3ric.RDS')
-fit3ric=readRDS('stan models/outs/fits/fit3ric.RDS')
-loo_f3ric=fit3ric$loo()
+write.csv(fit3ric_pk$summary(),'./stan models/outs/summary/fit3ric_pk_summary.csv')
+fit3ric_pk$save_object('./stan models/outs/fits/fit3ric_pk.RDS')
+fit3ric_pk=readRDS('stan models/outs/fits/fit3ric_pk.RDS')
+loo_f3ric_pk=fit3ric_pk$loo()
 
-fit3bh <- m3bh$sample(data=dl,
+fit3bh_pk <- m3bh$sample(data=dl,
                       seed = 333,
                       chains = 8, 
                       iter_warmup = 200,
@@ -606,10 +616,10 @@ fit3bh <- m3bh$sample(data=dl,
                       adapt_delta = 0.995,
                       max_treedepth = 20)
 
-write.csv(fit3bh$summary(),'./stan models/outs/summary/fit3bh_summary.csv')
-fit3bh$save_object('./stan models/outs/fits/fit3bh.RDS')
-fit3bh=readRDS('stan models/outs/fits/fit3bh.RDS')
-loo_f3bh=fit3bh$loo()
+write.csv(fit3bh_pk$summary(),'./stan models/outs/summary/fit3bh_pk_summary.csv')
+fit3bh_pk$save_object('./stan models/outs/fits/fit3bh_pk.RDS')
+fit3bh_pk=readRDS('stan models/outs/fits/fit3bh_pk.RDS')
+loo_f3bh_pk=fit3bh_pk$loo()
 
 
 
