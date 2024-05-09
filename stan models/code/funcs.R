@@ -15,3 +15,8 @@ rag_n=function(x){
   
   return(cbind(start_n,end_n))
 }
+
+transf_beta<- function(y){
+  n.obs <- sum(!is.na(y))
+  (y * (n.obs - 1) + 0.5) / n.obs
+}
