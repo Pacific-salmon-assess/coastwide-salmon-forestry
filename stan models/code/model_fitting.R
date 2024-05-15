@@ -37,9 +37,6 @@ m2ric=cmdstanr::cmdstan_model(file2ric) #compile stan code to C++
 file2bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod_rv.stan")
 m2bh=cmdstanr::cmdstan_model(file2bh) #compile stan code to C++
 
-#file2cs=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod_rv.stan")
-#m2cs=cmdstanr::cmdstan_model(file2cs) #compile stan code to C++
-
 #non linear effect of ECA using GAM splines
 file2bh_gam=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_spline_eca_mod_cu.stan")
 m2bh_gam=cmdstanr::cmdstan_model(file2bh_gam) #compile stan code to C++
@@ -51,11 +48,6 @@ m3ric=cmdstanr::cmdstan_model(file3) #compile stan code to C++
 file3bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod_ExA.stan")
 m3bh=cmdstanr::cmdstan_model(file3bh) #compile stan code to C++
 
-file3bh2=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod_ExA2.stan")
-m3bh2=cmdstanr::cmdstan_model(file3bh2) #compile stan code to C++
-
-file3bh3=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_eca_mod_ExA3.stan")
-m3bh3=cmdstanr::cmdstan_model(file3bh3) #compile stan code to C++
 
 #latent multivariate productivity trends (fit set 4)
 file4ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_rw_prod_eca_mod.stan")
@@ -65,11 +57,11 @@ file4bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod2.sta
 m4bh=cmdstanr::cmdstan_model(file4bh) #compile stan code to C++
 
 #null models - no ECA effect - to extract residuals (fit set 5)
-file5bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_null_mod_cu.stan")
-m5bh=cmdstanr::cmdstan_model(file5bh) #compile stan code to C++
+#file5bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_null_mod_cu.stan")
+#m5bh=cmdstanr::cmdstan_model(file5bh) #compile stan code to C++
 
-file5ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_hier_null_mod_cu.stan")
-m5ric=cmdstanr::cmdstan_model(file5ric) #compile stan code to C++
+#file5ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_hier_null_mod_cu.stan")
+#m5ric=cmdstanr::cmdstan_model(file5ric) #compile stan code to C++
 
 
 #chum salmon####
@@ -92,8 +84,8 @@ ch20r$logit.ECA=qlogis(ch20r$ECA_age_proxy_forested_only+0.005)
 ch20r$logit.ECA.std=(ch20r$logit.ECA-mean(ch20r$logit.ECA))/sd(ch20r$logit.ECA)
 
 #normalize cumulative % disturbed
-ch20r$disturbedarea_prct_cs2=ifelse(ch20r$disturbedarea_prct_cs<1,1,ch20r$disturbedarea_prct_cs)
-ch20r$disturbedarea_prct_cs2=ifelse(ch20r$disturbedarea_prct_cs2>99,99,ch20r$disturbedarea_prct_cs2)
+ch20r$disturbedarea_prct_cs2=ifelse(ch20r$disturbedarea_prct_cs<1,0.5,ch20r$disturbedarea_prct_cs)
+ch20r$disturbedarea_prct_cs2=ifelse(ch20r$disturbedarea_prct_cs2>99,99.5,ch20r$disturbedarea_prct_cs2)
 
 ch20r$logit.pdisturb=qlogis(ch20r$disturbedarea_prct_cs2/100)
 ch20r$logit.pdisturb.std=(ch20r$logit.pdisturb-mean(ch20r$logit.pdisturb))/sd(ch20r$logit.pdisturb)
@@ -137,7 +129,7 @@ CU_year[,3]=paste(CU_year[,1],CU_year[,2],sep="_")
 ch20r$cu_yr=match(paste(ch20r$CU,ch20r$BroodYear,sep='_'),CU_year[,3])
 
 #data list for fits 1-3 - ECA
-dl_chm1=list(N=nrow(ch20r),
+dl_chm_1=list(N=nrow(ch20r),
         L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
         C=length(unique(ch20r$CU)),
         J=length(unique(ch20r$River)),
@@ -165,7 +157,7 @@ dl_chm1=list(N=nrow(ch20r),
         pRk_sig=smax_prior$m.r)
 
 #data list for fits 4 - ECA
-dl_chm2=list(N=nrow(ch20r),
+dl_chm_2=list(N=nrow(ch20r),
              L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
              C=length(unique(ch20r$CU)),
              J=length(unique(ch20r$River)),
@@ -195,7 +187,7 @@ dl_chm2=list(N=nrow(ch20r),
 bspline_ECA=t(splines::bs(ch20r$ECA_age_proxy_forested_only_std,knots=seq(-2,3,1),degree=3,intercept=F))
 pred_ECA=t(splines::bs(seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100),knots=seq(-2,3,1),degree=3,intercept=F))
 
-dl_chm3=list(N=nrow(ch20r),
+dl_chm_3=list(N=nrow(ch20r),
              L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
              C=length(unique(ch20r$CU)),
              J=length(unique(ch20r$River)),
@@ -227,7 +219,7 @@ dl_chm3=list(N=nrow(ch20r),
 ### Beverton-Holt model sets ####
 
 
-fit1bh_chm_eca <- m1bh$sample(data=dl_chm1,
+fit1bh_chm_eca <- m1bh$sample(data=dl_chm_1,
                       seed = 12345,
                       chains = 8, 
                       iter_warmup = 200,
@@ -242,7 +234,7 @@ fit1bh_chm_eca$save_object('./stan models/outs/fits/fit1bh_chm_eca.RDS')
 
 
 
-fit2bh_chm_eca <- m2bh$sample(data=dl_chm1,
+fit2bh_chm_eca <- m2bh$sample(data=dl_chm_1,
                               seed = 12345,
                               chains = 8, 
                               iter_warmup = 200,
@@ -255,7 +247,7 @@ write.csv(fit2bh_chm_eca$summary(),'./stan models/outs/summary/fit2bh_chm_eca_su
 fit2bh$save_object('stan models/outs/fits/fit2bh_chm_eca.RDS')
 
 
-fit3bh_chm_eca <- m3bh$sample(data=dl_chm1,
+fit3bh_chm_eca <- m3bh$sample(data=dl_chm_1,
                               seed = 1235,
                               chains = 8, 
                               iter_warmup = 200,
@@ -267,7 +259,7 @@ fit3bh_chm_eca <- m3bh$sample(data=dl_chm1,
 write.csv(fit3bh$summary(),'./stan models/outs/summary/fit3bh_summary.csv')
 fit3bh$save_object('./stan models/outs/fits/fit3bh.RDS')
 
-fit4bh_chm_eca <- m4bh$sample(data=dl_chm2,
+fit4bh_chm_eca <- m4bh$sample(data=dl_chm_2,
                               seed = 12345,
                               chains = 8, 
                               iter_warmup = 200,
@@ -280,7 +272,7 @@ write.csv(fit4bh_eca$summary(),'./stan models/outs/summary/fit4bh_eca_summary.cs
 fit4bh_eca$save_object('./stan models/outs/fits/fit4bh_eca.RDS')
 
 
-fit_bh_eca_gam <- m2bh_gam$sample(data=dl_chm3,
+fit_bh_eca_gam <- m2bh_gam$sample(data=dl_chm_3,
                                   seed = 1235,
                                   chains = 8, 
                                   iter_warmup = 200,
@@ -295,7 +287,7 @@ fit_bh_chm_eca_gam$save_object('./stan models/outs/fits/fit_bh_eca_gam.RDS')
 
 ### Ricker model sets####
 
-fit1ric_chm_eca <- m1ric$sample(data=dl_chm1,
+fit1ric_chm_eca <- m1ric$sample(data=dl_chm_1,
                                 seed = 33456,
                                 chains = 8, 
                                 iter_warmup = 200,
@@ -309,7 +301,7 @@ fit1ric_chm_eca$save_object('./stan models/outs/fits/fit1ric_chm_eca.RDS')
 fit1ric_chm_eca=readRDS('stan models/outs/fits/fit1ric_chm_eca.RDS')
 
 
-fit2ric_chm_eca <- m2ric$sample(data=dl_chm1,
+fit2ric_chm_eca <- m2ric$sample(data=dl_chm_1,
                   seed = 12345,
                   chains = 8, 
                   iter_warmup = 200,
@@ -321,7 +313,7 @@ fit2ric_chm_eca <- m2ric$sample(data=dl_chm1,
 write.csv(fit2ric_chm_eca$summary(),'./stan models/outs/summary/fit2ric_chm_eca_summary.csv')
 fit2ric_chm_eca$save_object('stan models/outs/fits/fit2ric_chm_eca.RDS')
 
-fit3ric_chm_eca <- m3ric$sample(data=dl_chm1,
+fit3ric_chm_eca <- m3ric$sample(data=dl_chm_1,
                                 seed = 33366,
                                 chains = 8, 
                                 iter_warmup = 200,
@@ -334,7 +326,7 @@ write.csv(fit3ric$summary(),'./stan models/outs/summary/fit3ric_chm_eca_summary.
 fit3ric$save_object('./stan models/outs/fits/fit3ric_chm_eca.RDS')
 
 
-fit4ric_chm_eca <- m4ric$sample(data=dl_chm2,
+fit4ric_chm_eca <- m4ric$sample(data=dl_chm_2,
                                 seed = 333,
                                 chains = 4, 
                                 iter_warmup = 200,
@@ -349,7 +341,7 @@ fit4ric_chm_eca$save_object('./stan models/outs/fits/fit4ric_chm_eca.RDS')
 
 ###Cushing model ###
 
-fit1cs_chm_eca <- m1cs$sample(data=dl_chm1,
+fit1cs_chm_eca <- m1cs$sample(data=dl_chm_1,
                               seed = 1234,
                               chains = 8, 
                               iter_warmup = 200,
@@ -361,7 +353,12 @@ fit1cs_chm_eca <- m1cs$sample(data=dl_chm1,
 write.csv(fit1cs_chm_eca$summary(),'./stan models/outs/summary/fit1cs_summary.csv')
 fit1cs_chm_eca$save_object('./stan models/outs/fits/fit1cs_chm_eca.RDS')
 
+#fit1 model comparison
+loo1_chm_bh=fit1bh_chm_eca$loo()
+loo1_chm_ric=fit1ric_chm_eca$loo()
+loo1_chm_cs=fit1cs_chm_eca$loo()
 
+loo1_chm_comp=loo::loo_compare(loo1_chm_ric,loo1_chm_bh,loo1_chm_cs)
 ## Cumulative percent disturbed####
 
 #Eca now set to cumulative % disturbed metric
@@ -419,6 +416,36 @@ dl_chm_5=list(N=nrow(ch20r),
               pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
               pRk_sig=smax_prior$m.r)
 
+bspline_ECA=t(splines::bs(ch20r$logit.pdisturb.std,knots=seq(-2,3,1),degree=3,intercept=F))
+pred_ECA=t(splines::bs(seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100),knots=seq(-2,3,1),degree=3,intercept=F))
+
+dl_chm_6=list(N=nrow(ch20r),
+             L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
+             C=length(unique(ch20r$CU)),
+             J=length(unique(ch20r$River)),
+             N_i=L_i$l,#series lengths
+             C_i=as.numeric(factor(cu$CU)), #CU index
+             ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
+             R_S=ch20r$ln_RS,
+             S=S_mat, #design matrix for spawner counts
+             ECA=ECA_mat, #design matrix for standardized ECA
+             Area=area_mat, #design matrix for watershed area
+             ExA=ExA_mat, #design matrix for std ECA x watershed area
+             ECA_vec=ch20r$logit.ECA.std,
+             B_ECA=bspline_ECA,
+             Nb=nrow(bspline_ECA),
+             start_y=N_s[,1],
+             end_y=N_s[,2],
+             start_t=L_i$tmin,
+             end_t=L_i$tmax,
+             pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
+             pSmax_sig=smax_prior$m.s,
+             pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
+             pRk_sig=smax_prior$m.r,
+             pred_ECA=pred_ECA,
+             Np=ncol(pred_ECA))
+
+
 
 ### Beverton Holt model fits ####
 fit1bh_chm_cpd <- m1bh$sample(data=dl_chm_4,
@@ -431,7 +458,7 @@ fit1bh_chm_cpd <- m1bh$sample(data=dl_chm_4,
                       max_treedepth = 20)
 
 write.csv(fit1bh_chm_cpd$summary(),'./stan models/outs/summary/fit1bh_chm_cpd_summary.csv')
-fit1bh_cpd$save_object('./stan models/outs/fits/fit1bh_chm_cpd.RDS')
+fit1bh_chm_cpd$save_object('./stan models/outs/fits/fit1bh_chm_cpd.RDS')
 
 fit2bh_chm_cpd <- m2bh$sample(data=dl_chm_4,
                               seed = 12345,
@@ -469,6 +496,18 @@ fit4bh_chm_cpd <- m4bh$sample(data=dl_chm_5,
 write.csv(fit4bh$summary(),'./stan models/outs/summary/fit4bh_chm_cpd_summary.csv')
 fit4bh$save_object('./stan models/outs/fits/fit4bh_chm_cpd.RDS')
 
+fit_bh_cpd_gam <- m2bh_gam$sample(data=dl_chm_6,
+                                  seed = 1235,
+                                  chains = 8, 
+                                  iter_warmup = 200,
+                                  iter_sampling = 800,
+                                  refresh = 100,
+                                  adapt_delta = 0.995,
+                                  max_treedepth = 20)
+
+
+write.csv(fit_bh_cpd_gam$summary(),'./stan models/outs/summary/fit_bh_cpd_gam_summary.csv')
+fit_bh_cpd_gam$save_object('./stan models/outs/fits/fit_bh_cpd_gam.RDS')
 
 ### Ricker model fits ####
 fit1ric_chm_pd <- m1ric$sample(data=dl_chm_4,
@@ -519,6 +558,12 @@ fit4ric_chm_cpd <- m4ric$sample(data=dl_chm_5,
 write.csv(fit4ric_chm_cpd$summary(),'./stan models/outs/summary/fit4ric_chm_cpd_summary.csv')
 fit4ric_chm_cpd$save_object('./stan models/outs/fits/fit4ric_chm_cpd.RDS')
 
+#fit1 model comparison
+loo2_chm_bh=fit1bh_chm_cpd$loo()
+loo2_chm_ric=fit1ric_chm_cpd$loo()
+loo2_chm_cs=fit1cs_chm_cpd$loo()
+
+loo2_chm_comp=loo::loo_compare(loo2_chm_ric,loo2_chm_bh,loo2_chm_cs)
 
 #Even Pinks####
 
@@ -585,22 +630,22 @@ CU_year[,3]=paste(CU_year[,1],CU_year[,2],sep="_")
 pk10r_e$cu_yr=match(paste(pk10r_e$CU,pk10r_e$BroodYear,sep='_'),CU_year[,3])
 
 #data list for fits 1-3 - ECA
-dl_pke1=list(N=nrow(p10r_e),
-             L=max(p10r_e$BroodYear)-min(p10r_e$BroodYear)+1,
-             C=length(unique(p10r_e$CU)),
-             J=length(unique(p10r_e$River)),
+dl_pke1=list(N=nrow(pk10r_e),
+             L=max(pk10r_e$BroodYear)-min(pk10r_e$BroodYear)+1,
+             C=length(unique(pk10r_e$CU)),
+             J=length(unique(pk10r_e$River)),
              N_i=L_i$l,#series lengths
              C_i=as.numeric(factor(cu$CU)), #CU index by stock
-             C_j=as.numeric(factor(p10r_e$CU)), #CU index by observation
-             C_ii=as.numeric(factor(p10r_e$cu_yr)), #CU index by observation
-             J_i=as.numeric(factor(p10r_e$River)), #River index by observation
-             J_ii=p10r_e$cu_yr, #index specific to each unique CU-Year combination
-             ii=as.numeric(factor(p10r_e$BroodYear)), #brood year index
-             R_S=p10r_e$ln_RS,
+             C_j=as.numeric(factor(pk10r_e$CU)), #CU index by observation
+             C_ii=as.numeric(factor(pk10r_e$cu_yr)), #CU index by observation
+             J_i=as.numeric(factor(pk10r_e$River)), #River index by observation
+             J_ii=pk10r_e$cu_yr, #index specific to each unique CU-Year combination
+             ii=as.numeric(factor(pk10r_e$BroodYear)), #brood year index
+             R_S=pk10r_e$ln_RS,
              S=S_mat, #design matrix for spawner counts
-             Sv=p10r_e$Spawners,
+             Sv=pk10r_e$Spawners,
              ECA=ECA_mat, #design matrix for standardized ECA
-             #     ECA_vec=as.matrix(p10r_e$logit.ECA.std), #vector of ECA ()
+             #     ECA_vec=as.matrix(pk10r_e$logit.ECA.std), #vector of ECA ()
              Area=area_mat, #design matrix for watershed area
              ExA=ExA_mat, #design matrix for std ECA x watershed area
              start_y=N_s[,1],
@@ -613,21 +658,21 @@ dl_pke1=list(N=nrow(p10r_e),
              pRk_sig=smax_prior$m.r)
 
 #data list for fits 4 - ECA
-dl_pke2=list(N=nrow(p10r_e),
-             L=max(p10r_e$BroodYear)-min(p10r_e$BroodYear)+1,
-             C=length(unique(p10r_e$CU)),
-             J=length(unique(p10r_e$River)),
+dl_pke2=list(N=nrow(pk10r_e),
+             L=max(pk10r_e$BroodYear)-min(pk10r_e$BroodYear)+1,
+             C=length(unique(pk10r_e$CU)),
+             J=length(unique(pk10r_e$River)),
              N_i=L_i$l,#series lengths
              C_i=as.numeric(factor(cu$CU)), #CU index by stock
-             C_j=as.numeric(factor(p10r_e$CU)), #CU index by observation
-             C_ii=as.numeric(factor(p10r_e$cu_yr)), #CU index by observation
-             J_i=as.numeric(factor(p10r_e$River)), #River index by observation
-             J_ii=p10r_e$cu_yr, #index specific to each unique CU-Year combination
-             ii=as.numeric(factor(p10r_e$BroodYear)), #brood year index
-             R_S=p10r_e$ln_RS,
-             S=p10r_e$Spawners, 
-             ECA=p10r_e$logit.ECA.std, #design matrix for standardized ECA
-             #     ECA_vec=as.matrix(p10r_e$logit.ECA.std), #vector of ECA ()
+             C_j=as.numeric(factor(pk10r_e$CU)), #CU index by observation
+             C_ii=as.numeric(factor(pk10r_e$cu_yr)), #CU index by observation
+             J_i=as.numeric(factor(pk10r_e$River)), #River index by observation
+             J_ii=pk10r_e$cu_yr, #index specific to each unique CU-Year combination
+             ii=as.numeric(factor(pk10r_e$BroodYear)), #brood year index
+             R_S=pk10r_e$ln_RS,
+             S=pk10r_e$Spawners, 
+             ECA=pk10r_e$logit.ECA.std, #design matrix for standardized ECA
+             #     ECA_vec=as.matrix(pk10r_e$logit.ECA.std), #vector of ECA ()
              #    Area=area_mat, #design matrix for watershed area
              ExA=ExA_mat, #design matrix for std ECA x watershed area
              start_y=N_s[,1],
@@ -640,22 +685,22 @@ dl_pke2=list(N=nrow(p10r_e),
              pRk_sig=smax_prior$m.r)
 
 #non-linear effects
-bspline_ECA=t(splines::bs(p10r_e$ECA_age_proxy_forested_only_std,knots=seq(-2,3,1),degree=3,intercept=F))
-pred_ECA=t(splines::bs(seq(min(p10r_e$ECA_age_proxy_forested_only_std),max(p10r_e$ECA_age_proxy_forested_only_std),length.out=100),knots=seq(-2,3,1),degree=3,intercept=F))
+bspline_ECA=t(splines::bs(pk10r_e$ECA_age_proxy_forested_only_std,knots=seq(-2,3,1),degree=3,intercept=F))
+pred_ECA=t(splines::bs(seq(min(pk10r_e$ECA_age_proxy_forested_only_std),max(pk10r_e$ECA_age_proxy_forested_only_std),length.out=100),knots=seq(-2,3,1),degree=3,intercept=F))
 
-dl_pke3=list(N=nrow(p10r_e),
-             L=max(p10r_e$BroodYear)-min(p10r_e$BroodYear)+1,
-             C=length(unique(p10r_e$CU)),
-             J=length(unique(p10r_e$River)),
+dl_pke3=list(N=nrow(pk10r_e),
+             L=max(pk10r_e$BroodYear)-min(pk10r_e$BroodYear)+1,
+             C=length(unique(pk10r_e$CU)),
+             J=length(unique(pk10r_e$River)),
              N_i=L_i$l,#series lengths
              C_i=as.numeric(factor(cu$CU)), #CU index
-             ii=as.numeric(factor(p10r_e$BroodYear)), #brood year index
-             R_S=p10r_e$ln_RS,
+             ii=as.numeric(factor(pk10r_e$BroodYear)), #brood year index
+             R_S=pk10r_e$ln_RS,
              S=S_mat, #design matrix for spawner counts
              ECA=ECA_mat, #design matrix for standardized ECA
              Area=area_mat, #design matrix for watershed area
              ExA=ExA_mat, #design matrix for std ECA x watershed area
-             ECA_vec=p10r_e$logit.ECA.std,
+             ECA_vec=pk10r_e$logit.ECA.std,
              B_ECA=bspline_ECA,
              Nb=nrow(bspline_ECA),
              start_y=N_s[,1],
@@ -681,7 +726,7 @@ fit1bh_pke_eca <- m1bh$sample(data=dl_pke1,
                               iter_warmup = 200,
                               iter_sampling = 800,
                               refresh = 100,
-                              adapt_delta = 0.995,
+                              adapt_delta = 0.999,
                               max_treedepth = 20)
 
 write.csv(fit1bh_pke_eca$summary(),'./stan models/outs/summary/fit1bh_eca_summary.csv')
@@ -814,22 +859,22 @@ fit1cs_pke_eca$save_object('./stan models/outs/fits/fit1cs_pke_eca.RDS')
 
 #Eca now set to cumulative % disturbed metric
 
-dl_pke_4=list(N=nrow(p10r_e),
-              L=max(p10r_e$BroodYear)-min(p10r_e$BroodYear)+1,
-              C=length(unique(p10r_e$CU)),
-              J=length(unique(p10r_e$River)),
+dl_pke_4=list(N=nrow(pk10r_e),
+              L=max(pk10r_e$BroodYear)-min(pk10r_e$BroodYear)+1,
+              C=length(unique(pk10r_e$CU)),
+              J=length(unique(pk10r_e$River)),
               N_i=L_i$l,#series lengths
               C_i=as.numeric(factor(cu$CU)), #CU index by stock
-              C_j=as.numeric(factor(p10r_e$CU)), #CU index by observation
-              C_ii=as.numeric(factor(p10r_e$cu_yr)), #CU index by observation
-              J_i=as.numeric(factor(p10r_e$River)), #River index by observation
-              J_ii=p10r_e$cu_yr, #index specific to each unique CU-Year combination
-              ii=as.numeric(factor(p10r_e$BroodYear)), #brood year index
-              R_S=p10r_e$ln_RS,
+              C_j=as.numeric(factor(pk10r_e$CU)), #CU index by observation
+              C_ii=as.numeric(factor(pk10r_e$cu_yr)), #CU index by observation
+              J_i=as.numeric(factor(pk10r_e$River)), #River index by observation
+              J_ii=pk10r_e$cu_yr, #index specific to each unique CU-Year combination
+              ii=as.numeric(factor(pk10r_e$BroodYear)), #brood year index
+              R_S=pk10r_e$ln_RS,
               S=S_mat, #design matrix for spawner counts
-              Sv=p10r_e$Spawners,
+              Sv=pk10r_e$Spawners,
               ECA=disturb_mat, #design matrix for standardized ECA
-              #     ECA_vec=as.matrix(p10r_e$logit.ECA.std), #vector of ECA ()
+              #     ECA_vec=as.matrix(pk10r_e$logit.ECA.std), #vector of ECA ()
               Area=area_mat, #design matrix for watershed area
               ExA=ExA_mat, #design matrix for std ECA x watershed area
               start_y=N_s[,1],
@@ -841,21 +886,21 @@ dl_pke_4=list(N=nrow(p10r_e),
               pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
               pRk_sig=smax_prior$m.r)
 
-dl_pke_5=list(N=nrow(p10r_e),
-              L=max(p10r_e$BroodYear)-min(p10r_e$BroodYear)+1,
-              C=length(unique(p10r_e$CU)),
-              J=length(unique(p10r_e$River)),
+dl_pke_5=list(N=nrow(pk10r_e),
+              L=max(pk10r_e$BroodYear)-min(pk10r_e$BroodYear)+1,
+              C=length(unique(pk10r_e$CU)),
+              J=length(unique(pk10r_e$River)),
               N_i=L_i$l,#series lengths
               C_i=as.numeric(factor(cu$CU)), #CU index by stock
-              C_j=as.numeric(factor(p10r_e$CU)), #CU index by observation
-              C_ii=as.numeric(factor(p10r_e$cu_yr)), #CU index by observation
-              J_i=as.numeric(factor(p10r_e$River)), #River index by observation
-              J_ii=p10r_e$cu_yr, #index specific to each unique CU-Year combination
-              ii=as.numeric(factor(p10r_e$BroodYear)), #brood year index
-              R_S=p10r_e$ln_RS,
-              S=p10r_e$Spawners, 
-              ECA=p10r_e$logit.ECA.std, #design matrix for standardized ECA
-              #     ECA_vec=as.matrix(p10r_e$logit.ECA.std), #vector of ECA ()
+              C_j=as.numeric(factor(pk10r_e$CU)), #CU index by observation
+              C_ii=as.numeric(factor(pk10r_e$cu_yr)), #CU index by observation
+              J_i=as.numeric(factor(pk10r_e$River)), #River index by observation
+              J_ii=pk10r_e$cu_yr, #index specific to each unique CU-Year combination
+              ii=as.numeric(factor(pk10r_e$BroodYear)), #brood year index
+              R_S=pk10r_e$ln_RS,
+              S=pk10r_e$Spawners, 
+              ECA=pk10r_e$logit.ECA.std, #design matrix for standardized ECA
+              #     ECA_vec=as.matrix(pk10r_e$logit.ECA.std), #vector of ECA ()
               #    Area=area_mat, #design matrix for watershed area
               ExA=ExA_mat, #design matrix for std ECA x watershed area
               start_y=N_s[,1],
@@ -879,7 +924,7 @@ fit1bh_pke_cpd <- m1bh$sample(data=dl_pke_4,
                               max_treedepth = 20)
 
 write.csv(fit1bh_pke_cpd$summary(),'./stan models/outs/summary/fit1bh_pke_cpd_summary.csv')
-fit1bh_cpd$save_object('./stan models/outs/fits/fit1bh_pke_cpd.RDS')
+fit1bh_pke_cpd$save_object('./stan models/outs/fits/fit1bh_pke_cpd.RDS')
 
 fit2bh_pke_cpd <- m2bh$sample(data=dl_pke_4,
                               seed = 12345,
@@ -1128,7 +1173,7 @@ fit1bh_pko_eca <- m1bh$sample(data=dl_pko1,
                               iter_warmup = 200,
                               iter_sampling = 800,
                               refresh = 100,
-                              adapt_delta = 0.995,
+                              adapt_delta = 0.999,
                               max_treedepth = 20)
 
 write.csv(fit1bh_pko_eca$summary(),'./stan models/outs/summary/fit1bh_eca_summary.csv')
@@ -1326,7 +1371,7 @@ fit1bh_pko_cpd <- m1bh$sample(data=dl_pko_4,
                               max_treedepth = 20)
 
 write.csv(fit1bh_pko_cpd$summary(),'./stan models/outs/summary/fit1bh_pko_cpd_summary.csv')
-fit1bh_cpd$save_object('./stan models/outs/fits/fit1bh_pko_cpd.RDS')
+fit1bh_pko_cpd$save_object('./stan models/outs/fits/fit1bh_pko_cpd.RDS')
 
 fit2bh_pko_cpd <- m2bh$sample(data=dl_pko_4,
                               seed = 12345,
@@ -1334,7 +1379,7 @@ fit2bh_pko_cpd <- m2bh$sample(data=dl_pko_4,
                               iter_warmup = 200,
                               iter_sampling = 800,
                               refresh = 100,
-                              adapt_delta = 0.995,
+                              adapt_delta = 0.999,
                               max_treedepth = 20)
 
 write.csv(fit2bh_cpd$summary(),'./stan models/outs/summary/fit2bh_pko_cpd_summary.csv')
@@ -1346,7 +1391,7 @@ fit3bh_pko_cpd <- m3bh$sample(data=dl_pko_4,
                               iter_warmup = 200,
                               iter_sampling = 800,
                               refresh = 100,
-                              adapt_delta = 0.995,
+                              adapt_delta = 0.999,
                               max_treedepth = 20)
 
 write.csv(fit3bh_pko_cpd$summary(),'./stan models/outs/summary/fit3bh_pko_cpd.csv')
@@ -1358,7 +1403,7 @@ fit4bh_pko_cpd <- m4bh$sample(data=dl_pko_5,
                               iter_warmup = 200,
                               iter_sampling = 800,
                               refresh = 100,
-                              adapt_delta = 0.995,
+                              adapt_delta = 0.999,
                               max_treedepth = 20)
 
 write.csv(fit4bh$summary(),'./stan models/outs/summary/fit4bh_pko_cpd_summary.csv')

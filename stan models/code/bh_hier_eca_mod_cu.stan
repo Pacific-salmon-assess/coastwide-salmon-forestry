@@ -1,5 +1,3 @@
-//static, autocorrelated
-//no pooling
 data{
   int<lower=1> N;//number of observations
   int L; //length covered by all time-series
@@ -125,7 +123,6 @@ for(j in 1:J){
  }
  
  Smsy[j] = Rk[j]*sqrt(1/exp(alpha_j[j]))-(Rk[j]/exp(alpha_j[j]));
- Umsy[j] = 1-lambert_w0(exp(1-alpha_j[j]));
 }
 }
 
