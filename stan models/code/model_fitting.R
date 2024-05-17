@@ -244,7 +244,7 @@ fit2bh_chm_eca <- m2bh$sample(data=dl_chm_1,
                               max_treedepth = 20)
 
 write.csv(fit2bh_chm_eca$summary(),'./stan models/outs/summary/fit2bh_chm_eca_summary.csv')
-fit2bh$save_object('stan models/outs/fits/fit2bh_chm_eca.RDS')
+fit2bh_chm_eca$save_object('stan models/outs/fits/fit2bh_chm_eca.RDS')
 
 
 fit3bh_chm_eca <- m3bh$sample(data=dl_chm_1,
@@ -256,8 +256,8 @@ fit3bh_chm_eca <- m3bh$sample(data=dl_chm_1,
                               adapt_delta = 0.995,
                               max_treedepth = 20)
 
-write.csv(fit3bh$summary(),'./stan models/outs/summary/fit3bh_summary.csv')
-fit3bh$save_object('./stan models/outs/fits/fit3bh.RDS')
+write.csv(fit3bh$summary(),'./stan models/outs/summary/fit3bh_chm_eca_summary.csv')
+fit3bh_chm_eca$save_object('./stan models/outs/fits/fit3bh_chm_eca.RDS')
 
 fit4bh_chm_eca <- m4bh$sample(data=dl_chm_2,
                               seed = 12345,
@@ -268,11 +268,11 @@ fit4bh_chm_eca <- m4bh$sample(data=dl_chm_2,
                               adapt_delta = 0.995,
                               max_treedepth = 20)
 
-write.csv(fit4bh_eca$summary(),'./stan models/outs/summary/fit4bh_eca_summary.csv')
-fit4bh_eca$save_object('./stan models/outs/fits/fit4bh_eca.RDS')
+write.csv(fit4bh_eca$summary(),'./stan models/outs/summary/fit4bh_chm_eca_summary.csv')
+fit4bh_eca$save_object('./stan models/outs/fits/fit4bh_chm_eca.RDS')
 
 
-fit_bh_eca_gam <- m2bh_gam$sample(data=dl_chm_3,
+fit_bh_chm_eca_gam <- m2bh_gam$sample(data=dl_chm_3,
                                   seed = 1235,
                                   chains = 8, 
                                   iter_warmup = 200,
@@ -469,8 +469,8 @@ fit2bh_chm_cpd <- m2bh$sample(data=dl_chm_4,
                               adapt_delta = 0.995,
                               max_treedepth = 20)
 
-write.csv(fit2bh_cpd$summary(),'./stan models/outs/summary/fit2bh_chm_cpd_summary.csv')
-fit2bh_cpd$save_object('stan models/outs/fits/fit2bh_chm_cpd.RDS')
+write.csv(fit2bh_chm_cpd$summary(),'./stan models/outs/summary/fit2bh_chm_cpd_summary.csv')
+fit2bh_chm_cpd$save_object('stan models/outs/fits/fit2bh_chm_cpd.RDS')
 
 fit3bh_chm_cpd <- m3bh$sample(data=dl_chm_4,
                               seed = 1235,
@@ -516,7 +516,7 @@ fit1ric_chm_pd <- m1ric$sample(data=dl_chm_4,
                                iter_warmup = 200,
                                iter_sampling = 800,
                                refresh = 100,
-                               adapt_delta = 0.995,
+                               adapt_delta = 0.999,
                                max_treedepth = 20)
 
 write.csv(fit1ric$summary(),'./stan models/outs/summary/fit1ric_chm_cpd_summary.csv')
