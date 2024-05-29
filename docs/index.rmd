@@ -946,11 +946,7 @@ abline(v=0,lwd=2)
 
 ## Pink - Odd broodlines
 
-### Beverton-Holt
-
-The Beverton-Holt model formulation had the highest support amongst the considered density-dependence model forms for Chum.
-
-#### CU-level varying effects for ECA and CPD
+### CU-level varying effects for ECA and CPD
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
@@ -1015,7 +1011,7 @@ lines(m_pred~cpd_n,lwd=3,col='darkred')
 ```
 
 
-#### River-level varying effects of ECA and CPD
+### River-level varying effects of ECA and CPD
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit.
 
 This plot shows density of effect sizes among CUs and the red line indicates the global effect:
@@ -1079,7 +1075,7 @@ lines(u_pred~cpd_n,lty=5)
 ```
 
 
-#### Watershed area as a mediator
+### Watershed area as a mediator
 
 Posterior estimates of the interaction between watershed area and the effect of ECA (median in red):
 
@@ -1199,12 +1195,12 @@ for(c in 1:length(unique(ch20r$River))){
    realized_cpd=dbh1_chm_cpd[,colnames(dbh1_chm_cpd) %in% paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]%*%rv$logit.pdisturb.std
  realized_cpd_m=apply(realized_cpd,2,median)
     
-   plot(realized_eca_m~rv$BroodYear,bty='l',type='n',ylim=c(min(c(realized_eca_m,realized_cpd_m)),max(c(realized_eca_m,realized_cpd_m))*1.1),ylab='Marginal effect on productivity through time',xlab='Brood Year')
+   plot(realized_eca_m~rv$BroodYear,bty='l',type='n',ylim=c(min(c(realized_eca_m,realized_cpd_m)),max(c(realized_eca_m,realized_cpd_m))*1.2),ylab='Marginal effect on productivity through time',xlab='Brood Year')
    lines(realized_eca_m~BroodYear,data=rv,col='navy',lwd=2)
-    points(realized_eca_m~BroodYear,data=rv,bg='navy',pch=21,cex=1.5) 
+    points(realized_eca_m~BroodYear,data=rv,col='navy',bg=col_points1,pch=21,cex=1.5) 
   
    lines(realized_cpd_m~BroodYear,data=rv,col='tan2',lwd=2)
-    points(realized_cpd_m~BroodYear,data=rv,bg='tan2',pch=21,cex=1.5) 
+    points(realized_cpd_m~BroodYear,data=rv,col='tan2',bg=col_points2,pch=21,cex=1.5) 
    
     
     text(x=par('usr')[2]-5,y=realized_eca_m[length(realized_eca_m)]+(par('usr')[4]-par('usr')[3])*0.03,'ECA',col='navy')
