@@ -434,7 +434,7 @@ This section will compare the productivity responses to two measures of forestry
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-```{r, chm fitset 1 bh}
+```{r, chm fitset 1 bh, fig.width=12,fig.height=8}
 d1eca=read.csv(here('stan models','outs','fits','posterior','d1eca_chm.csv'))
 
 par(mfrow=c(2,2))
@@ -501,7 +501,7 @@ The overall among population effect size (b_ECA) for ECA, and varying effects of
 
 This plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-```{r, chm fitset 2 bh}
+```{r, chm fitset 2 bh, fig.width=12,fig.height=8}
 d2eca=read.csv(here('stan models','outs','fits','posterior','d2eca_chm.csv'))
 d2cpd=read.csv(here('stan models','outs','fits','posterior','d2cpd_chm.csv'))
 
@@ -568,7 +568,7 @@ Here, we compare a linear form (untransformed ECA/CPD), a square-root transforma
 
 ECA:
 
-```{r, hist eca trans}
+```{r, hist eca trans, fig.width=12,fig.height=8}
 ch20r$sqrt.ECA=sqrt(ch20r$ECA_age_proxy_forested_only)
 ch20r$sqrt.ECA.std=(ch20r$sqrt.ECA-mean(ch20r$sqrt.ECA))/sd(ch20r$sqrt.ECA)
 
@@ -582,7 +582,7 @@ hist(ch20r$logit.ECA,breaks=30,xlab='logit(ECA)',main='')
 
 CPD:
 
-```{r, hist cpd trans}
+```{r, hist cpd trans, fig.width=12,fig.height=8}
 ch20r$sqrt.CPD=sqrt(ch20r$disturbedarea_prct_cs)
 ch20r$sqrt.CPD.std=(ch20r$sqrt.CPD-mean(ch20r$sqrt.CPD))/sd(ch20r$sqrt.CPD)
 
@@ -598,7 +598,7 @@ This is how the responses to ECA/CPD compare across these metrics for Chum, alon
 
 ECA:
 
-```{r, eca form comp}
+```{r, eca form comp, fig.width=12,fig.height=8}
 par(mfrow=c(2,2))
 d_logit=d1eca
 x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
@@ -676,7 +676,7 @@ lines(apply(d_gam[2:101],2,quantile,0.975)~seq(0,max(ch20r$ECA_age_proxy_foreste
 
 CPD:
 
-```{r, cpd form comp}
+```{r, cpd form comp, fig.width=12,fig.height=8}
 par(mfrow=c(2,2))
 d_logit=d1cpd
 x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
@@ -784,7 +784,7 @@ abline(v=0,lwd=2)
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-```{r, pke fitset 1 bh}
+```{r, pke fitset 1 bh, fig.width=12,fig.height=8}
 d1eca=read.csv(here('stan models','outs','fits','posterior','d1eca_pke.csv'))
 
 par(mfrow=c(2,2))
@@ -852,7 +852,7 @@ The overall among population effect size (b_ECA) for ECA, and varying effects of
 
 This plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-```{r, pke fitset 2 bh}
+```{r, pke fitset 2 bh, fig.width=12,fig.height=8}
 
 d2eca=read.csv(here('stan models','outs','fits','posterior','d2eca_pke.csv'))
 d2cpd=read.csv(here('stan models','outs','fits','posterior','d2cpd_pke.csv'))
@@ -952,7 +952,7 @@ The Beverton-Holt model formulation had the highest support amongst the consider
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-```{r, pko fitset 1 bh}
+```{r, pko fitset 1 bh, fig.width=12,fig.height=8}
 d1eca=read.csv(here('stan models','outs','fits','posterior','d1eca_pko.csv'))
 
 par(mfrow=c(2,2))
@@ -1018,7 +1018,7 @@ The overall among population effect size (b_ECA) for ECA, and varying effects of
 
 This plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-```{r, pko fitset 2 bh}
+```{r, pko fitset 2 bh, fig.width=12,fig.height=8}
 d2eca=read.csv(here('stan models','outs','fits','posterior','d2eca_pko.csv'))
 d2cpd=read.csv(here('stan models','outs','fits','posterior','d2cpd_pko.csv'))
 
