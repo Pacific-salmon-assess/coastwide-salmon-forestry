@@ -126,12 +126,14 @@ A version of each model was fit to the Chum, Even-year Pink, and Odd-year Pink d
 library(here);library(cmdstanr);library(dplyr)
 
 ch20r <- read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
-
+ch20r$cuid=as.numeric(factor(ch20r$CU))
 #even year pinks
 pk10r_e <- read.csv("../origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_e$cuid=as.numeric(factor(pk10r_e$CU))
 
 #odd year pinks
 pk10r_o <- read.csv("../origional-ecofish-data-models/Data/Processed/pko_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_o$cuid=as.numeric(factor(pk10r_o$CU))
 
 #two rivers named salmon river... recode
 ch20r$River=ifelse(ch20r$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20r$River)
@@ -1194,7 +1196,7 @@ for(c in 1:length(unique(ch20r$River))){
   realized_eca=dbh1_chm_eca[,colnames(dbh1_chm_eca) %in% paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]%*%rv$logit.ECA.std
  realized_eca_m=apply(realized_eca,2,median)
   
-   realized_cpd=dbh1_chm_cpd[,colnames(dbh1_chm_cpd) %in% paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]%*%rv$logit.ECA.std
+   realized_cpd=dbh1_chm_cpd[,colnames(dbh1_chm_cpd) %in% paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]%*%rv$logit.pdisturb.std
  realized_cpd_m=apply(realized_cpd,2,median)
     
    plot(realized_eca_m~rv$BroodYear,bty='l',type='n',ylim=c(min(c(realized_eca_m,realized_cpd_m)),max(c(realized_eca_m,realized_cpd_m))*1.1),ylab='Marginal effect on productivity through time',xlab='Brood Year')
