@@ -4,6 +4,7 @@
 .Ruserdata
 .RDS
 .csv
+.pdf
 
 outs/
 outs/*.*

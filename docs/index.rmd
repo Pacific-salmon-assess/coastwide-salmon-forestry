@@ -430,12 +430,7 @@ This section will compare the productivity responses to two measures of forestry
 
 ## Chum
 
-
-### Beverton-Holt
-
-The Beverton-Holt model formulation had the highest support amongst the considered density-dependence model forms for Chum.
-
-#### CU-level varying effects for ECA and CPD
+### CU-level varying effects for ECA and CPD
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
@@ -500,7 +495,7 @@ lines(m_pred~cpd_n,lwd=3,col='darkred')
 ```
 
 
-#### River-level varying effects of ECA and CPD
+### River-level varying effects of ECA and CPD
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit.
 
@@ -565,7 +560,7 @@ lines(u_pred~cpd_n,lty=5)
 
 ```
 
-#### Shape of the relationship for ECA and CPD
+### Shape of the relationship for ECA and CPD
 
 We can treat the data on ECA/CPD in a variety of ways, that come with their own trade-offs, and influence the shape of their relationship with productivity. In the prior sections we transformed both predictors with the logit (p/(1-p)), partly to help normalize the data. We wanted to compare how these assumptions may change our inferences on the strength of effects, however. 
 
@@ -754,7 +749,7 @@ lines(apply(d_gam[2:101],2,quantile,0.975)~seq(0,max(ch20r$disturbedarea_prct_cs
 
 ```
 
-#### Watershed area as a mediator
+### Watershed area as a mediator
 
 Posterior estimates of the interaction between watershed area and the effect of ECA (median in red):
 
@@ -785,11 +780,7 @@ abline(v=0,lwd=2)
 
 ## Pink - Even broodlines
 
-### Beverton-Holt
-
-The Beverton-Holt model formulation had the highest support amongst the considered density-dependence model forms for Chum.
-
-#### CU-level varying effects for ECA and CPD
+### CU-level varying effects for ECA and CPD
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
@@ -855,7 +846,7 @@ lines(m_pred~cpd_n,lwd=3,col='darkred')
 ```
 
 
-#### River-level varying effects of ECA and CPD
+### River-level varying effects of ECA and CPD
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit.
 
@@ -923,7 +914,7 @@ lines(u_pred~cpd_n,lty=5)
 
 
 
-#### Watershed area as a mediator
+### Watershed area as a mediator
 
 Posterior estimates of the interaction between watershed area and the effect of ECA (median in red):
 
