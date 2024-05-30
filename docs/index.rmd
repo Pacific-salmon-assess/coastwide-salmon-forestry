@@ -1104,7 +1104,7 @@ abline(v=0,lwd=2)
 
 
 # River-level Spawner-Recruit fits
-Here is each river-level stock-recruitment curve in both Beverton-Holt and Ricker forms. The observations are shaded according to their ECA level (brown = higher ECA, green = lower ECA; scaled to each S-R series). The median expected recruits and their 90% credible intervals are displayed as black solid and dashed lines. The expected recruits at minimum and maximum observed ECA values for that river are shown in brown and green lines, respectively. The time-series for ECA (bottom-left) is shown with the realized effect on productivity under each model (Ricker = orange; BH = blue; bottom-right).
+Here is each river-level stock-recruitment curve comparing estimates with ECA or CPD. The observations are shaded according to their ECA/CPD level (brown = higher ECA, green = lower ECA; scaled to each S-R series). The median expected recruits and their 90% credible intervals are displayed as black solid and dashed lines. The expected recruits at minimum and maximum observed ECA/CPD values for that river are shown in brown and green lines, respectively. The time-series for ECA (bottom-left) is shown with the realized effect on productivity under each model (ECA = blue; CPD = orange; bottom-right).
 
 
 ## Chum
