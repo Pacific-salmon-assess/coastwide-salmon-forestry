@@ -612,7 +612,7 @@ m_pred=apply(pRS,2,median)
 l_pred=apply(pRS,2,quantile,0.05)
 u_pred=apply(pRS,2,quantile,0.95)
 
-plot(m_pred~eca_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3,main='logit(ECA)')
+plot(m_pred~eca_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3,main='logit ECA')
 for(j in 3:ncol(d_logit)){
   ps=as.matrix(d_logit[,j])%*%x_n
   lines(apply(ps,2,median)~eca_n,col=adjustcolor('darkgray',alpha.f=0.6))
@@ -640,18 +640,18 @@ lines(u_pred~eca_n,lty=5)
 lines(m_pred~eca_n,lwd=3,col='darkred')
 
 d_sqrt=read.csv(here('stan models','outs','fits','posterior','d_cpd_sqrt.csv'))
-ch20r$sqrt.ECA=sqrt(ch20r$ECA_age_proxy_forested_only)
-ch20r$sqrt.ECA.std=(ch20r$sqrt.ECA-mean(ch20r$sqrt.ECA))/sd(ch20r$sqrt.ECA)
+ch20r$sqrt.CPD=sqrt(ch20r$disturbedarea_prct_cs)
+ch20r$sqrt.CPD.std=(ch20r$sqrt.CPD-mean(ch20r$sqrt.CPD))/sd(ch20r$sqrt.CPD)
 
 x_n=seq(min(ch20r$sqrt.ECA.std),max(ch20r$sqrt.ECA.std),length.out=100)
-eca_n=x_n*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA)
+eca_n=(x_n*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
 
 pRS=as.matrix(d_sqrt[,2])%*%x_n
 m_pred=apply(pRS,2,median)
 l_pred=apply(pRS,2,quantile,0.05)
 u_pred=apply(pRS,2,quantile,0.95)
 
-plot(m_pred~eca_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3,main='sqrt(ECA)')
+plot(m_pred~eca_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3,main='sqrt ECA')
 for(j in 3:ncol(d_logit)){
   ps=as.matrix(d_sqrt[,j])%*%x_n
   lines(apply(ps,2,median)~eca_n,col=adjustcolor('darkgray',alpha.f=0.6))
@@ -662,7 +662,7 @@ lines(m_pred~eca_n,lwd=3,col='darkred')
 
 
 d_gam=read.csv(here('stan models','outs','fits','posterior','d_eca_gam.csv'))
-plot(apply(d_gam[2:101],2,median)~seq(0,max(ch20r$ECA_age_proxy_forested_only),length.out=100),xlab='Equivalent clearcut area',ylab='Marginal effect on productivity',type='l',lwd=3,bty='l',ylim=c(-2,2))
+plot(apply(d_gam[2:101],2,median)~seq(0,max(ch20r$ECA_age_proxy_forested_only),length.out=100),xlab='Equivalent clearcut area',ylab='Marginal effect on productivity',type='l',lwd=3,bty='l',ylim=c(-2,2),main='GAM ECA')
 d_gamc=read.csv(here('stan models','outs','fits','posterior','d_eca_gam_cu.csv'),header=T,check.names=F)
 for(i in 1:22){
   d2=d_gamc[,grepl(paste(',',i,']',sep=''),colnames(d_gamc))]
@@ -680,6 +680,7 @@ CPD:
 
 ```{r, cpd form comp, fig.width=12,fig.height=8}
 par(mfrow=c(2,2))
+
 d_logit=d1cpd
 x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
 cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))
@@ -689,7 +690,7 @@ m_pred=apply(pRS,2,median)
 l_pred=apply(pRS,2,quantile,0.05)
 u_pred=apply(pRS,2,quantile,0.95)
 
-plot(m_pred~cpd_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Cumulative % disturbed',ylim=c(-2,2),col='darkred',lwd=3)
+plot(m_pred~cpd_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Cumulative % disturbed',ylim=c(-2,2),col='darkred',lwd=3,main='logit CPD')
 for(j in 3:ncol(d_logit)){
   ps=as.matrix(d_logit[,j])%*%x_n
   lines(apply(ps,2,median)~cpd_n,col=adjustcolor('darkgray',alpha.f=0.6))
@@ -699,46 +700,46 @@ lines(u_pred~cpd_n,lty=5)
 lines(m_pred~cpd_n,lwd=3,col='darkred')
 
 d_linear=read.csv(here('stan models','outs','fits','posterior','d_cpd_linear.csv'))
-x_n=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
-eca_n=x_n*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
+x_n=seq(min(scale(ch20r$disturbedarea_prct_cs)),max(scale(ch20r$disturbedarea_prct_cs)),length.out=100)
+cpd_n=x_n*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
 
 pRS=as.matrix(d_linear[,2])%*%x_n
 m_pred=apply(pRS,2,median)
 l_pred=apply(pRS,2,quantile,0.05)
 u_pred=apply(pRS,2,quantile,0.95)
 
-plot(m_pred~eca_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3,main='linear ECA')
+plot(m_pred~cpd_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Cumulative % disturbed',ylim=c(-2,2),col='darkred',lwd=3,main='linear CPD')
 for(j in 3:ncol(d_linear)){
   ps=as.matrix(d_linear[,j])%*%x_n
-  lines(apply(ps,2,median)~eca_n,col=adjustcolor('darkgray',alpha.f=0.6))
+  lines(apply(ps,2,median)~cpd_n,col=adjustcolor('darkgray',alpha.f=0.6))
 }
-lines(l_pred~eca_n,lty=5)
-lines(u_pred~eca_n,lty=5)
-lines(m_pred~eca_n,lwd=3,col='darkred')
+lines(l_pred~cpd_n,lty=5)
+lines(u_pred~cpd_n,lty=5)
+lines(m_pred~cpd_n,lwd=3,col='darkred')
 
 d_sqrt=read.csv(here('stan models','outs','fits','posterior','d_cpd_sqrt.csv'))
-ch20r$sqrt.ECA=sqrt(ch20r$ECA_age_proxy_forested_only)
-ch20r$sqrt.ECA.std=(ch20r$sqrt.ECA-mean(ch20r$sqrt.ECA))/sd(ch20r$sqrt.ECA)
+ch20r$sqrt.CPD=sqrt(ch20r$disturbedarea_prct_cs)
+ch20r$sqrt.CPD.std=(ch20r$sqrt.CPD-mean(ch20r$sqrt.CPD))/sd(ch20r$sqrt.CPD)
 
-x_n=seq(min(ch20r$sqrt.ECA.std),max(ch20r$sqrt.ECA.std),length.out=100)
-eca_n=x_n*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA)
+x_n=seq(min(ch20r$sqrt.CPD.std),max(ch20r$sqrt.CPD.std),length.out=100)
+cpd_n=(x_n*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
 
 pRS=as.matrix(d_sqrt[,2])%*%x_n
 m_pred=apply(pRS,2,median)
 l_pred=apply(pRS,2,quantile,0.05)
 u_pred=apply(pRS,2,quantile,0.95)
 
-plot(m_pred~eca_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3,main='sqrt(ECA)')
-for(j in 3:ncol(d_logit)){
+plot(m_pred~cpd_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Cumulative % disturbed',ylim=c(-2,2),col='darkred',lwd=3,main='sqrt CPD')
+for(j in 3:ncol(d_sqrt)){
   ps=as.matrix(d_sqrt[,j])%*%x_n
-  lines(apply(ps,2,median)~eca_n,col=adjustcolor('darkgray',alpha.f=0.6))
+  lines(apply(ps,2,median)~cpd_n,col=adjustcolor('darkgray',alpha.f=0.6))
 }
-lines(l_pred~eca_n,lty=5)
-lines(u_pred~eca_n,lty=5)
-lines(m_pred~eca_n,lwd=3,col='darkred')
+lines(l_pred~cpd_n,lty=5)
+lines(u_pred~cpd_n,lty=5)
+lines(m_pred~cpd_n,lwd=3,col='darkred')
 
 d_gam=read.csv(here('stan models','outs','fits','posterior','d_cpd_gam.csv'))
-plot(apply(d_gam[2:101],2,median)~seq(0,max(ch20r$disturbedarea_prct_cs),length.out=100),xlab='Cumulative % disturbed',ylab='Marginal effect on productivity',type='l',lwd=3,bty='l',ylim=c(-2,2))
+plot(apply(d_gam[2:101],2,median)~seq(0,max(ch20r$disturbedarea_prct_cs),length.out=100),xlab='Cumulative % disturbed',ylab='Marginal effect on productivity',type='l',lwd=3,bty='l',ylim=c(-2,2),main='GAM CPD')
 d_gamc=read.csv(here('stan models','outs','fits','posterior','d_cpd_gam_cu.csv'),header=T,check.names=F)
 for(i in 1:22){
   d2=d_gamc[,grepl(paste(',',i,']',sep=''),colnames(d_gamc))]

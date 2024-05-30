@@ -111,7 +111,7 @@ S_mat=make_design_matrix(ch20r$Spawners,ch20r$River)
 #just to see an overview of ECA by river
 eca_s=ch20r%>%group_by(River)%>%summarize(m=mean(ECA_age_proxy_forested_only*100),m.std=mean(logit.ECA.std),range=max(ECA_age_proxy_forested_only*100)-min(ECA_age_proxy_forested_only*100),cu=unique(CU))
 
-ECA_mat=make_design_matrix(ch20r$sqrt.ECA.std,ch20r$River)
+ECA_mat=make_design_matrix(ch20r$logit.ECA.std,ch20r$River)
 
 disturb_mat=make_design_matrix(ch20r$sqrt.CPD.std,ch20r$River)
 
