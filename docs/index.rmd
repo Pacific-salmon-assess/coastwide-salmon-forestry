@@ -125,14 +125,14 @@ A version of each model was fit to the Chum, Even-year Pink, and Odd-year Pink d
 ```{r prep data,  include=FALSE}
 library(here);library(cmdstanr);library(dplyr)
 
-ch20r <- read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
+ch20r <- read.csv("./origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
 ch20r$cuid=as.numeric(factor(ch20r$CU))
 #even year pinks
-pk10r_e <- read.csv("../origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_e <- read.csv("./origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
 pk10r_e$cuid=as.numeric(factor(pk10r_e$CU))
 
 #odd year pinks
-pk10r_o <- read.csv("../origional-ecofish-data-models/Data/Processed/pko_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_o <- read.csv("./origional-ecofish-data-models/Data/Processed/pko_SR_10_hat_yr_reduced_VRI90.csv")
 pk10r_o$cuid=as.numeric(factor(pk10r_o$CU))
 
 #two rivers named salmon river... recode
@@ -145,29 +145,17 @@ pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-00
 pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_o$River)
 pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_o$River)
 
-#create logit transformed and standardized ECA:
-ch20r$logit.ECA=qlogis(ch20r$ECA_age_proxy_forested_only+0.005)
-ch20r$logit.ECA.std=(ch20r$logit.ECA-mean(ch20r$logit.ECA))/sd(ch20r$logit.ECA)
-pk10r_o$logit.ECA=qlogis(pk10r_o$ECA_age_proxy_forested_only+0.005)
-pk10r_o$logit.ECA.std=(pk10r_o$logit.ECA-mean(pk10r_o$logit.ECA))/sd(pk10r_o$logit.ECA)
-pk10r_e$logit.ECA=qlogis(pk10r_e$ECA_age_proxy_forested_only+0.005)
-pk10r_e$logit.ECA.std=(pk10r_e$logit.ECA-mean(pk10r_e$logit.ECA))/sd(pk10r_e$logit.ECA)
+#
+ch20r$disturbedarea_prct_cs.std=scale(ch20r$disturbedarea_prct_cs)
 
-#create logit transformed and standardized CPD:
-ch20r$disturbedarea_prct_cs2=ifelse(ch20r$disturbedarea_prct_cs<1,0.5,ch20r$disturbedarea_prct_cs)
-ch20r$disturbedarea_prct_cs2=ifelse(ch20r$disturbedarea_prct_cs2>99,99.5,ch20r$disturbedarea_prct_cs2)
-ch20r$logit.pdisturb=qlogis(ch20r$disturbedarea_prct_cs2/100)
-ch20r$logit.pdisturb.std=(ch20r$logit.pdisturb-mean(ch20r$logit.pdisturb))/sd(ch20r$logit.pdisturb)
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+ch20r$sqrt.ECA=sqrt(ch20r$ECA_age_proxy_forested_only)
+ch20r$sqrt.ECA.std=(ch20r$sqrt.ECA-mean(ch20r$sqrt.ECA))/sd(ch20r$sqrt.ECA)
 
-pk10r_o$disturbedarea_prct_cs2=ifelse(pk10r_o$disturbedarea_prct_cs<1,0.5,pk10r_o$disturbedarea_prct_cs)
-pk10r_o$disturbedarea_prct_cs2=ifelse(pk10r_o$disturbedarea_prct_cs2>99,99.5,pk10r_o$disturbedarea_prct_cs2)
-pk10r_o$logit.pdisturb=qlogis(pk10r_o$disturbedarea_prct_cs2/100)
-pk10r_o$logit.pdisturb.std=(pk10r_o$logit.pdisturb-mean(pk10r_o$logit.pdisturb))/sd(pk10r_o$logit.pdisturb)
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+ch20r$sqrt.CPD=sqrt(ch20r$disturbedarea_prct_cs)
+ch20r$sqrt.CPD.std=(ch20r$sqrt.CPD-mean(ch20r$sqrt.CPD))/sd(ch20r$sqrt.CPD)
 
-pk10r_e$disturbedarea_prct_cs2=ifelse(pk10r_e$disturbedarea_prct_cs<1,0.5,pk10r_e$disturbedarea_prct_cs)
-pk10r_e$disturbedarea_prct_cs2=ifelse(pk10r_e$disturbedarea_prct_cs2>99,99.5,pk10r_e$disturbedarea_prct_cs2)
-pk10r_e$logit.pdisturb=qlogis(pk10r_e$disturbedarea_prct_cs2/100)
-pk10r_e$logit.pdisturb.std=(pk10r_e$logit.pdisturb-mean(pk10r_e$logit.pdisturb))/sd(pk10r_e$logit.pdisturb)
 ```
 
 
@@ -437,19 +425,22 @@ This section will compare the productivity responses to two measures of forestry
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
 ```{r, chm fitset 1 bh, fig.width=12,fig.height=8}
-d1eca=read.csv(here('stan models','outs','fits','posterior','d1eca_chm.csv'))
+d1eca=read.csv(here('stan models','outs','fits','posterior','fit1bh_chm_eca_linear.csv'))
+
+cu=distinct(ch20r,River,.keep_all = T)
+cu.nrv=summary(factor(cu$CU))
 
 par(mfrow=c(2,2))
 plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
 d0eca=density(d1eca[,2],bw=0.02)
-for(j in 3:ncol(d1eca)){
+for(j in 3:24){
 d=density(d1eca[,j],bw=0.02)
 lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
 }
 lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-d1cpd=read.csv(here('stan models','outs','fits','posterior','d1cpd_chm.csv'))
+d1cpd=read.csv(here('stan models','outs','fits','posterior','fit1bh_chm_cpd_linear.csv'))
 
 plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
 d0cpd=density(d1cpd[,2],bw=0.02)
@@ -460,39 +451,62 @@ lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
 lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
-eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
+x_n=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
+eca_n=x_n*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
 
-pRS=as.matrix(d1eca[,2])%*%x_n
-m_pred=apply(pRS,2,median)
-l_pred=apply(pRS,2,quantile,0.05)
-u_pred=apply(pRS,2,quantile,0.95)
+pRSe=exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+as.matrix(d1eca[,2])%*%x_n)/exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+matrix(as.matrix(d1eca[,2])%*%x_n[1],ncol=100,nrow=nrow(d1eca)))
+m_prede=apply(pRSe,2,median)
 
-plot(m_pred~eca_n,bty='n',type='l',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3)
-for(j in 3:ncol(d1eca)){
-  ps=as.matrix(d1eca[,j])%*%x_n
-  lines(apply(ps,2,median)~eca_n,col=adjustcolor('darkgray',alpha.f=0.6))
+plot(m_prede*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clear cut area',ylim=c(-90,30),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
+axis(side=2,at=seq(-90,30,by=10))
+abline(h=100,lwd=0.5,lty=5)
+for(i in 1:nrow(d1eca)){
+  lines(pRSe[i,]*100-100~eca_n,col=adjustcolor('darkgray',alpha.f = 0.01))
 }
-lines(l_pred~eca_n,lty=5)
-lines(u_pred~eca_n,lty=5)
-lines(m_pred~eca_n,lwd=3,col='darkred')
+lines(m_prede*100-100~eca_n,lwd=3,col='darkred')
+#abline(v=0)
 
-x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
-cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))*100
+ch20r$disturbedarea_prct_cs.std=scale(ch20r$disturbedarea_prct_cs)
+x_n=seq(min(ch20r$disturbedarea_prct_cs.std),max(ch20r$disturbedarea_prct_cs.std),length.out=100)
+cpd_n=x_n*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
 
-pRS=as.matrix(d1cpd[,2])%*%x_n
-m_pred=apply(pRS,2,median)
-l_pred=apply(pRS,2,quantile,0.05)
-u_pred=apply(pRS,2,quantile,0.95)
+pRSc=exp(matrix(d1cpd[,colnames(d1cpd)=='alpha_0'],ncol=100,nrow=nrow(d1cpd))+as.matrix(d1cpd[,2])%*%x_n)/exp(matrix(d1cpd[,colnames(d1cpd)=='alpha_0'],ncol=100,nrow=nrow(d1cpd))+matrix(as.matrix(d1cpd[,2])%*%x_n[1],ncol=100,nrow=nrow(d1cpd)))
+m_predc=apply(pRSc,2,median)
 
-plot(m_pred~cpd_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Cumulative % disturbed area',ylim=c(-2,2),col='darkred',lwd=3)
-for(j in 2:ncol(d1cpd)){
-  ps=as.matrix(d1cpd[,j])%*%x_n
-  lines(apply(ps,2,median)~cpd_n,col=adjustcolor('darkgray',alpha.f=0.6))
+plot(m_predc*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-90,30),col='darkred',lwd=3,yaxt='n',xlim=c(min(cpd_n),max(cpd_n)))
+axis(side=2,at=seq(-90,30,by=10))
+abline(h=100,lwd=0.5,lty=5)
+for(i in 1:nrow(d1cpd)){
+  lines(pRSc[i,]*100-100~cpd_n,col=adjustcolor('darkgray',alpha.f = 0.01))
 }
-lines(l_pred~cpd_n,lty=5)
-lines(u_pred~cpd_n,lty=5)
-lines(m_pred~cpd_n,lwd=3,col='darkred')
+lines(m_predc*100-100~cpd_n,lwd=3,col='darkred')
+
+cols=RColorBrewer::brewer.pal(7,'Blues');
+cols=cols[-1] #remove first colour - too pale to see
+br1=quantile(cu.nrv,seq(0,1,by=0.2))
+col_lines1=cols[findInterval(cu.nrv,br1)]
+
+plot(m_pred*100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-90,100),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(-90,100,by=10))
+abline(h=100,lwd=0.5,lty=5)
+for(c in 1:22){
+  cc=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
+  x_nc=seq(min(cc$sqrt.CPD.std),max(cc$sqrt.CPD.std),length.out=100)
+  cpd_nc=(x_n*sd(cc$sqrt.CPD)+mean(cc$sqrt.CPD))^2
+  
+#  x_nc=seq(min(cc$disturbedarea_prct_cs.std),max(cc$disturbedarea_prct_cs.std),length.out=100)
+ # cpd_nc=x_nc*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
+  pRSc=exp(matrix(d1cpd[,colnames(d1cpd)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1cpd))+as.matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',c,']',sep='')])%*%x_nc)/exp(matrix(d1cpd[,colnames(d1cpd)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1cpd))+matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',c,']',sep='')]%*%x_n[1],ncol=100,nrow=nrow(d1cpd)))
+  lines(apply(pRSc,2,median)*100~cpd_nc,col=col_lines1[c],lwd= log(cu.nrv[c]+1))
+}
+#
+for(i in 1:6){
+  lines(rep(par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,2)~c((par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.05),(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.1)),lwd=log(quantile(cu.nrv,seq(0,1,by=0.2))[i]+1),col=cols[i])
+  text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.15),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,round(quantile(cu.nrv,seq(0,1,by=0.2))[i]))
+}
+text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.075),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.005,'No. of rivers')
+lines(m_pred*100~cpd_n,lwd=3,col='darkred')
+
 
 ```
 
@@ -529,19 +543,26 @@ abline(v=0,lwd=2)
 x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
 eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
 
-pRS=as.matrix(d2eca[,2])%*%x_n
-m_pred=apply(pRS,2,median)
-l_pred=apply(pRS,2,quantile,0.05)
-u_pred=apply(pRS,2,quantile,0.95)
+d2eca=fit2bh_chm_eca$draws(variables=c('b_ECA','b_ECA_cu','b_ECA_j','alpha_0','alpha_cu','alpha_j','Rk'),format='draws_matrix')
 
-plot(m_pred~eca_n,bty='l',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),type='n')
-for(j in 3:ncol(d2eca)){
-  ps=as.matrix(d2eca[,j])%*%x_n
-  lines(apply(ps,2,median)~eca_n,col=adjustcolor('darkgray',alpha.f=0.2))
-}
-lines(m_pred~eca_n,lwd=3,col='darkred')
-lines(l_pred~eca_n,lty=5)
-lines(u_pred~eca_n,lty=5)
+
+pRS=exp(matrix(d2eca[,colnames(d2eca)=='alpha_0'],ncol=100,nrow=nrow(d2eca))+as.matrix(d2eca[,2])%*%x_n)/exp(matrix(d2eca[,colnames(d2eca)=='alpha_0'],ncol=100,nrow=nrow(d2eca))+matrix(d2eca[,2]%*%x_n[1],ncol=100,nrow=nrow(d2eca)))
+m_pred=apply(pRS,2,median)
+
+
+plot(m_pred*100~eca_n,bty='l',type='n',ylab='Percent change in intrinsic productivity (recruits/spawner)',xlab='Equivalent clearcut area',ylim=c(0,300),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(0,300,by=50))
+abline(h=100,lwd=0.5,lty=5)
+for(c in 1:length(unique(ch20r$River))){
+  jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
+  x_nc=seq(min(jj$ECA_age_proxy_forested_only_std),max(jj$ECA_age_proxy_forested_only_std),length.out=100)
+  eca_nc=x_nc*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
+  pRSc=exp(matrix(d2eca[,colnames(d2eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2eca))+as.matrix(d2eca[,colnames(d2eca)==paste('b_ECA_j[',c,']',sep='')])%*%x_nc)/exp(matrix(d2eca[,colnames(d2eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2eca))+matrix(d2eca[,colnames(d2eca)==paste('b_ECA_j[',c,']',sep='')]%*%x_n[1],ncol=100,nrow=nrow(d2eca)))
+  lines(apply(pRSc,2,median)*100-100~eca_nc,col=adjustcolor('black',alpha.f=0.5))
+
+  }
+lines(m_pred*100-100~eca_n,lwd=3,col='darkred')
+
 
 x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
 cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))*100
@@ -561,6 +582,83 @@ lines(l_pred~cpd_n,lty=5)
 lines(u_pred~cpd_n,lty=5)
 
 ```
+
+
+### Accounting for broad-scale drivers of productivity
+
+Productivity responses to forestry may be an artifact of broad-scale oceanic drivers that are known to shape marine survival. To account for this, we implement a shared time-varying coastwide productivity model - where the global productivity $\alpha$ evolves through time according to a random walk model:
+
+$\alpha_t = \alpha_{t-1} + w_t$
+
+$w_t ~ N(0, \sigma_{\alpha,t}$
+
+This term, $alpha_t$ adjusts the productivity for all stocks at each time-step, capturing potential synchronous increases and decreases in productivity from latent common drivers (e.g. Sea surface temperatures, Pacific Decadal Oscillation Index, North Pacific Gyre Oscillation Index, etc.) and accounts for these patterns while jointly estimating the effect of forestry metrics.
+
+```{r, cpd tv, fig.width=12,fig.height=8}
+d4cpd=read.csv(here('stan models','outs','fits','posterior','fit4bh_chm_cpd_sqrt.csv'),check.names=F)
+
+d_alpha=data.frame(d4cpd[,grepl('alpha_t',colnames(d4cpd))])
+
+par(mfrow=c(2,2))
+plot(c(-1.5,2.5)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',xlab='Brood cohort year',ylab='Coastwide productivity estimate',bty='l')
+for(i in 1:nrow(d_alpha)){
+lines(unlist(d_alpha[i,])~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),col=adjustcolor('darkgray',alpha.f=0.2))  
+}
+lines(apply(d_alpha,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),lwd=2,col='darkred')
+points(apply(d_alpha,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),lwd=2,bg='darkred',pch=21)
+
+
+plot(c(0,13)~c(-1,1),bty='l',type='n',ylab='',ylim=c(0,13),yaxt='n',xlab='Standardized coefficients')
+mtext(side=2,'Posterior density')
+d0eca=density(d4cpd[,2],bw=0.02)
+for(j in 3:24){ #22 cus
+d=density(d4cpd[,j],bw=0.02)
+lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+
+x_n=seq(min(ch20r$sqrt.CPD.std),max(ch20r$sqrt.CPD.std),length.out=100)
+cpd_n=(x_n*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
+
+dalpha0=apply(d_alpha,1,median)
+
+pRS=exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+as.matrix(d4cpd[,2])%*%x_n)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+matrix(as.matrix(d4cpd[,2])%*%x_n[1],ncol=100,nrow=nrow(d4cpd)))
+m_pred=apply(pRS,2,median)
+
+plot(m_pred*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n',xlim=c(min(cpd_n),max(cpd_n)))
+axis(side=2,at=seq(-60,0,by=10))
+abline(h=100,lwd=0.5,lty=5)
+for(i in 1:nrow(d4cpd)){
+  lines(pRS[i,]*100-100~cpd_n,col=adjustcolor('darkgray',alpha.f = 0.01))
+}
+lines(m_pred*100-100~cpd_n,lwd=3,col='darkred')
+#abline(v=0)
+
+cu=distinct(ch20r,River,.keep_all = T)
+cu$CU2=as.numeric(factor(cu$CU))
+
+plot(m_pred*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(-60,0,by=10))
+abline(h=100,lwd=0.5,lty=5)
+for(c in 1:length(unique(ch20r$River))){
+  jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
+  x_nc=seq(min(jj$sqrt.CPD.std),max(jj$sqrt.CPD.std),length.out=100)
+  cpd_nc=(x_nc*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
+
+   pRSc=exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('b_ECA_cu[',cu$CU2[c],']',sep='')])%*%x_nc)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('b_ECA_cu[',cu$CU2[c],']',sep='')],ncol=100,nrow=nrow(d4cpd))*x_n[1])
+ 
+  lines(apply(pRSc,2,median)*100-100~cpd_nc,col=adjustcolor('black',alpha.f=0.5))
+  
+}
+lines(m_pred*100-100~cpd_n,lwd=3,col='darkred')
+
+
+
+
+```
+
 
 ### Shape of the relationship for ECA and CPD
 
@@ -606,20 +704,37 @@ d_logit=d1eca
 x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
 eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
 
-
-pRS=as.matrix(d_logit[,2])%*%x_n
+pRS=exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+as.matrix(d1eca[,2])%*%x_n)/exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+matrix(d1eca[,2]%*%x_n[1],ncol=100,nrow=nrow(d1eca)))
 m_pred=apply(pRS,2,median)
-l_pred=apply(pRS,2,quantile,0.05)
-u_pred=apply(pRS,2,quantile,0.95)
+cols=RColorBrewer::brewer.pal(7,'Blues');
+cols=cols[-1] #remove first colour - too pale to see
+br1=quantile(cu.nrv,seq(0,1,by=0.2))
+col_lines1=cols[findInterval(cu.nrv,br1)]
 
-plot(m_pred~eca_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3,main='logit ECA')
-for(j in 3:ncol(d_logit)){
-  ps=as.matrix(d_logit[,j])%*%x_n
-  lines(apply(ps,2,median)~eca_n,col=adjustcolor('darkgray',alpha.f=0.6))
+plot(m_pred*100~eca_n,bty='l',type='n',ylab='Percent change in intrinsic productivity (recruits/spawner)',xlab='Cumulative disturbed area (%)',ylim=c(0,100),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
+axis(side=2,at=seq(0,400,by=50))
+abline(h=100,lwd=0.5,lty=5)
+for(i in 1:nrow(d1eca)){
+  lines(pRS[i,]*100~eca_n,col=adjustcolor('darkgray',alpha.f = 0.01))
 }
-lines(l_pred~eca_n,lty=5)
-lines(u_pred~eca_n,lty=5)
-lines(m_pred~eca_n,lwd=3,col='darkred')
+lines(m_pred*100~eca_n,lwd=3,col='darkred')
+#abline(v=0)
+
+pRS=exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+as.matrix(d1eca[,2])%*%x_n)/exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+matrix(d1eca[,2]%*%x_n[1],ncol=100,nrow=nrow(d1eca)))
+m_pred=apply(pRS,2,median)
+cols=RColorBrewer::brewer.pal(7,'Blues');
+cols=cols[-1] #remove first colour - too pale to see
+br1=quantile(cu.nrv,seq(0,1,by=0.2))
+col_lines1=cols[findInterval(cu.nrv,br1)]
+
+plot(m_pred*100~eca_n,bty='l',type='n',ylab='Percent change in intrinsic productivity (recruits/spawner)',xlab='Cumulative disturbed area (%)',ylim=c(0,100),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
+axis(side=2,at=seq(0,400,by=50))
+abline(h=100,lwd=0.5,lty=5)
+for(i in 1:nrow(d1eca)){
+  lines(pRS[i,]*100~eca_n,col=adjustcolor('darkgray',alpha.f = 0.01))
+}
+lines(m_pred*100~eca_n,lwd=3,col='darkred')
+#abline(v=0)
 
 d_linear=read.csv(here('stan models','outs','fits','posterior','d_cpd_linear.csv'))
 x_n=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
