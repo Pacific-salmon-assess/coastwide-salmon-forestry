@@ -125,14 +125,14 @@ A version of each model was fit to the Chum, Even-year Pink, and Odd-year Pink d
 ```{r prep data,  include=FALSE}
 library(here);library(cmdstanr);library(dplyr)
 
-ch20r <- read.csv("./origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
+ch20r <- read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
 ch20r$cuid=as.numeric(factor(ch20r$CU))
 #even year pinks
-pk10r_e <- read.csv("./origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_e <- read.csv("../origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
 pk10r_e$cuid=as.numeric(factor(pk10r_e$CU))
 
 #odd year pinks
-pk10r_o <- read.csv("./origional-ecofish-data-models/Data/Processed/pko_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_o <- read.csv("../origional-ecofish-data-models/Data/Processed/pko_SR_10_hat_yr_reduced_VRI90.csv")
 pk10r_o$cuid=as.numeric(factor(pk10r_o$CU))
 
 #two rivers named salmon river... recode
@@ -424,14 +424,15 @@ This section will compare the productivity responses to two measures of forestry
 
 The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
-```{r, chm fitset 1 bh, fig.width=12,fig.height=8}
-d1eca=read.csv(here('stan models','outs','fits','posterior','fit1bh_chm_eca_linear.csv'))
+```{r, chm fitset 1 bh, fig.width=12,fig.height=12}
+d1eca=read.csv(here('stan models','outs','fits','posterior','fit1bh_chm_eca_linear.csv'),check.names=F)
 
 cu=distinct(ch20r,River,.keep_all = T)
 cu.nrv=summary(factor(cu$CU))
 
-par(mfrow=c(2,2))
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+par(mfrow=c(3,2))
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+mtext(side=2,'Posterior density',line=0.5)
 d0eca=density(d1eca[,2],bw=0.02)
 for(j in 3:24){
 d=density(d1eca[,j],bw=0.02)
@@ -440,21 +441,22 @@ lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
 lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-d1cpd=read.csv(here('stan models','outs','fits','posterior','fit1bh_chm_cpd_linear.csv'))
+d1cpd=read.csv(here('stan models','outs','fits','posterior','fit1bh_chm_cpd_linear.csv'),check.names=F)
 
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='',main='CPD effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+mtext(side=2,'Posterior density',line=0.5)
 d0cpd=density(d1cpd[,2],bw=0.02)
-for(j in 3:ncol(d1cpd)){
+for(j in 3:24){
 d=density(d1cpd[,j],bw=0.02)
 lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
 }
 lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-x_n=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
-eca_n=x_n*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
+x_ne=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
+eca_n=x_ne*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
 
-pRSe=exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+as.matrix(d1eca[,2])%*%x_n)/exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+matrix(as.matrix(d1eca[,2])%*%x_n[1],ncol=100,nrow=nrow(d1eca)))
+pRSe=exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+as.matrix(d1eca[,2])%*%x_ne)/exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+matrix(as.matrix(d1eca[,2])%*%x_ne[1],ncol=100,nrow=nrow(d1eca)))
 m_prede=apply(pRSe,2,median)
 
 plot(m_prede*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clear cut area',ylim=c(-90,30),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
@@ -467,10 +469,10 @@ lines(m_prede*100-100~eca_n,lwd=3,col='darkred')
 #abline(v=0)
 
 ch20r$disturbedarea_prct_cs.std=scale(ch20r$disturbedarea_prct_cs)
-x_n=seq(min(ch20r$disturbedarea_prct_cs.std),max(ch20r$disturbedarea_prct_cs.std),length.out=100)
-cpd_n=x_n*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
+x_ncpd=seq(min(ch20r$disturbedarea_prct_cs.std),max(ch20r$disturbedarea_prct_cs.std),length.out=100)
+cpd_n=x_ncpd*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
 
-pRSc=exp(matrix(d1cpd[,colnames(d1cpd)=='alpha_0'],ncol=100,nrow=nrow(d1cpd))+as.matrix(d1cpd[,2])%*%x_n)/exp(matrix(d1cpd[,colnames(d1cpd)=='alpha_0'],ncol=100,nrow=nrow(d1cpd))+matrix(as.matrix(d1cpd[,2])%*%x_n[1],ncol=100,nrow=nrow(d1cpd)))
+pRSc=exp(matrix(d1cpd[,colnames(d1cpd)=='alpha_0'],ncol=100,nrow=nrow(d1cpd))+as.matrix(d1cpd[,2])%*%x_ncpd)/exp(matrix(d1cpd[,colnames(d1cpd)=='alpha_0'],ncol=100,nrow=nrow(d1cpd))+matrix(as.matrix(d1cpd[,2])%*%x_ncpd[1],ncol=100,nrow=nrow(d1cpd)))
 m_predc=apply(pRSc,2,median)
 
 plot(m_predc*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-90,30),col='darkred',lwd=3,yaxt='n',xlim=c(min(cpd_n),max(cpd_n)))
@@ -486,18 +488,40 @@ cols=cols[-1] #remove first colour - too pale to see
 br1=quantile(cu.nrv,seq(0,1,by=0.2))
 col_lines1=cols[findInterval(cu.nrv,br1)]
 
-plot(m_pred*100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-90,100),col='darkred',lwd=3,yaxt='n')
-axis(side=2,at=seq(-90,100,by=10))
-abline(h=100,lwd=0.5,lty=5)
+
+plot(m_prede*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-100,200),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(-100,200,by=50))
+abline(h=0,lwd=0.5,lty=5)
 for(c in 1:22){
   cc=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
-  x_nc=seq(min(cc$sqrt.CPD.std),max(cc$sqrt.CPD.std),length.out=100)
-  cpd_nc=(x_n*sd(cc$sqrt.CPD)+mean(cc$sqrt.CPD))^2
+  x_neca=seq(min(cc$ECA_age_proxy_forested_only_std),max(cc$ECA_age_proxy_forested_only_std),length.out=100)
+  eca_nc=x_neca*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
   
 #  x_nc=seq(min(cc$disturbedarea_prct_cs.std),max(cc$disturbedarea_prct_cs.std),length.out=100)
  # cpd_nc=x_nc*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
-  pRSc=exp(matrix(d1cpd[,colnames(d1cpd)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1cpd))+as.matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',c,']',sep='')])%*%x_nc)/exp(matrix(d1cpd[,colnames(d1cpd)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1cpd))+matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',c,']',sep='')]%*%x_n[1],ncol=100,nrow=nrow(d1cpd)))
-  lines(apply(pRSc,2,median)*100~cpd_nc,col=col_lines1[c],lwd= log(cu.nrv[c]+1))
+  pRSe=exp(matrix(d1eca[,colnames(d1eca)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1eca))+matrix(as.matrix(d1eca[,colnames(d1eca)==paste('b_ECA_cu[',c,']',sep='')])%*%x_neca,nrow=nrow(d1eca),ncol=100))/exp(matrix(d1eca[,colnames(d1eca)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1eca))+matrix(as.matrix(d1eca[,colnames(d1eca)==paste('b_ECA_cu[',c,']',sep='')])%*%x_ne[1],ncol=100,nrow=nrow(d1eca)))
+  lines(apply(pRSe,2,median)*100-100~eca_nc,col=col_lines1[c],lwd= log(cu.nrv[c]+1))
+}
+for(i in 1:6){
+  lines(rep(par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,2)~c((par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.05),(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.1)),lwd=log(quantile(cu.nrv,seq(0,1,by=0.2))[i]+1),col=cols[i])
+  text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.15),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,round(quantile(cu.nrv,seq(0,1,by=0.2))[i]))
+}
+text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.075),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.005,'No. of rivers')
+lines(m_prede*100~eca_n,lwd=3,col='darkred')
+
+
+plot(m_predc*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-100,200),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(-100,200,by=50))
+abline(h=0,lwd=0.5,lty=5)
+for(c in 1:22){
+  cc=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
+  x_nc=seq(min(cc$disturbedarea_prct_cs.std),max(cc$disturbedarea_prct_cs.std),length.out=100)
+  cpd_nc=x_nc*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
+  
+#  x_nc=seq(min(cc$disturbedarea_prct_cs.std),max(cc$disturbedarea_prct_cs.std),length.out=100)
+ # cpd_nc=x_nc*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
+  pRSc=exp(matrix(d1cpd[,colnames(d1cpd)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1cpd))+matrix(as.matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',c,']',sep='')])%*%x_nc,nrow=nrow(d1cpd),ncol=100))/exp(matrix(d1cpd[,colnames(d1cpd)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1cpd))+matrix(as.matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',c,']',sep='')])%*%x_ncpd[1],ncol=100,nrow=nrow(d1cpd)))
+  lines(apply(pRSc,2,median)*100-100~cpd_nc,col=col_lines1[c],lwd= log(cu.nrv[c]+1))
 }
 #
 for(i in 1:6){
@@ -505,8 +529,7 @@ for(i in 1:6){
   text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.15),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,round(quantile(cu.nrv,seq(0,1,by=0.2))[i]))
 }
 text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.075),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.005,'No. of rivers')
-lines(m_pred*100~cpd_n,lwd=3,col='darkred')
-
+lines(m_predc*100-100~cpd_n,lwd=3,col='darkred')
 
 ```
 
@@ -518,12 +541,13 @@ The overall among population effect size (b_ECA) for ECA, and varying effects of
 This plot shows density of effect sizes among CUs and the red line indicates the global effect:
 
 ```{r, chm fitset 2 bh, fig.width=12,fig.height=8}
-d2eca=read.csv(here('stan models','outs','fits','posterior','d2eca_chm.csv'))
-d2cpd=read.csv(here('stan models','outs','fits','posterior','d2cpd_chm.csv'))
+d2eca=read.csv(here('stan models','outs','fits','posterior','fit2bh_chm_eca_sqrt.csv'),check.names=F)
+d2cpd=read.csv(here('stan models','outs','fits','posterior','fit2bh_chm_cpd_sqrt.csv'),check.names=F)
 
 par(mfrow=c(2,2))
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
 d0eca=density(d2eca[,2],bw=0.02)
+mtext(side=2,'Posterior density',line=0.5)
 for(j in 3:ncol(d2eca)){ #22 cus
 d=density(d2eca[,j],bw=0.02)
 lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
@@ -531,8 +555,9 @@ lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
 lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='',main='CPD effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
 d0cpd=density(d2cpd[,2],bw=0.02)
+mtext(side=2,'Posterior density',line=0.5)
 for(j in 3:ncol(d2cpd)){ #22 cus
 d=density(d2cpd[,j],bw=0.02)
 lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
@@ -540,46 +565,46 @@ lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
 lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
-eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
+x_ne=seq(min(ch20r$sqrt.ECA.std),max(ch20r$sqrt.ECA.std),length.out=100)
+eca_n=(x_ne*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
 
-d2eca=fit2bh_chm_eca$draws(variables=c('b_ECA','b_ECA_cu','b_ECA_j','alpha_0','alpha_cu','alpha_j','Rk'),format='draws_matrix')
-
-
-pRS=exp(matrix(d2eca[,colnames(d2eca)=='alpha_0'],ncol=100,nrow=nrow(d2eca))+as.matrix(d2eca[,2])%*%x_n)/exp(matrix(d2eca[,colnames(d2eca)=='alpha_0'],ncol=100,nrow=nrow(d2eca))+matrix(d2eca[,2]%*%x_n[1],ncol=100,nrow=nrow(d2eca)))
-m_pred=apply(pRS,2,median)
+pRSe=exp(matrix(d2eca[,colnames(d2eca)=='alpha_0'],ncol=100,nrow=nrow(d2eca))+as.matrix(d2eca[,2])%*%x_ne)/exp(matrix(d2eca[,colnames(d2eca)=='alpha_0'],ncol=100,nrow=nrow(d2eca))+matrix(as.matrix(d2eca[,2])%*%x_ne[1],ncol=100,nrow=nrow(d2eca)))
+m_prede=apply(pRSe,2,median)
 
 
-plot(m_pred*100~eca_n,bty='l',type='n',ylab='Percent change in intrinsic productivity (recruits/spawner)',xlab='Equivalent clearcut area',ylim=c(0,300),col='darkred',lwd=3,yaxt='n')
-axis(side=2,at=seq(0,300,by=50))
-abline(h=100,lwd=0.5,lty=5)
+plot(m_prede*100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-100,300),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(-100,300,by=50))
+abline(h=0,lwd=0.5,lty=5)
 for(c in 1:length(unique(ch20r$River))){
   jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
-  x_nc=seq(min(jj$ECA_age_proxy_forested_only_std),max(jj$ECA_age_proxy_forested_only_std),length.out=100)
-  eca_nc=x_nc*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
-  pRSc=exp(matrix(d2eca[,colnames(d2eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2eca))+as.matrix(d2eca[,colnames(d2eca)==paste('b_ECA_j[',c,']',sep='')])%*%x_nc)/exp(matrix(d2eca[,colnames(d2eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2eca))+matrix(d2eca[,colnames(d2eca)==paste('b_ECA_j[',c,']',sep='')]%*%x_n[1],ncol=100,nrow=nrow(d2eca)))
-  lines(apply(pRSc,2,median)*100-100~eca_nc,col=adjustcolor('black',alpha.f=0.5))
+  x_nc=seq(min(jj$sqrt.ECA.std),max(jj$sqrt.ECA.std),length.out=100)
+  eca_nc=(x_nc*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
+  pRSce=exp(matrix(d2eca[,colnames(d2eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2eca))+as.matrix(d2eca[,colnames(d2eca)==paste('b_ECA_j[',c,']',sep='')])%*%x_nc)/exp(matrix(d2eca[,colnames(d2eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2eca))+matrix(as.matrix(d2eca[,colnames(d2eca)==paste('b_ECA_j[',c,']',sep='')])%*%x_ne[1],ncol=100,nrow=nrow(d2eca)))
+  lines(apply(pRSce,2,median)*100-100~eca_nc,col=adjustcolor('black',alpha.f=0.5))
 
   }
-lines(m_pred*100-100~eca_n,lwd=3,col='darkred')
+lines(m_prede*100-100~eca_n,lwd=3,col='darkred')
 
 
-x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
-cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))*100
+x_nc=seq(min(ch20r$sqrt.CPD.std),max(ch20r$sqrt.CPD.std),length.out=100)
+cpd_n=(x_nc*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
 
-pRS=as.matrix(d2cpd[,2])%*%x_n
-m_pred=apply(pRS,2,median)
-l_pred=apply(pRS,2,quantile,0.05)
-u_pred=apply(pRS,2,quantile,0.95)
+pRSc=exp(matrix(d2cpd[,colnames(d2cpd)=='alpha_0'],ncol=100,nrow=nrow(d2cpd))+as.matrix(d2cpd[,2])%*%x_nc)/exp(matrix(d2cpd[,colnames(d2cpd)=='alpha_0'],ncol=100,nrow=nrow(d2cpd))+matrix(as.matrix(d2cpd[,2])%*%x_nc[1],ncol=100,nrow=nrow(d2cpd)))
+m_predc=apply(pRSc,2,median)
 
-plot(m_pred~cpd_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Cumulative % disturbed area',ylim=c(-2,2))
-for(j in 3:ncol(d2cpd)){
-  ps=as.matrix(d2cpd[,j])%*%x_n
-  lines(apply(ps,2,median)~cpd_n,col=adjustcolor('darkgray',alpha.f=0.2))
-}
-lines(m_pred~cpd_n,lwd=3,col='darkred')
-lines(l_pred~cpd_n,lty=5)
-lines(u_pred~cpd_n,lty=5)
+plot(m_predc*100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-100,300),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(-100,300,by=50))
+abline(h=0,lwd=0.5,lty=5)
+for(c in 1:length(unique(ch20r$River))){
+  jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
+  x_nc=seq(min(jj$sqrt.CPD.std),max(jj$sqrt.CPD.std),length.out=100)
+  cpd_nc=(x_nc*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
+  pRScc=exp(matrix(d2cpd[,colnames(d2cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))+as.matrix(d2cpd[,colnames(d2cpd)==paste('b_ECA_j[',c,']',sep='')])%*%x_nc)/exp(matrix(d2cpd[,colnames(d2cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))+matrix(d2cpd[,colnames(d2cpd)==paste('b_ECA_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))*x_nc[1])
+  lines(apply(pRScc,2,median)*100-100~cpd_nc,col=adjustcolor('black',alpha.f=0.5))
+
+  }
+lines(m_predc*100-100~cpd_n,lwd=3,col='darkred')
+
 
 ```
 
@@ -609,7 +634,7 @@ points(apply(d_alpha,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),lw
 
 
 plot(c(0,13)~c(-1,1),bty='l',type='n',ylab='',ylim=c(0,13),yaxt='n',xlab='Standardized coefficients')
-mtext(side=2,'Posterior density')
+mtext(side=2,'Posterior density',line=0.5)
 d0eca=density(d4cpd[,2],bw=0.02)
 for(j in 3:24){ #22 cus
 d=density(d4cpd[,j],bw=0.02)
@@ -677,7 +702,6 @@ par(mfrow=c(2,2))
 hist(ch20r$ECA_age_proxy_forested_only,breaks=30,xlab='ECA',main='')
 abline(v=c(0.05,0.1,0.15,0.2,0.3,0.4),col='darkred',lty=3)
 hist(sqrt(ch20r$ECA_age_proxy_forested_only),breaks=30,xlab='sqrt(ECA)',main='')
-hist(ch20r$logit.ECA,breaks=30,xlab='logit(ECA)',main='')
 ```
 
 CPD:
@@ -690,7 +714,6 @@ par(mfrow=c(2,2))
 hist(ch20r$disturbedarea_prct_cs,breaks=30,xlab='CPD',main='')
 abline(v=c(10,20,30,40,60,80),col='darkred',lty=3)
 hist(sqrt(ch20r$disturbedarea_prct_cs),breaks=30,xlab='sqrt(CPD)',main='')
-hist(ch20r$logit.pdisturb,breaks=30,xlab='logit(CPD)',main='')
 ```
 
 
@@ -700,41 +723,6 @@ ECA:
 
 ```{r, eca form comp, fig.width=12,fig.height=8}
 par(mfrow=c(2,2))
-d_logit=d1eca
-x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
-eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
-
-pRS=exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+as.matrix(d1eca[,2])%*%x_n)/exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+matrix(d1eca[,2]%*%x_n[1],ncol=100,nrow=nrow(d1eca)))
-m_pred=apply(pRS,2,median)
-cols=RColorBrewer::brewer.pal(7,'Blues');
-cols=cols[-1] #remove first colour - too pale to see
-br1=quantile(cu.nrv,seq(0,1,by=0.2))
-col_lines1=cols[findInterval(cu.nrv,br1)]
-
-plot(m_pred*100~eca_n,bty='l',type='n',ylab='Percent change in intrinsic productivity (recruits/spawner)',xlab='Cumulative disturbed area (%)',ylim=c(0,100),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
-axis(side=2,at=seq(0,400,by=50))
-abline(h=100,lwd=0.5,lty=5)
-for(i in 1:nrow(d1eca)){
-  lines(pRS[i,]*100~eca_n,col=adjustcolor('darkgray',alpha.f = 0.01))
-}
-lines(m_pred*100~eca_n,lwd=3,col='darkred')
-#abline(v=0)
-
-pRS=exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+as.matrix(d1eca[,2])%*%x_n)/exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+matrix(d1eca[,2]%*%x_n[1],ncol=100,nrow=nrow(d1eca)))
-m_pred=apply(pRS,2,median)
-cols=RColorBrewer::brewer.pal(7,'Blues');
-cols=cols[-1] #remove first colour - too pale to see
-br1=quantile(cu.nrv,seq(0,1,by=0.2))
-col_lines1=cols[findInterval(cu.nrv,br1)]
-
-plot(m_pred*100~eca_n,bty='l',type='n',ylab='Percent change in intrinsic productivity (recruits/spawner)',xlab='Cumulative disturbed area (%)',ylim=c(0,100),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
-axis(side=2,at=seq(0,400,by=50))
-abline(h=100,lwd=0.5,lty=5)
-for(i in 1:nrow(d1eca)){
-  lines(pRS[i,]*100~eca_n,col=adjustcolor('darkgray',alpha.f = 0.01))
-}
-lines(m_pred*100~eca_n,lwd=3,col='darkred')
-#abline(v=0)
 
 d_linear=read.csv(here('stan models','outs','fits','posterior','d_cpd_linear.csv'))
 x_n=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
@@ -767,7 +755,7 @@ l_pred=apply(pRS,2,quantile,0.05)
 u_pred=apply(pRS,2,quantile,0.95)
 
 plot(m_pred~eca_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Equivalent clearcut area',ylim=c(-2,2),col='darkred',lwd=3,main='sqrt ECA')
-for(j in 3:ncol(d_logit)){
+for(j in 3:ncol(d_sqrt)){
   ps=as.matrix(d_sqrt[,j])%*%x_n
   lines(apply(ps,2,median)~eca_n,col=adjustcolor('darkgray',alpha.f=0.6))
 }
@@ -795,24 +783,6 @@ CPD:
 
 ```{r, cpd form comp, fig.width=12,fig.height=8}
 par(mfrow=c(2,2))
-
-d_logit=d1cpd
-x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
-cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))
-
-pRS=as.matrix(d_logit[,2])%*%x_n
-m_pred=apply(pRS,2,median)
-l_pred=apply(pRS,2,quantile,0.05)
-u_pred=apply(pRS,2,quantile,0.95)
-
-plot(m_pred~cpd_n,bty='l',type='n',ylab='change in log(R/S)',xlab='Cumulative % disturbed',ylim=c(-2,2),col='darkred',lwd=3,main='logit CPD')
-for(j in 3:ncol(d_logit)){
-  ps=as.matrix(d_logit[,j])%*%x_n
-  lines(apply(ps,2,median)~cpd_n,col=adjustcolor('darkgray',alpha.f=0.6))
-}
-lines(l_pred~cpd_n,lty=5)
-lines(u_pred~cpd_n,lty=5)
-lines(m_pred~cpd_n,lwd=3,col='darkred')
 
 d_linear=read.csv(here('stan models','outs','fits','posterior','d_cpd_linear.csv'))
 x_n=seq(min(scale(ch20r$disturbedarea_prct_cs)),max(scale(ch20r$disturbedarea_prct_cs)),length.out=100)
@@ -905,6 +875,17 @@ The overall among population effect size (b_ECA) for ECA, and varying effects of
 ```{r, pke fitset 1 bh, fig.width=12,fig.height=8}
 d1eca=read.csv(here('stan models','outs','fits','posterior','d1eca_pke.csv'))
 
+pk10r_e$logit.ECA=qlogis(pk10r_e$ECA_age_proxy_forested_only+0.005)
+pk10r_e$logit.ECA.std=(pk10r_e$logit.ECA-mean(pk10r_e$logit.ECA))/sd(pk10r_e$logit.ECA)
+
+#normalize cumulative % disturbed
+pk10r_e$disturbedarea_prct_cs2=ifelse(pk10r_e$disturbedarea_prct_cs<1,1,pk10r_e$disturbedarea_prct_cs)
+pk10r_e$disturbedarea_prct_cs2=ifelse(pk10r_e$disturbedarea_prct_cs2>99,99,pk10r_e$disturbedarea_prct_cs2)
+
+pk10r_e$logit.pdisturb=qlogis(pk10r_e$disturbedarea_prct_cs2/100)
+pk10r_e$logit.pdisturb.std=(pk10r_e$logit.pdisturb-mean(pk10r_e$logit.pdisturb))/sd(pk10r_e$logit.pdisturb)
+
+
 par(mfrow=c(2,2))
 plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
 d0eca=density(d1eca[,2],bw=0.02)
@@ -926,8 +907,8 @@ lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
 lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
-eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
+x_n=seq(min(pk10r_e$logit.ECA.std),max(pk10r_e$logit.ECA.std),length.out=100)
+eca_n=plogis(x_n*sd(pk10r_e$logit.ECA)+mean(pk10r_e$logit.ECA))
 
 pRS=as.matrix(d1eca[,2])%*%x_n
 m_pred=apply(pRS,2,median)
@@ -943,8 +924,8 @@ lines(l_pred~eca_n,lty=5)
 lines(u_pred~eca_n,lty=5)
 lines(m_pred~eca_n,lwd=3,col='darkred')
 
-x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
-cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))*100
+x_n=seq(min(pk10r_e$logit.pdisturb.std),max(pk10r_e$logit.pdisturb.std),length.out=100)
+cpd_n=plogis(x_n*sd(pk10r_e$logit.pdisturb)+mean(pk10r_e$logit.pdisturb))*100
 
 pRS=as.matrix(d1cpd[,2])%*%x_n
 m_pred=apply(pRS,2,median)
@@ -994,8 +975,8 @@ lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
 lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
-eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
+x_n=seq(min(pk10r_e$logit.ECA.std),max(pk10r_e$logit.ECA.std),length.out=100)
+eca_n=plogis(x_n*sd(pk10r_e$logit.ECA)+mean(pk10r_e$logit.ECA))
 
 pRS=as.matrix(d2eca[,2])%*%x_n
 m_pred=apply(pRS,2,median)
@@ -1011,8 +992,8 @@ lines(m_pred~eca_n,lwd=3,col='darkred')
 lines(l_pred~eca_n,lty=5)
 lines(u_pred~eca_n,lty=5)
 
-x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
-cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))*100
+x_n=seq(min(pk10r_e$logit.pdisturb.std),max(pk10r_e$logit.pdisturb.std),length.out=100)
+cpd_n=plogis(x_n*sd(pk10r_e$logit.pdisturb)+mean(pk10r_e$logit.pdisturb))*100
 
 pRS=as.matrix(d2cpd[,2])%*%x_n
 m_pred=apply(pRS,2,median)
@@ -1069,6 +1050,18 @@ The overall among population effect size (b_ECA) for ECA, and varying effects of
 ```{r, pko fitset 1 bh, fig.width=12,fig.height=8}
 d1eca=read.csv(here('stan models','outs','fits','posterior','d1eca_pko.csv'))
 
+#normalize ECA - logit transformation (ie. log(x/(1-x)))
+pk10r_o$logit.ECA=qlogis(pk10r_o$ECA_age_proxy_forested_only+0.005)
+pk10r_o$logit.ECA.std=(pk10r_o$logit.ECA-mean(pk10r_o$logit.ECA))/sd(pk10r_o$logit.ECA)
+
+#normalize cumulative % disturbed
+pk10r_o$disturbedarea_prct_cs2=ifelse(pk10r_o$disturbedarea_prct_cs<1,1,pk10r_o$disturbedarea_prct_cs)
+pk10r_o$disturbedarea_prct_cs2=ifelse(pk10r_o$disturbedarea_prct_cs2>99,99,pk10r_o$disturbedarea_prct_cs2)
+
+pk10r_o$logit.pdisturb=qlogis(pk10r_o$disturbedarea_prct_cs2/100)
+pk10r_o$logit.pdisturb.std=(pk10r_o$logit.pdisturb-mean(pk10r_o$logit.pdisturb))/sd(pk10r_o$logit.pdisturb)
+
+
 par(mfrow=c(2,2))
 plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
 d0eca=density(d1eca[,2],bw=0.02)
@@ -1090,8 +1083,8 @@ lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
 lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
-eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
+x_n=seq(min(pk10r_o$logit.ECA.std),max(pk10r_o$logit.ECA.std),length.out=100)
+eca_n=plogis(x_n*sd(pk10r_o$logit.ECA)+mean(pk10r_o$logit.ECA))
 
 pRS=as.matrix(d1eca[,2])%*%x_n
 m_pred=apply(pRS,2,median)
@@ -1107,8 +1100,8 @@ lines(l_pred~eca_n,lty=5)
 lines(u_pred~eca_n,lty=5)
 lines(m_pred~eca_n,lwd=3,col='darkred')
 
-x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
-cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))*100
+x_n=seq(min(pk10r_o$logit.pdisturb.std),max(pk10r_o$logit.pdisturb.std),length.out=100)
+cpd_n=plogis(x_n*sd(pk10r_o$logit.pdisturb)+mean(pk10r_o$logit.pdisturb))*100
 
 pRS=as.matrix(d1cpd[,2])%*%x_n
 m_pred=apply(pRS,2,median)
@@ -1155,8 +1148,8 @@ lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
 lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
-x_n=seq(min(ch20r$logit.ECA.std),max(ch20r$logit.ECA.std),length.out=100)
-eca_n=plogis(x_n*sd(ch20r$logit.ECA)+mean(ch20r$logit.ECA))
+x_n=seq(min(pk10r_o$logit.ECA.std),max(pk10r_o$logit.ECA.std),length.out=100)
+eca_n=plogis(x_n*sd(pk10r_o$logit.ECA)+mean(pk10r_o$logit.ECA))
 
 pRS=as.matrix(d2eca[,2])%*%x_n
 m_pred=apply(pRS,2,median)
@@ -1172,8 +1165,8 @@ lines(m_pred~eca_n,lwd=3,col='darkred')
 lines(l_pred~eca_n,lty=5)
 lines(u_pred~eca_n,lty=5)
 
-x_n=seq(min(ch20r$logit.pdisturb.std),max(ch20r$logit.pdisturb.std),length.out=100)
-cpd_n=plogis(x_n*sd(ch20r$logit.pdisturb)+mean(ch20r$logit.pdisturb))*100
+x_n=seq(min(pk10r_o$logit.pdisturb.std),max(pk10r_o$logit.pdisturb.std),length.out=100)
+cpd_n=plogis(x_n*sd(pk10r_o$logit.pdisturb)+mean(pk10r_o$logit.pdisturb))*100
 
 pRS=as.matrix(d2cpd[,2])%*%x_n
 m_pred=apply(pRS,2,median)
@@ -1227,11 +1220,12 @@ Here is each river-level stock-recruitment curve comparing estimates with ECA or
 
 ```{r, sr time-series chm, fig.width=12,fig.height=8, results="asis"}
 ch20r$cuid=as.numeric(factor(ch20r$CU))
+
 f1bh_chm_eca=readRDS(here('stan models','outs','fits','fit1bh_chm_eca.RDS'))
 f1bh_chm_cpd=readRDS(here('stan models','outs','fits','fit1bh_chm_cpd.RDS'))
 
-dbh1_chm_eca=f1bh_chm_eca$draws(variables=c('alpha_j','Rk','b_ECA_cu'),form='draws_matrix')
-dbh1_chm_cpd=f1bh_chm_cpd$draws(variables=c('alpha_j','Rk','b_ECA_cu'),form='draws_matrix')
+d1eca=f1bh_chm_eca$draws(variables=c('alpha_j','Rk','b_ECA_cu'),form='draws_matrix')
+d1cpd=f1bh_chm_cpd$draws(variables=c('alpha_j','Rk','b_ECA_cu'),form='draws_matrix')
 
 for(c in 1:length(unique(ch20r$River))){
   cat('\n')  
@@ -1249,19 +1243,19 @@ for(c in 1:length(unique(ch20r$River))){
   #ECA
   plot(Recruits~Spawners,data=rv,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv$River),'(ECA)',sep=' '))
   
-  alpha_j=dbh1_chm_eca[,colnames(dbh1_chm_eca) %in% paste('alpha_j[',c,']',sep='')]
-  Rk_j=dbh1_chm_eca[,colnames(dbh1_chm_eca) %in% paste('Rk[',c,']',sep='')]
-  b_ECA=dbh1_chm_eca[,colnames(dbh1_chm_eca) %in% paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]                                                                          
+  alpha_j=d1eca[,colnames(d1eca)== paste('alpha_j[',c,']',sep='')]
+  Rk_j=d1eca[,colnames(d1eca)== paste('Rk[',c,']',sep='')]
+  b_ECA=d1eca[,colnames(d1eca)== paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]                                                                          
   s_pred=seq(0,max(rv$Spawners),length.out=100)
   
-  RS_pred_m=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,median))*s_pred
-  RS_pred_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
-  RS_pred_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
+  RS_pred_m=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,median))*s_pred
+  RS_pred_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
+  RS_pred_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
   
   
-  RS_pred_eca_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$logit.ECA.std),ncol=length(s_pred),nrow=nrow(alpha_j)),2,median))*s_pred
+  RS_pred_eca_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$ECA_age_proxy_forested_only_std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
   
-  RS_pred_eca_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$logit.ECA.std),ncol=length(s_pred),nrow=nrow(alpha_j)),2,median))*s_pred
+  RS_pred_eca_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$ECA_age_proxy_forested_only_std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
   
   lines(RS_pred_m~s_pred,lwd=3)
   lines(RS_pred_l~s_pred,lwd=1,lty=5)
@@ -1274,19 +1268,19 @@ for(c in 1:length(unique(ch20r$River))){
   #CPD
   plot(Recruits~Spawners,data=rv,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv$River),'(CPD)',sep=' '))
   
-  alpha_j=dbh1_chm_cpd[,colnames(dbh1_chm_cpd) %in% paste('alpha_j[',c,']',sep='')]
-  Rk_j=dbh1_chm_cpd[,colnames(dbh1_chm_cpd) %in% paste('Rk[',c,']',sep='')]
-  b_ECA=dbh1_chm_cpd[,colnames(dbh1_chm_cpd) %in% paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]                                                                          
+  alpha_j=d1cpd[,colnames(d1cpd)== paste('alpha_j[',c,']',sep='')]
+  Rk_j=d1cpd[,colnames(d1cpd)== paste('Rk[',c,']',sep='')]
+  b_ECA=d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]                                                                          
   s_pred=seq(0,max(rv$Spawners),length.out=100)
   
-  RS_pred_m=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,median))*s_pred
-  RS_pred_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
-  RS_pred_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
+  RS_pred_m=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,median))*s_pred
+  RS_pred_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
+  RS_pred_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
   
   
-  RS_pred_eca_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$logit.pdisturb.std),ncol=length(s_pred),nrow=nrow(alpha_j)),2,median))*s_pred
+  RS_pred_eca_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$disturbedarea_prct_cs.std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
   
-  RS_pred_eca_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=nrow(alpha_j))-log(1+(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$logit.pdisturb.std),ncol=length(s_pred),nrow=nrow(alpha_j)),2,median))*s_pred
+  RS_pred_eca_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$disturbedarea_prct_cs.std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
   
   lines(RS_pred_m~s_pred,lwd=3)
   lines(RS_pred_l~s_pred,lwd=1,lty=5)
@@ -1305,10 +1299,10 @@ for(c in 1:length(unique(ch20r$River))){
     text(x=par('usr')[2]-4,y=par('usr')[4]*0.95,'ECA',col='navy')
     text(x=par('usr')[2]-4,y=par('usr')[4]*0.88,'CPD',col='tan2')
   
-  realized_eca=dbh1_chm_eca[,colnames(dbh1_chm_eca) %in% paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]%*%rv$logit.ECA.std
+  realized_eca=as.matrix(d1eca[,colnames(d1eca)==paste('b_ECA_cu[',unique(rv$cuid),']',sep='')])%*%rv$ECA_age_proxy_forested_only_std
  realized_eca_m=apply(realized_eca,2,median)
   
-   realized_cpd=dbh1_chm_cpd[,colnames(dbh1_chm_cpd) %in% paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]%*%rv$logit.pdisturb.std
+   realized_cpd=as.matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',unique(rv$cuid),']',sep='')])%*%as.vector(rv$disturbedarea_prct_cs.std)
  realized_cpd_m=apply(realized_cpd,2,median)
     
    plot(realized_eca_m~rv$BroodYear,bty='l',type='n',ylim=c(min(c(realized_eca_m,realized_cpd_m)),max(c(realized_eca_m,realized_cpd_m))*1.2),ylab='Marginal effect on productivity through time',xlab='Brood Year')

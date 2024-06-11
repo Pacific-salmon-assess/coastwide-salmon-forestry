@@ -62,6 +62,9 @@ m4ric=cmdstanr::cmdstan_model(file4ric) #compile stan code to C++
 file4bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod.stan")
 m4bh=cmdstanr::cmdstan_model(file4bh) #compile stan code to C++
 
+file4bh2=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_rv.stan")
+m4bh2=cmdstanr::cmdstan_model(file4bh2) #compile stan code to C++
+
 #null models - no ECA effect - to extract residuals (fit set 5)
 #file5bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_null_mod_cu.stan")
 #m5bh=cmdstanr::cmdstan_model(file5bh) #compile stan code to C++
@@ -105,9 +108,9 @@ S_mat=make_design_matrix(ch20r$Spawners,ch20r$River)
 #just to see an overview of ECA by river
 eca_s=ch20r%>%group_by(River)%>%summarize(m=mean(ECA_age_proxy_forested_only*100),range=max(ECA_age_proxy_forested_only*100)-min(ECA_age_proxy_forested_only*100),cu=unique(CU))
 
-ECA_mat=make_design_matrix(ch20r$sqrt.ECA.std,ch20r$River)
+ECA_mat=make_design_matrix(ch20r$ECA_age_proxy_forested_only_std,ch20r$River)
 
-disturb_mat=make_design_matrix(ch20r$sqrt.CPD.std,ch20r$River)
+disturb_mat=make_design_matrix(ch20r$disturbedarea_prct_cs,ch20r$River)
 
 #watershed area by river
 area_mat=make_design_matrix(ch20r$ln_area_km2_std,ch20r$River)
@@ -517,7 +520,7 @@ dl_chm_5=list(N=nrow(ch20r),
               ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
               R_S=ch20r$ln_RS,
               S=ch20r$Spawners, 
-              ECA=ch20r$logit.ECA.std, #design matrix for standardized ECA
+              ECA=as.vector(ch20r$disturbedarea_prct_cs.std), #design matrix for standardized ECA
               #     ECA_vec=as.matrix(ch20r$logit.ECA.std), #vector of ECA ()
               #    Area=area_mat, #design matrix for watershed area
               ExA=ExA_mat, #design matrix for std ECA x watershed area
@@ -673,7 +676,7 @@ fit3bh_chm_cpd <- m3bh$sample(data=dl_chm_4,
 write.csv(fit3bh_chm_cpd$summary(),'./stan models/outs/summary/fit3bh_chm_cpd.csv')
 fit3bh_chm_cpd$save_object('./stan models/outs/fits/fit3bh_chm_cpd.RDS')
 
-fit4bh_chm_cpd <- m4bh$sample(data=dl_chm_5,
+fit4bh_chm_cpd <- m4bh2$sample(data=dl_chm_5,
                               chains = 4, 
                               iter_warmup = 200,
                               iter_sampling =600,
@@ -851,7 +854,7 @@ loo2_chm_comp=loo::loo_compare(loo2_chm_ric,loo2_chm_bh,loo2_chm_cs)
 ##data formatting####
 
 #censure implausible values (extremely high productivity)
-pk10r_e<- subset(pk10r_e,exp(ln_RS)<=80)
+#pk10r_e<- subset(pk10r_e,exp(ln_RS)<=80)
 
 #two rivers with duplicated names:
 pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_e$River)
@@ -881,9 +884,9 @@ S_mat=make_design_matrix(pk10r_e$Spawners,pk10r_e$River)
 #just to see an overview of ECA by river
 eca_s=pk10r_e%>%group_by(River)%>%summarize(m=mean(ECA_age_proxy_forested_only*100),m.std=mean(logit.ECA.std),range=max(ECA_age_proxy_forested_only*100)-min(ECA_age_proxy_forested_only*100),cu=unique(CU))
 
-ECA_mat=make_design_matrix(pk10r_e$logit.ECA.std,pk10r_e$River)
+ECA_mat=make_design_matrix(pk10r_e$ECA_age_proxy_forested_only_std,pk10r_e$River)
 
-disturb_mat=make_design_matrix(pk10r_e$logit.pdisturb.std,pk10r_e$River)
+disturb_mat=make_design_matrix(scale(pk10r_e$disturbedarea_prct_cs),pk10r_e$River)
 
 #watershed area by river
 area_mat=make_design_matrix(pk10r_e$ln_area_km2_std,pk10r_e$River)
@@ -1010,7 +1013,7 @@ fit1bh_pke_eca <- m1bh$sample(data=dl_pke1,
                               max_treedepth = 20)
 
 write.csv(fit1bh_pke_eca$summary(),'./stan models/outs/summary/fit1bh_eca_summary.csv')
-fit1bh_pke_eca$save_object('./stan models/outs/fits/fit1bh_pke_eca.RDS')
+fit1bh_pke_eca$save_object('./stan models/outs/fits/fit1bh_pke_eca_linear.RDS')
 
 
 
@@ -1024,7 +1027,7 @@ fit2bh_pke_eca <- m2bh$sample(data=dl_pke1,
                               max_treedepth = 20)
 
 write.csv(fit2bh_pke_eca$summary(),'./stan models/outs/summary/fit2bh_pke_eca_summary.csv')
-fit2bh_pke_eca$save_object('stan models/outs/fits/fit2bh_pke_eca.RDS')
+fit2bh_pke_eca$save_object('stan models/outs/fits/fit2bh_pke_eca_linear.RDS')
 
 
 fit3bh_pke_eca <- m3bh$sample(data=dl_pke1,
