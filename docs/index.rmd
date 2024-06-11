@@ -507,7 +507,7 @@ for(i in 1:6){
   text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.15),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,round(quantile(cu.nrv,seq(0,1,by=0.2))[i]))
 }
 text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.075),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.005,'No. of rivers')
-lines(m_prede*100~eca_n,lwd=3,col='darkred')
+lines(m_prede*100-100~eca_n,lwd=3,col='darkred')
 
 
 plot(m_predc*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-100,200),col='darkred',lwd=3,yaxt='n')
@@ -586,20 +586,20 @@ for(c in 1:length(unique(ch20r$River))){
 lines(m_prede*100-100~eca_n,lwd=3,col='darkred')
 
 
-x_nc=seq(min(ch20r$sqrt.CPD.std),max(ch20r$sqrt.CPD.std),length.out=100)
-cpd_n=(x_nc*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
+x_ncpd=seq(min(ch20r$sqrt.CPD.std),max(ch20r$sqrt.CPD.std),length.out=100)
+cpd_n=(x_ncpd*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
 
 pRSc=exp(matrix(d2cpd[,colnames(d2cpd)=='alpha_0'],ncol=100,nrow=nrow(d2cpd))+as.matrix(d2cpd[,2])%*%x_nc)/exp(matrix(d2cpd[,colnames(d2cpd)=='alpha_0'],ncol=100,nrow=nrow(d2cpd))+matrix(as.matrix(d2cpd[,2])%*%x_nc[1],ncol=100,nrow=nrow(d2cpd)))
 m_predc=apply(pRSc,2,median)
 
-plot(m_predc*100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-100,300),col='darkred',lwd=3,yaxt='n')
+plot(m_predc*100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-100,300),col='darkred',lwd=3,yaxt='n')
 axis(side=2,at=seq(-100,300,by=50))
 abline(h=0,lwd=0.5,lty=5)
 for(c in 1:length(unique(ch20r$River))){
   jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
   x_nc=seq(min(jj$sqrt.CPD.std),max(jj$sqrt.CPD.std),length.out=100)
   cpd_nc=(x_nc*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
-  pRScc=exp(matrix(d2cpd[,colnames(d2cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))+as.matrix(d2cpd[,colnames(d2cpd)==paste('b_ECA_j[',c,']',sep='')])%*%x_nc)/exp(matrix(d2cpd[,colnames(d2cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))+matrix(d2cpd[,colnames(d2cpd)==paste('b_ECA_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))*x_nc[1])
+  pRScc=exp(matrix(d2cpd[,colnames(d2cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))+as.matrix(d2cpd[,colnames(d2cpd)==paste('b_ECA_j[',c,']',sep='')])%*%x_nc)/exp(matrix(d2cpd[,colnames(d2cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))+matrix(d2cpd[,colnames(d2cpd)==paste('b_ECA_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))*x_ncpd[1])
   lines(apply(pRScc,2,median)*100-100~cpd_nc,col=adjustcolor('black',alpha.f=0.5))
 
   }
@@ -615,7 +615,7 @@ Productivity responses to forestry may be an artifact of broad-scale oceanic dri
 
 $\alpha_t = \alpha_{t-1} + w_t$
 
-$w_t ~ N(0, \sigma_{\alpha,t}$
+$w_t ~ N(0, \sigma_{\alpha,t})$
 
 This term, $alpha_t$ adjusts the productivity for all stocks at each time-step, capturing potential synchronous increases and decreases in productivity from latent common drivers (e.g. Sea surface temperatures, Pacific Decadal Oscillation Index, North Pacific Gyre Oscillation Index, etc.) and accounts for these patterns while jointly estimating the effect of forestry metrics.
 
@@ -698,7 +698,7 @@ ch20r$sqrt.ECA=sqrt(ch20r$ECA_age_proxy_forested_only)
 ch20r$sqrt.ECA.std=(ch20r$sqrt.ECA-mean(ch20r$sqrt.ECA))/sd(ch20r$sqrt.ECA)
 
 
-par(mfrow=c(2,2))
+par(mfrow=c(1,2))
 hist(ch20r$ECA_age_proxy_forested_only,breaks=30,xlab='ECA',main='')
 abline(v=c(0.05,0.1,0.15,0.2,0.3,0.4),col='darkred',lty=3)
 hist(sqrt(ch20r$ECA_age_proxy_forested_only),breaks=30,xlab='sqrt(ECA)',main='')
@@ -710,7 +710,7 @@ CPD:
 ch20r$sqrt.CPD=sqrt(ch20r$disturbedarea_prct_cs)
 ch20r$sqrt.CPD.std=(ch20r$sqrt.CPD-mean(ch20r$sqrt.CPD))/sd(ch20r$sqrt.CPD)
 
-par(mfrow=c(2,2))
+par(mfrow=c(1,2))
 hist(ch20r$disturbedarea_prct_cs,breaks=30,xlab='CPD',main='')
 abline(v=c(10,20,30,40,60,80),col='darkred',lty=3)
 hist(sqrt(ch20r$disturbedarea_prct_cs),breaks=30,xlab='sqrt(CPD)',main='')
