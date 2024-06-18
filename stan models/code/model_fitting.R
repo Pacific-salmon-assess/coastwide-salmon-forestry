@@ -179,7 +179,7 @@ dl_chm_2=list(N=nrow(ch20r),
              ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
              R_S=ch20r$ln_RS,
              S=ch20r$Spawners, 
-             ECA=ch20r$logit.ECA.std, #design matrix for standardized ECA
+             ECA=ch20r$ECA_age_proxy_forested_only_std, #design matrix for standardized ECA
              #     ECA_vec=as.matrix(ch20r$logit.ECA.std), #vector of ECA ()
              #    Area=area_mat, #design matrix for watershed area
              ExA=ExA_mat, #design matrix for std ECA x watershed area
@@ -355,16 +355,59 @@ write.csv(fit3bh_chm_eca$summary(),'./stan models/outs/summary/fit3bh_chm_eca_su
 fit3bh_chm_eca$save_object('./stan models/outs/fits/fit3bh_chm_eca.RDS')
 
 fit4bh_chm_eca <- m4bh$sample(data=dl_chm_2,
-                              seed = 12345,
+                              init=0,
                               chains = 8, 
                               iter_warmup = 200,
-                              iter_sampling = 800,
+                              iter_sampling = 400,
                               refresh = 100,
-                              adapt_delta = 0.995,
+                              adapt_delta = 0.999,
                               max_treedepth = 20)
 
-write.csv(fit4bh_eca$summary(),'./stan models/outs/summary/fit4bh_chm_eca_summary.csv')
-fit4bh_eca$save_object('./stan models/outs/fits/fit4bh_chm_eca.RDS')
+write.csv(fit4bh_chm_eca$summary(),'./stan models/outs/summary/fit4bh_chm_eca_summary.csv')
+fit4bh_chm_eca$save_object('./stan models/outs/fits/fit4bh_chm_eca.RDS')
+
+dfit4eca=fit4bh_chm_eca$draws(variables=c('b_ECA','b_ECA_cu','alpha_t','alpha_j','Rk'),format='draws_matrix')
+write.csv(dfit4eca,here('stan models','outs','fits','posterior','fit4bh_chm_eca_linear.csv'))
+
+
+d_alpha=fit4bh_chm_eca$draws(variables='alpha_t',format='draws_matrix')
+
+par(mfrow=c(2,2))
+plot(c(-1.5,2.5)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',xlab='Brood cohort year',ylab='Coastwide productivity estimate',bty='l')
+for(i in 1:nrow(d_alpha)){
+  lines(as.vector(d_alpha[i,])~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),col=adjustcolor('darkgray',alpha.f=0.2))  
+}
+lines(apply(d_alpha,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),lwd=2,col='darkred')
+points(apply(d_alpha,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),lwd=2,bg='darkred',pch=21)
+
+d_ECA=fit4bh_chm_eca$draws(variables=c('b_ECA','b_ECA_cu'),format='draws_matrix')
+
+plot(c(0,13)~c(-1,1),bty='l',type='n',ylab='',ylim=c(0,13),yaxt='n',xlab='Standardized coefficients')
+mtext(side=2,'Posterior density',line=0.5)
+d0eca=density(d_ECA[,1],bw=0.02)
+for(j in 2:23){ #22 cus
+  d=density(d_ECA[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+
+x_n=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
+eca_n=(x_n*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only))
+
+dalpha0=apply(d_alpha,1,median)
+
+pRS=exp(matrix(dalpha0,ncol=100,nrow=nrow(d_ECA))+as.matrix(d_ECA[,2])%*%x_n)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d_ECA))+matrix(as.matrix(d_ECA[,2])%*%x_n[1],ncol=100,nrow=nrow(d_ECA)))
+m_pred=apply(pRS,2,median)
+
+plot(m_pred*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
+axis(side=2,at=seq(-60,0,by=10))
+abline(h=100,lwd=0.5,lty=5)
+for(i in 1:nrow(d_ECA)){
+  lines(pRS[i,]*100-100~eca_n,col=adjustcolor('darkgray',alpha.f = 0.01))
+}
+lines(m_pred*100-100~eca_n,lwd=3,col='darkred')
 
 
 fit_bh_chm_eca_gam <- m2bh_gam$sample(data=dl_chm_3,
@@ -678,8 +721,9 @@ fit3bh_chm_cpd$save_object('./stan models/outs/fits/fit3bh_chm_cpd.RDS')
 
 fit4bh_chm_cpd <- m4bh2$sample(data=dl_chm_5,
                               chains = 4, 
+                              init=0,
                               iter_warmup = 200,
-                              iter_sampling =600,
+                              iter_sampling =400,
                               refresh = 200,
                               adapt_delta = 0.999,
                               max_treedepth = 20)
