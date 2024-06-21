@@ -666,7 +666,7 @@ lines(m_pred*100-100~eca_n,lwd=3,col='darkred')
 cu=distinct(ch20r,River,.keep_all = T)
 cu$CU2=as.numeric(factor(cu$CU))
 
-plot(m_pred*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n')
+plot(m_pred*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n')
 axis(side=2,at=seq(-60,0,by=10))
 abline(h=100,lwd=0.5,lty=5)
 for(c in 1:length(unique(ch20r$River))){

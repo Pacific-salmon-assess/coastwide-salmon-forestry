@@ -65,6 +65,12 @@ m4bh=cmdstanr::cmdstan_model(file4bh) #compile stan code to C++
 file4bh2=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_rv.stan")
 m4bh2=cmdstanr::cmdstan_model(file4bh2) #compile stan code to C++
 
+file4bhac=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_ac.stan")
+m4bhac=cmdstanr::cmdstan_model(file4bhac) #compile stan code to C++
+
+file4bhnac=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_nac.stan")
+m4bhnac=cmdstanr::cmdstan_model(file4bhnac) #compile stan code to C++
+
 #null models - no ECA effect - to extract residuals (fit set 5)
 #file5bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_hier_null_mod_cu.stan")
 #m5bh=cmdstanr::cmdstan_model(file5bh) #compile stan code to C++
@@ -129,7 +135,7 @@ cu=distinct(ch20r,River,.keep_all = T)
 cu.nrv=summary(factor(cu$CU))
 
 #time points for each series
-L_i=ch20r%>%group_by(River)%>%summarize(l=n(),tmin=min(BroodYear)-1954+1,tmax=max(BroodYear)-1954+1)
+L_i=ch20r%>%group_by(River)%>%summarize(l=n(),min=min(BroodYear),max=max(BroodYear),tmin=min(BroodYear)-1954+1,tmax=max(BroodYear)-1954+1)
 
 CU_year=expand.grid(levels(factor(ch20r$CU)),seq(min(ch20r$BroodYear),max(ch20r$BroodYear)))
 CU_year= CU_year[order(CU_year[,1]),]
@@ -179,7 +185,7 @@ dl_chm_2=list(N=nrow(ch20r),
              ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
              R_S=ch20r$ln_RS,
              S=ch20r$Spawners, 
-             ECA=ch20r$ECA_age_proxy_forested_only_std, #design matrix for standardized ECA
+             ECA=ch20r$sqrt.ECA.std, #design matrix for standardized ECA
              #     ECA_vec=as.matrix(ch20r$logit.ECA.std), #vector of ECA ()
              #    Area=area_mat, #design matrix for watershed area
              ExA=ExA_mat, #design matrix for std ECA x watershed area
@@ -208,7 +214,7 @@ dl_chm_3=list(N=nrow(ch20r),
              ECA=ECA_mat, #design matrix for standardized ECA
              Area=area_mat, #design matrix for watershed area
              ExA=ExA_mat, #design matrix for std ECA x watershed area
-             ECA_vec=ch20r$logit.ECA.std,
+             ECA_vec=ch20r$ECA_age_proxy_forested_only_std,
              B_ECA=bspline_ECA,
              Nb=nrow(bspline_ECA),
              start_y=N_s[,1],
@@ -410,6 +416,19 @@ for(i in 1:nrow(d_ECA)){
 lines(m_pred*100-100~eca_n,lwd=3,col='darkred')
 
 
+fit4bhac_chm_cpd <- m4bhac$sample(data=dl_chm_2,
+                                  chains = 6, 
+                                  init=0,
+                                  iter_warmup = 200,
+                                  iter_sampling =500,
+                                  refresh = 100,
+                                  adapt_delta = 0.999,
+                                  max_treedepth = 20)
+
+write.csv(fit4bhac_chm_cpd$summary(),'./stan models/outs/summary/fit4bh_chm_eca_summary.csv')
+fit4bhac_chm_cpd$save_object('./stan models/outs/fits/fit4bh_chm_eca.RDS')
+
+
 fit_bh_chm_eca_gam <- m2bh_gam$sample(data=dl_chm_3,
                                   seed = 333,
                                   chains = 8, 
@@ -563,7 +582,7 @@ dl_chm_5=list(N=nrow(ch20r),
               ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
               R_S=ch20r$ln_RS,
               S=ch20r$Spawners, 
-              ECA=as.vector(ch20r$disturbedarea_prct_cs.std), #design matrix for standardized ECA
+              ECA=as.vector(ch20r$sqrt.CPD.std), #design matrix for standardized ECA
               #     ECA_vec=as.matrix(ch20r$logit.ECA.std), #vector of ECA ()
               #    Area=area_mat, #design matrix for watershed area
               ExA=ExA_mat, #design matrix for std ECA x watershed area
@@ -575,6 +594,7 @@ dl_chm_5=list(N=nrow(ch20r),
               pSmax_sig=smax_prior$m.s,
               pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
               pRk_sig=smax_prior$m.r)
+
 
 bspline_ECA=t(splines::bs(ch20r$disturbedarea_prct_cs,knots=c(5,10,15,20,30,40),degree=2,intercept=F))
 pred_ECA=t(splines::bs(seq(0,max(ch20r$disturbedarea_prct_cs),length.out=100),knots=c(5,10,15,20,30,40),degree=2,intercept=F))
@@ -591,7 +611,7 @@ dl_chm_6=list(N=nrow(ch20r),
              ECA=ECA_mat, #design matrix for standardized ECA
              Area=area_mat, #design matrix for watershed area
              ExA=ExA_mat, #design matrix for std ECA x watershed area
-             ECA_vec=ch20r$logit.ECA.std,
+             ECA_vec=as.vector(ch20r$disturbedarea_prct_cs.std),
              B_ECA=bspline_ECA,
              Nb=nrow(bspline_ECA),
              start_y=N_s[,1],
@@ -719,8 +739,8 @@ fit3bh_chm_cpd <- m3bh$sample(data=dl_chm_4,
 write.csv(fit3bh_chm_cpd$summary(),'./stan models/outs/summary/fit3bh_chm_cpd.csv')
 fit3bh_chm_cpd$save_object('./stan models/outs/fits/fit3bh_chm_cpd.RDS')
 
-fit4bh_chm_cpd <- m4bh2$sample(data=dl_chm_5,
-                              chains = 4, 
+fit4bh_chm_cpd <- m4bh$sample(data=dl_chm_5,
+                              chains = 8, 
                               init=0,
                               iter_warmup = 200,
                               iter_sampling =400,
@@ -768,6 +788,38 @@ for(j in 2:ncol(d_ECA)){
 lines(l_pred~cpd_n,lty=5)
 lines(u_pred~cpd_n,lty=5)
 lines(m_pred~cpd_n,lwd=3,col='darkred')
+
+
+
+fit4bhac_chm_cpd <- m4bhac$sample(data=dl_chm_5,
+                                  chains = 6, 
+                                  init=0,
+                                  iter_warmup = 200,
+                                  iter_sampling =500,
+                                  refresh = 100,
+                                  adapt_delta = 0.999,
+                                  max_treedepth = 20)
+
+fit4bhnac_chm_cpd <- m4bhnac$sample(data=dl_chm_5,
+                                  chains = 6, 
+                                  init=0,
+                                  iter_warmup = 200,
+                                  iter_sampling =200,
+                                  refresh = 200,
+                                  adapt_delta = 0.999,
+                                  max_treedepth = 20)
+
+
+f4cpd=readRDS(here('stan models','outs','fits','fit4bh_chm_cpd.RDS'))
+
+d_alpha=f4cpd$draws(variables='alpha_t',format='draws_matrix')
+par(mfrow=c(1,2))
+plot(c(-5,5)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',xlab='brood year',ylab='intrinsic productivity')
+lines(apply(d_alpha,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)))
+
+d_alpha2=fit4bhac_chm_cpd$draws(variables='alpha_t',format='draws_matrix')
+plot(c(-5,5)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',xlab='brood year',ylab='intrinsic productivity')
+lines(apply(d_alpha2,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)))
 
 
 fit_bh_chm_cpd_gam <- m2bh_gam$sample(data=dl_chm_6,
