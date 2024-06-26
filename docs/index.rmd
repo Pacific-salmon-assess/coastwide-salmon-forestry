@@ -159,260 +159,6 @@ ch20r$sqrt.CPD.std=(ch20r$sqrt.CPD-mean(ch20r$sqrt.CPD))/sd(ch20r$sqrt.CPD)
 ```
 
 
-# Forestry metrics by river, CU, and watershed area
-
-The third set of models includes watershed area as a mediator of the effect of ECA on productivity:
-
-$log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,c}*ECA_{t,r} + \beta_{eca-x-area,c}*ECA_{t,r}*Area_{r} + w_{t,r}$
-
-## Chum
-
-This is the distribution of watershed area among 295 rivers with Chum surveys:
-
-```{r, watershed area chm}
-par(mfrow=c(1,1))
-da=distinct(ch20r,River,.keep_all = T)
-hist(log10(da$area_km2),xlab='Watershed area (km2)',xaxt='n',main='',breaks=30,xlim=c(0,log10(1e4)))
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-#da=da[order(da$area_km2),]
-```
-
-The range of observed ECAs can vary substantially by rivers and CUs:
-
-```{r, chm eca range}
-plot(rep(1,nrow(da))~seq(1,295),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='')
-for(i in 1:nrow(da)){
- s=subset(ch20r,River==da$River[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
-}
-
-cu=distinct(ch20r,CU,.keep_all = T)
-plot(rep(1,nrow(cu))~seq(1,22),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in CU-level time-series',bty='l',xlab='')
-for(i in 1:nrow(cu)){
- s=subset(ch20r,CU==cu$CU[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
-}
-
-
-plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
-for(i in 1:nrow(da)){
- s=subset(ch20r,River==da$River[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(unique(log10(s$area_km2)),2))
-}
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-```
-
-The same plots for the Cumulative % Disturbed metric:
-
-```{r, chm cpd range}
-plot(rep(1,nrow(da))~seq(1,295),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='')
-for(i in 1:nrow(da)){
- s=subset(ch20r,River==da$River[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
-}
-
-cu=distinct(ch20r,CU,.keep_all = T)
-plot(rep(1,nrow(cu))~seq(1,22),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in CU-level time-series',bty='l',xlab='')
-for(i in 1:nrow(cu)){
- s=subset(ch20r,CU==cu$CU[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
-}
-
-
-plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
-for(i in 1:nrow(da)){
- s=subset(ch20r,River==da$River[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(unique(log10(s$area_km2)),2))
-}
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-```
-
-## Pink Even
-
-This is the distribution of watershed area among 336 rivers with Pink surveys:
-
-```{r, watershed area pke}
-da=distinct(pk10r_o,River,.keep_all = T)
-hist(log10(da$area_km2),xlab='Watershed area (km2)',xaxt='n',main='',breaks=30,xlim=c(0,log10(1e4)))
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-#da=da[order(da$area_km2),]
-```
-
-The range of observed ECAs can vary substantially by rivers and CUs:
-
-```{r, pke eca range}
-plot(rep(1,nrow(da))~seq(1,nrow(da)),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='')
-for(i in 1:nrow(da)){
- s=subset(pk10r_o,River==da$River[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
-}
-
-cu=distinct(pk10r_o,CU,.keep_all = T)
-plot(rep(1,nrow(cu))~seq(1,nrow(cu)),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in CU-level time-series',bty='l',xlab='')
-for(i in 1:nrow(cu)){
- s=subset(pk10r_o,CU==cu$CU[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
-}
-
-
-plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
-for(i in 1:nrow(da)){
- s=subset(pk10r_o,River==da$River[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(unique(log10(s$area_km2)),2))
-}
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-```
-
-The same plots for the Cumulative % Disturbed metric:
-
-```{r, pke cpd range}
-plot(rep(1,nrow(da))~seq(1,nrow(da)),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='')
-for(i in 1:nrow(da)){
- s=subset(pk10r_o,River==da$River[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
-}
-
-cu=distinct(pk10r_o,CU,.keep_all = T)
-plot(rep(1,nrow(cu))~seq(1,nrow(cu)),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in CU-level time-series',bty='l',xlab='')
-for(i in 1:nrow(cu)){
- s=subset(pk10r_o,CU==cu$CU[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
-}
-
-
-plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
-for(i in 1:nrow(da)){
- s=subset(pk10r_o,River==da$River[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(unique(log10(s$area_km2)),2))
-}
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-```
-
-## Pink Odd
-
-This is the distribution of watershed area among 251 rivers with Pink (odd) surveys:
-
-```{r, watershed area pko}
-da=distinct(pk10r_o,River,.keep_all = T)
-hist(log10(da$area_km2),xlab='Watershed area (km2)',xaxt='n',main='',breaks=30,xlim=c(0,log10(1e4)))
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-#da=da[order(da$area_km2),]
-```
-
-The range of observed ECAs can vary substantially by rivers and CUs:
-
-```{r, pko eca range}
-plot(rep(1,nrow(da))~seq(1,nrow(da)),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='')
-for(i in 1:nrow(da)){
- s=subset(pk10r_o,River==da$River[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
-}
-
-cu=distinct(pk10r_o,CU,.keep_all = T)
-plot(rep(1,nrow(cu))~seq(1,nrow(cu)),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in CU-level time-series',bty='l',xlab='')
-for(i in 1:nrow(cu)){
- s=subset(pk10r_o,CU==cu$CU[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
-}
-
-
-plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
-for(i in 1:nrow(da)){
- s=subset(pk10r_o,River==da$River[i])
- lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(unique(log10(s$area_km2)),2))
-}
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-```
-
-The same plots for the Cumulative % Disturbed metric:
-
-```{r, pko cpd range}
-plot(rep(1,nrow(da))~seq(1,nrow(da)),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='')
-for(i in 1:nrow(da)){
- s=subset(pk10r_o,River==da$River[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
-}
-
-cu=distinct(pk10r_o,CU,.keep_all = T)
-plot(rep(1,nrow(cu))~seq(1,nrow(cu)),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in CU-level time-series',bty='l',xlab='')
-for(i in 1:nrow(cu)){
- s=subset(pk10r_o,CU==cu$CU[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
-}
-
-
-plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
-for(i in 1:nrow(da)){
- s=subset(pk10r_o,River==da$River[i])
- lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(unique(log10(s$area_km2)),2))
-}
-pow <- 0:5
-ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
-axis(1, log10(ticksat), col="black", labels=NA,
-     tcl=-0.2, lwd=0, lwd.ticks=1)
-
-axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
-     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
-
-```
-
-\newpage
 
 # Forestry effects by species
 
@@ -420,214 +166,25 @@ This section will compare the productivity responses to two measures of forestry
 
 ## Chum
 
-### CU-level varying effects for ECA and CPD
-
-The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit are outputted below. The plot shows density of effect sizes among CUs and the red line indicates the global effect:
-
-```{r, chm fitset 1 bh, fig.width=12,fig.height=12}
-d1eca=read.csv(here('stan models','outs','fits','posterior','fit1bh_chm_eca_linear.csv'),check.names=F)
-
-cu=distinct(ch20r,River,.keep_all = T)
-cu.nrv=summary(factor(cu$CU))
-
-par(mfrow=c(3,2))
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='',main='ECA effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
-mtext(side=2,'Posterior density',line=0.5)
-d0eca=density(d1eca[,2],bw=0.02)
-for(j in 3:24){
-d=density(d1eca[,j],bw=0.02)
-lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
-}
-lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
-abline(v=0,lwd=2)
-
-d1cpd=read.csv(here('stan models','outs','fits','posterior','fit1bh_chm_cpd_linear.csv'),check.names=F)
-
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='',main='CPD effect sizes by CU (BH)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
-mtext(side=2,'Posterior density',line=0.5)
-d0cpd=density(d1cpd[,2],bw=0.02)
-for(j in 3:24){
-d=density(d1cpd[,j],bw=0.02)
-lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
-}
-lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
-abline(v=0,lwd=2)
-
-x_ne=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
-eca_n=x_ne*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
-
-pRSe=exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+as.matrix(d1eca[,2])%*%x_ne)/exp(matrix(d1eca[,colnames(d1eca)=='alpha_0'],ncol=100,nrow=nrow(d1eca))+matrix(as.matrix(d1eca[,2])%*%x_ne[1],ncol=100,nrow=nrow(d1eca)))
-m_prede=apply(pRSe,2,median)
-
-plot(m_prede*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clear cut area',ylim=c(-90,30),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
-axis(side=2,at=seq(-90,30,by=10))
-abline(h=100,lwd=0.5,lty=5)
-for(i in 1:nrow(d1eca)){
-  lines(pRSe[i,]*100-100~eca_n,col=adjustcolor('darkgray',alpha.f = 0.01))
-}
-lines(m_prede*100-100~eca_n,lwd=3,col='darkred')
-#abline(v=0)
-
-ch20r$disturbedarea_prct_cs.std=scale(ch20r$disturbedarea_prct_cs)
-x_ncpd=seq(min(ch20r$disturbedarea_prct_cs.std),max(ch20r$disturbedarea_prct_cs.std),length.out=100)
-cpd_n=x_ncpd*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
-
-pRSc=exp(matrix(d1cpd[,colnames(d1cpd)=='alpha_0'],ncol=100,nrow=nrow(d1cpd))+as.matrix(d1cpd[,2])%*%x_ncpd)/exp(matrix(d1cpd[,colnames(d1cpd)=='alpha_0'],ncol=100,nrow=nrow(d1cpd))+matrix(as.matrix(d1cpd[,2])%*%x_ncpd[1],ncol=100,nrow=nrow(d1cpd)))
-m_predc=apply(pRSc,2,median)
-
-plot(m_predc*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-90,30),col='darkred',lwd=3,yaxt='n',xlim=c(min(cpd_n),max(cpd_n)))
-axis(side=2,at=seq(-90,30,by=10))
-abline(h=100,lwd=0.5,lty=5)
-for(i in 1:nrow(d1cpd)){
-  lines(pRSc[i,]*100-100~cpd_n,col=adjustcolor('darkgray',alpha.f = 0.01))
-}
-lines(m_predc*100-100~cpd_n,lwd=3,col='darkred')
-
-cols=RColorBrewer::brewer.pal(7,'Blues');
-cols=cols[-1] #remove first colour - too pale to see
-br1=quantile(cu.nrv,seq(0,1,by=0.2))
-col_lines1=cols[findInterval(cu.nrv,br1)]
-
-
-plot(m_prede*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-100,200),col='darkred',lwd=3,yaxt='n')
-axis(side=2,at=seq(-100,200,by=50))
-abline(h=0,lwd=0.5,lty=5)
-for(c in 1:22){
-  cc=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
-  x_neca=seq(min(cc$ECA_age_proxy_forested_only_std),max(cc$ECA_age_proxy_forested_only_std),length.out=100)
-  eca_nc=x_neca*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
-  
-#  x_nc=seq(min(cc$disturbedarea_prct_cs.std),max(cc$disturbedarea_prct_cs.std),length.out=100)
- # cpd_nc=x_nc*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
-  pRSe=exp(matrix(d1eca[,colnames(d1eca)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1eca))+matrix(as.matrix(d1eca[,colnames(d1eca)==paste('b_ECA_cu[',c,']',sep='')])%*%x_neca,nrow=nrow(d1eca),ncol=100))/exp(matrix(d1eca[,colnames(d1eca)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1eca))+matrix(as.matrix(d1eca[,colnames(d1eca)==paste('b_ECA_cu[',c,']',sep='')])%*%x_ne[1],ncol=100,nrow=nrow(d1eca)))
-  lines(apply(pRSe,2,median)*100-100~eca_nc,col=col_lines1[c],lwd= log(cu.nrv[c]+1))
-}
-for(i in 1:6){
-  lines(rep(par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,2)~c((par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.05),(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.1)),lwd=log(quantile(cu.nrv,seq(0,1,by=0.2))[i]+1),col=cols[i])
-  text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.15),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,round(quantile(cu.nrv,seq(0,1,by=0.2))[i]))
-}
-text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.075),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.005,'No. of rivers')
-lines(m_prede*100-100~eca_n,lwd=3,col='darkred')
-
-
-plot(m_predc*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-100,200),col='darkred',lwd=3,yaxt='n')
-axis(side=2,at=seq(-100,200,by=50))
-abline(h=0,lwd=0.5,lty=5)
-for(c in 1:22){
-  cc=subset(ch20r,CU==levels(factor(ch20r$CU))[c])
-  x_nc=seq(min(cc$disturbedarea_prct_cs.std),max(cc$disturbedarea_prct_cs.std),length.out=100)
-  cpd_nc=x_nc*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
-  
-#  x_nc=seq(min(cc$disturbedarea_prct_cs.std),max(cc$disturbedarea_prct_cs.std),length.out=100)
- # cpd_nc=x_nc*sd(ch20r$disturbedarea_prct_cs)+mean(ch20r$disturbedarea_prct_cs)
-  pRSc=exp(matrix(d1cpd[,colnames(d1cpd)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1cpd))+matrix(as.matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',c,']',sep='')])%*%x_nc,nrow=nrow(d1cpd),ncol=100))/exp(matrix(d1cpd[,colnames(d1cpd)==paste('alpha_cu[',c,']',sep='')],ncol=100,nrow=nrow(d1cpd))+matrix(as.matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',c,']',sep='')])%*%x_ncpd[1],ncol=100,nrow=nrow(d1cpd)))
-  lines(apply(pRSc,2,median)*100-100~cpd_nc,col=col_lines1[c],lwd= log(cu.nrv[c]+1))
-}
-#
-for(i in 1:6){
-  lines(rep(par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,2)~c((par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.05),(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.1)),lwd=log(quantile(cu.nrv,seq(0,1,by=0.2))[i]+1),col=cols[i])
-  text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.15),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.05*i,round(quantile(cu.nrv,seq(0,1,by=0.2))[i]))
-}
-text(x=(par('usr')[2]-(par('usr')[2]-par('usr')[1])*0.075),y=par('usr')[4]-(par('usr')[4]-par('usr')[3])*0.005,'No. of rivers')
-lines(m_predc*100-100~cpd_n,lwd=3,col='darkred')
-
-```
-
-
-### River-level varying effects of ECA and CPD
-
-The overall among population effect size (b_ECA) for ECA, and varying effects of ECA by CU (b_ECA_cu), from the Beverton-Holt fit.
-
-This plot shows density of effect sizes among CUs and the red line indicates the global effect:
-
-```{r, chm fitset 2 bh, fig.width=12,fig.height=8}
-d2eca=read.csv(here('stan models','outs','fits','posterior','fit2bh_chm_eca_sqrt.csv'),check.names=F)
-d2cpd=read.csv(here('stan models','outs','fits','posterior','fit2bh_chm_cpd_sqrt.csv'),check.names=F)
-
-par(mfrow=c(2,2))
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
-d0eca=density(d2eca[,2],bw=0.02)
-mtext(side=2,'Posterior density',line=0.5)
-for(j in 3:ncol(d2eca)){ #22 cus
-d=density(d2eca[,j],bw=0.02)
-lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
-}
-lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
-abline(v=0,lwd=2)
-
-plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='',main='CPD effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
-d0cpd=density(d2cpd[,2],bw=0.02)
-mtext(side=2,'Posterior density',line=0.5)
-for(j in 3:ncol(d2cpd)){ #22 cus
-d=density(d2cpd[,j],bw=0.02)
-lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
-}
-lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
-abline(v=0,lwd=2)
-
-x_ne=seq(min(ch20r$sqrt.ECA.std),max(ch20r$sqrt.ECA.std),length.out=100)
-eca_n=(x_ne*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
-
-pRSe=exp(matrix(d2eca[,colnames(d2eca)=='alpha_0'],ncol=100,nrow=nrow(d2eca))+as.matrix(d2eca[,2])%*%x_ne)/exp(matrix(d2eca[,colnames(d2eca)=='alpha_0'],ncol=100,nrow=nrow(d2eca))+matrix(as.matrix(d2eca[,2])%*%x_ne[1],ncol=100,nrow=nrow(d2eca)))
-m_prede=apply(pRSe,2,median)
-
-
-plot(m_prede*100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-100,300),col='darkred',lwd=3,yaxt='n')
-axis(side=2,at=seq(-100,300,by=50))
-abline(h=0,lwd=0.5,lty=5)
-for(c in 1:length(unique(ch20r$River))){
-  jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
-  x_nc=seq(min(jj$sqrt.ECA.std),max(jj$sqrt.ECA.std),length.out=100)
-  eca_nc=(x_nc*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
-  pRSce=exp(matrix(d2eca[,colnames(d2eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2eca))+as.matrix(d2eca[,colnames(d2eca)==paste('b_ECA_j[',c,']',sep='')])%*%x_nc)/exp(matrix(d2eca[,colnames(d2eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2eca))+matrix(as.matrix(d2eca[,colnames(d2eca)==paste('b_ECA_j[',c,']',sep='')])%*%x_ne[1],ncol=100,nrow=nrow(d2eca)))
-  lines(apply(pRSce,2,median)*100-100~eca_nc,col=adjustcolor('black',alpha.f=0.5))
-
-  }
-lines(m_prede*100-100~eca_n,lwd=3,col='darkred')
-
-
-x_ncpd=seq(min(ch20r$sqrt.CPD.std),max(ch20r$sqrt.CPD.std),length.out=100)
-cpd_n=(x_ncpd*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
-
-pRSc=exp(matrix(d2cpd[,colnames(d2cpd)=='alpha_0'],ncol=100,nrow=nrow(d2cpd))+as.matrix(d2cpd[,2])%*%x_nc)/exp(matrix(d2cpd[,colnames(d2cpd)=='alpha_0'],ncol=100,nrow=nrow(d2cpd))+matrix(as.matrix(d2cpd[,2])%*%x_nc[1],ncol=100,nrow=nrow(d2cpd)))
-m_predc=apply(pRSc,2,median)
-
-plot(m_predc*100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-100,300),col='darkred',lwd=3,yaxt='n')
-axis(side=2,at=seq(-100,300,by=50))
-abline(h=0,lwd=0.5,lty=5)
-for(c in 1:length(unique(ch20r$River))){
-  jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
-  x_nc=seq(min(jj$sqrt.CPD.std),max(jj$sqrt.CPD.std),length.out=100)
-  cpd_nc=(x_nc*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
-  pRScc=exp(matrix(d2cpd[,colnames(d2cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))+as.matrix(d2cpd[,colnames(d2cpd)==paste('b_ECA_j[',c,']',sep='')])%*%x_nc)/exp(matrix(d2cpd[,colnames(d2cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))+matrix(d2cpd[,colnames(d2cpd)==paste('b_ECA_j[',c,']',sep='')],ncol=100,nrow=nrow(d2cpd))*x_ncpd[1])
-  lines(apply(pRScc,2,median)*100-100~cpd_nc,col=adjustcolor('black',alpha.f=0.5))
-
-  }
-lines(m_predc*100-100~cpd_n,lwd=3,col='darkred')
-
-
-```
-
-
-### Accounting for broad-scale drivers of productivity
+### Equivalent clearcut area
 
 Productivity responses to forestry may be an artifact of broad-scale oceanic drivers that are known to shape marine survival. To account for this, we implement a shared time-varying coastwide productivity model - where the global productivity $\alpha$ evolves through time according to a random walk model:
 
 $\alpha_t = \alpha_{t-1} + w_t$
 
-$w_t ~ N(0, \sigma_{\alpha,t})$
+$w_t \~ N(0, \sigma_{\alpha,t})$
 
 This term, $alpha_t$ adjusts the productivity for all stocks at each time-step, capturing potential synchronous increases and decreases in productivity from latent common drivers (e.g. Sea surface temperatures, Pacific Decadal Oscillation Index, North Pacific Gyre Oscillation Index, etc.) and accounts for these patterns while jointly estimating the effect of forestry metrics.
 
 Equivalent clearcut area:
 
 ```{r, eca tv, fig.width=12,fig.height=8}
-d4eca=read.csv(here('stan models','outs','fits','posterior','fit4bh_chm_eca_linear.csv'),check.names=F)
+d4eca=read.csv(here('stan models','outs','fits','posterior','bh_chm_eca.csv'),check.names=F)
 
 d_alpha=data.frame(d4eca[,grepl('alpha_t',colnames(d4eca))])
 
 par(mfrow=c(2,2))
-plot(c(-1.5,2.5)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',xlab='Brood cohort year',ylab='Coastwide productivity estimate',bty='l')
+plot(c(0,13)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',xlab='Brood cohort year',ylab='Coastwide productivity estimate',bty='l')
 for(i in 1:nrow(d_alpha)){
 lines(unlist(d_alpha[i,])~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),col=adjustcolor('darkgray',alpha.f=0.2))  
 }
@@ -635,27 +192,27 @@ lines(apply(d_alpha,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),lwd
 points(apply(d_alpha,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),lwd=2,bg='darkred',pch=21)
 
 
-plot(c(0,13)~c(-1,1),bty='l',type='n',ylab='',ylim=c(0,13),yaxt='n',xlab='Standardized coefficients')
+plot(c(0,13)~c(-1.5,1.5),bty='l',type='n',ylab='',ylim=c(0,13),yaxt='n',xlab='Standardized coefficients')
 mtext(side=2,'Posterior density',line=0.5)
 d0eca=density(d4eca[,2],bw=0.02)
 for(j in 3:24){ #22 cus
 d=density(d4eca[,j],bw=0.02)
-lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.5))
 }
 lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
 
-x_n=seq(min(ch20r$ECA_age_proxy_forested_only_std),max(ch20r$ECA_age_proxy_forested_only_std),length.out=100)
-eca_n=x_n*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only)
+x_n=seq(min(ch20r$sqrt.ECA.std),max(ch20r$sqrt.ECA.std),length.out=100)
+eca_n=(x_n*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
 
 dalpha0=apply(d_alpha,1,median)
 
 pRS=exp(matrix(dalpha0,ncol=100,nrow=nrow(d4eca))+as.matrix(d4eca[,2])%*%x_n)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d4eca))+matrix(as.matrix(d4eca[,2])%*%x_n[1],ncol=100,nrow=nrow(d4eca)))
 m_pred=apply(pRS,2,median)
 
-plot(m_pred*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
-axis(side=2,at=seq(-60,0,by=10))
+plot(m_pred*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-90,50),col='darkred',lwd=3,yaxt='n',xlim=c(min(eca_n),max(eca_n)))
+axis(side=2,at=seq(-90,30,by=15))
 abline(h=100,lwd=0.5,lty=5)
 for(i in 1:nrow(d4eca)){
   lines(pRS[i,]*100-100~eca_n,col=adjustcolor('darkgray',alpha.f = 0.01))
@@ -666,35 +223,32 @@ lines(m_pred*100-100~eca_n,lwd=3,col='darkred')
 cu=distinct(ch20r,River,.keep_all = T)
 cu$CU2=as.numeric(factor(cu$CU))
 
-plot(m_pred*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n')
-axis(side=2,at=seq(-60,0,by=10))
+plot(m_pred*100-100~eca_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Equivalent clearcut area',ylim=c(-90,50),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(-90,30,by=15))
 abline(h=100,lwd=0.5,lty=5)
 for(c in 1:length(unique(ch20r$River))){
   jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
-  x_nc=seq(min(jj$ECA_age_proxy_forested_only_std),max(jj$ECA_age_proxy_forested_only_std),length.out=100)
-  eca_nc=(x_nc*sd(ch20r$ECA_age_proxy_forested_only)+mean(ch20r$ECA_age_proxy_forested_only))
+  x_nc=seq(min(jj$sqrt.ECA.std),max(jj$sqrt.ECA.std),length.out=100)
+  eca_nc=(x_nc*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
 
-   pRSc=exp(matrix(dalpha0,ncol=100,nrow=nrow(d4eca))+matrix(d4eca[,colnames(d4eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4eca))+matrix(d4eca[,colnames(d4eca)==paste('b_ECA_cu[',cu$CU2[c],']',sep='')])%*%x_nc)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d4eca))+matrix(d4eca[,colnames(d4eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4eca))+matrix(d4eca[,colnames(d4eca)==paste('b_ECA_cu[',cu$CU2[c],']',sep='')],ncol=100,nrow=nrow(d4eca))*x_n[1])
+   pRSc=exp(matrix(dalpha0,ncol=100,nrow=nrow(d4eca))+matrix(d4eca[,colnames(d4eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4eca))+matrix(d4eca[,colnames(d4eca)==paste('b_for_cu[',cu$CU2[c],']',sep='')])%*%x_nc)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d4eca))+matrix(d4eca[,colnames(d4eca)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4eca))+matrix(d4eca[,colnames(d4eca)==paste('b_for_cu[',cu$CU2[c],']',sep='')],ncol=100,nrow=nrow(d4eca))*x_n[1])
  
   lines(apply(pRSc,2,median)*100-100~eca_nc,col=adjustcolor('black',alpha.f=0.5))
   
 }
 lines(m_pred*100-100~eca_n,lwd=3,col='darkred')
 
-
-
-
 ```
 
-Cumulative % disturbed:
+### Cumulative % disturbed:
 
 ```{r, cpd tv, fig.width=12,fig.height=8}
-d4cpd=read.csv(here('stan models','outs','fits','posterior','fit4bh_chm_cpd_sqrt.csv'),check.names=F)
+d4cpd=read.csv(here('stan models','outs','fits','posterior','post_cpd_chm.csv'),check.names=F)
 
 d_alpha=data.frame(d4cpd[,grepl('alpha_t',colnames(d4cpd))])
 
 par(mfrow=c(2,2))
-plot(c(-1.5,2.5)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',xlab='Brood cohort year',ylab='Coastwide productivity estimate',bty='l')
+plot(c(0,13)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',xlab='Brood cohort year',ylab='Coastwide productivity estimate',bty='l')
 for(i in 1:nrow(d_alpha)){
 lines(unlist(d_alpha[i,])~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),col=adjustcolor('darkgray',alpha.f=0.2))  
 }
@@ -721,8 +275,8 @@ dalpha0=apply(d_alpha,1,median)
 pRS=exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+as.matrix(d4cpd[,2])%*%x_n)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+matrix(as.matrix(d4cpd[,2])%*%x_n[1],ncol=100,nrow=nrow(d4cpd)))
 m_pred=apply(pRS,2,median)
 
-plot(m_pred*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n',xlim=c(min(cpd_n),max(cpd_n)))
-axis(side=2,at=seq(-60,0,by=10))
+plot(m_pred*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-90,30),col='darkred',lwd=3,yaxt='n',xlim=c(min(cpd_n),max(cpd_n)))
+axis(side=2,at=seq(-90,30,by=10))
 abline(h=100,lwd=0.5,lty=5)
 for(i in 1:nrow(d4cpd)){
   lines(pRS[i,]*100-100~cpd_n,col=adjustcolor('darkgray',alpha.f = 0.01))
@@ -733,15 +287,15 @@ lines(m_pred*100-100~cpd_n,lwd=3,col='darkred')
 cu=distinct(ch20r,River,.keep_all = T)
 cu$CU2=as.numeric(factor(cu$CU))
 
-plot(m_pred*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-60,0),col='darkred',lwd=3,yaxt='n')
-axis(side=2,at=seq(-60,0,by=10))
+plot(m_pred*100-100~cpd_n,bty='l',type='n',ylab='Change in intrinsic productivity (recruits/spawner, %)',xlab='Cumulative disturbed area (%)',ylim=c(-90,30),col='darkred',lwd=3,yaxt='n')
+axis(side=2,at=seq(-90,30,by=10))
 abline(h=100,lwd=0.5,lty=5)
 for(c in 1:length(unique(ch20r$River))){
   jj=subset(ch20r,River==levels(factor(ch20r$River))[c])
   x_nc=seq(min(jj$sqrt.CPD.std),max(jj$sqrt.CPD.std),length.out=100)
   cpd_nc=(x_nc*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
 
-   pRSc=exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('b_ECA_cu[',cu$CU2[c],']',sep='')])%*%x_nc)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('b_ECA_cu[',cu$CU2[c],']',sep='')],ncol=100,nrow=nrow(d4cpd))*x_n[1])
+   pRSc=exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('b_for_cu[',cu$CU2[c],']',sep='')])%*%x_nc)/exp(matrix(dalpha0,ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('alpha_j[',c,']',sep='')],ncol=100,nrow=nrow(d4cpd))+matrix(d4cpd[,colnames(d4cpd)==paste('b_for_cu[',cu$CU2[c],']',sep='')],ncol=100,nrow=nrow(d4cpd))*x_n[1])
  
   lines(apply(pRSc,2,median)*100-100~cpd_nc,col=adjustcolor('black',alpha.f=0.5))
   
@@ -904,34 +458,6 @@ lines(apply(d_gam[2:101],2,quantile,0.025)~seq(0,max(ch20r$disturbedarea_prct_cs
 lines(apply(d_gam[2:101],2,quantile,0.975)~seq(0,max(ch20r$disturbedarea_prct_cs),length.out=100),lty=5)
 ### Ricker model sets####
 
-```
-
-### Watershed area as a mediator
-
-Posterior estimates of the interaction between watershed area and the effect of ECA (median in red):
-
-```{r, areaxeca chm}
-par(mfrow=c(1,1))
-f3bh_chm_eca=readRDS(here('stan models','outs','fits','fit3bh_chm_eca.RDS'))
-
-d3chm=f3bh_chm_eca$draws(variables=c('b_ECA_Area'),format='draws_matrix')
-
-hist(d3chm, breaks=30,main='',xlab='Effect size')
-abline(v=median(d3chm),lwd=3,col='darkred')
-abline(v=0,lwd=2)
-```
-
-Posterior estimates of the interaction between watershed area and the effect of CPD (median in red):
-
-```{r, areaxcpd chm}
-par(mfrow=c(1,1))
-f3bh_chm_cpd=readRDS(here('stan models','outs','fits','fit3bh_chm_cpd.RDS'))
-
-d3chm=f3bh_chm_cpd$draws(variables=c('b_ECA_Area'),format='draws_matrix')
-
-hist(d3chm, breaks=30,main='',xlab='Effect size')
-abline(v=median(d3chm),lwd=3,col='darkred')
-abline(v=0,lwd=2)
 ```
 
 
@@ -1280,6 +806,261 @@ abline(v=median(d3pko),lwd=3,col='darkred')
 abline(v=0,lwd=2)
 ```
 
+# Forestry metrics by river, CU, and watershed area
+
+The third set of models includes watershed area as a mediator of the effect of ECA on productivity:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \beta_r*S_{t,r} + \beta_{eca,c}*ECA_{t,r} + \beta_{eca-x-area,c}*ECA_{t,r}*Area_{r} + w_{t,r}$
+
+## Chum
+
+This is the distribution of watershed area among 295 rivers with Chum surveys:
+
+```{r, watershed area chm}
+par(mfrow=c(1,1))
+da=distinct(ch20r,River,.keep_all = T)
+hist(log10(da$area_km2),xlab='Watershed area (km2)',xaxt='n',main='',breaks=30,xlim=c(0,log10(1e4)))
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+#da=da[order(da$area_km2),]
+```
+
+The range of observed ECAs can vary substantially by rivers and CUs:
+
+```{r, chm eca range}
+plot(rep(1,nrow(da))~seq(1,295),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='')
+for(i in 1:nrow(da)){
+ s=subset(ch20r,River==da$River[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
+}
+
+cu=distinct(ch20r,CU,.keep_all = T)
+plot(rep(1,nrow(cu))~seq(1,22),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in CU-level time-series',bty='l',xlab='')
+for(i in 1:nrow(cu)){
+ s=subset(ch20r,CU==cu$CU[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
+}
+
+
+plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
+for(i in 1:nrow(da)){
+ s=subset(ch20r,River==da$River[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(unique(log10(s$area_km2)),2))
+}
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+```
+
+The same plots for the Cumulative % Disturbed metric:
+
+```{r, chm cpd range}
+plot(rep(1,nrow(da))~seq(1,295),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='')
+for(i in 1:nrow(da)){
+ s=subset(ch20r,River==da$River[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
+}
+
+cu=distinct(ch20r,CU,.keep_all = T)
+plot(rep(1,nrow(cu))~seq(1,22),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in CU-level time-series',bty='l',xlab='')
+for(i in 1:nrow(cu)){
+ s=subset(ch20r,CU==cu$CU[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
+}
+
+
+plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
+for(i in 1:nrow(da)){
+ s=subset(ch20r,River==da$River[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(unique(log10(s$area_km2)),2))
+}
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+```
+
+## Pink Even
+
+This is the distribution of watershed area among 336 rivers with Pink surveys:
+
+```{r, watershed area pke}
+da=distinct(pk10r_o,River,.keep_all = T)
+hist(log10(da$area_km2),xlab='Watershed area (km2)',xaxt='n',main='',breaks=30,xlim=c(0,log10(1e4)))
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+#da=da[order(da$area_km2),]
+```
+
+The range of observed ECAs can vary substantially by rivers and CUs:
+
+```{r, pke eca range}
+plot(rep(1,nrow(da))~seq(1,nrow(da)),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='')
+for(i in 1:nrow(da)){
+ s=subset(pk10r_o,River==da$River[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
+}
+
+cu=distinct(pk10r_o,CU,.keep_all = T)
+plot(rep(1,nrow(cu))~seq(1,nrow(cu)),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in CU-level time-series',bty='l',xlab='')
+for(i in 1:nrow(cu)){
+ s=subset(pk10r_o,CU==cu$CU[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
+}
+
+
+plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
+for(i in 1:nrow(da)){
+ s=subset(pk10r_o,River==da$River[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(unique(log10(s$area_km2)),2))
+}
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+```
+
+The same plots for the Cumulative % Disturbed metric:
+
+```{r, pke cpd range}
+plot(rep(1,nrow(da))~seq(1,nrow(da)),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='')
+for(i in 1:nrow(da)){
+ s=subset(pk10r_o,River==da$River[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
+}
+
+cu=distinct(pk10r_o,CU,.keep_all = T)
+plot(rep(1,nrow(cu))~seq(1,nrow(cu)),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in CU-level time-series',bty='l',xlab='')
+for(i in 1:nrow(cu)){
+ s=subset(pk10r_o,CU==cu$CU[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
+}
+
+
+plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
+for(i in 1:nrow(da)){
+ s=subset(pk10r_o,River==da$River[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(unique(log10(s$area_km2)),2))
+}
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+```
+
+## Pink Odd
+
+This is the distribution of watershed area among 251 rivers with Pink (odd) surveys:
+
+```{r, watershed area pko}
+da=distinct(pk10r_o,River,.keep_all = T)
+hist(log10(da$area_km2),xlab='Watershed area (km2)',xaxt='n',main='',breaks=30,xlim=c(0,log10(1e4)))
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+#da=da[order(da$area_km2),]
+```
+
+The range of observed ECAs can vary substantially by rivers and CUs:
+
+```{r, pko eca range}
+plot(rep(1,nrow(da))~seq(1,nrow(da)),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='')
+for(i in 1:nrow(da)){
+ s=subset(pk10r_o,River==da$River[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
+}
+
+cu=distinct(pk10r_o,CU,.keep_all = T)
+plot(rep(1,nrow(cu))~seq(1,nrow(cu)),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in CU-level time-series',bty='l',xlab='')
+for(i in 1:nrow(cu)){
+ s=subset(pk10r_o,CU==cu$CU[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(i,2))
+}
+
+
+plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,1),ylab='Range of ECA observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
+for(i in 1:nrow(da)){
+ s=subset(pk10r_o,River==da$River[i])
+ lines(c(min(s$ECA_age_proxy_forested_only),max(s$ECA_age_proxy_forested_only))~rep(unique(log10(s$area_km2)),2))
+}
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+```
+
+The same plots for the Cumulative % Disturbed metric:
+
+```{r, pko cpd range}
+plot(rep(1,nrow(da))~seq(1,nrow(da)),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='')
+for(i in 1:nrow(da)){
+ s=subset(pk10r_o,River==da$River[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
+}
+
+cu=distinct(pk10r_o,CU,.keep_all = T)
+plot(rep(1,nrow(cu))~seq(1,nrow(cu)),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in CU-level time-series',bty='l',xlab='')
+for(i in 1:nrow(cu)){
+ s=subset(pk10r_o,CU==cu$CU[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(i,2))
+}
+
+
+plot(rep(1,nrow(da))~log10(da$area_km2),type='n',xaxt='n',ylim=c(0,100),ylab='Range of CPD observations in River-level time-series',bty='l',xlab='Watershed area (km2)',xlim=c(0,log10(1e4)))
+for(i in 1:nrow(da)){
+ s=subset(pk10r_o,River==da$River[i])
+ lines(c(min(s$disturbedarea_prct_cs),max(s$disturbedarea_prct_cs))~rep(unique(log10(s$area_km2)),2))
+}
+pow <- 0:5
+ticksat <- as.vector(sapply(pow, function(p) (1:10)*10^p))
+axis(1, log10(ticksat), col="black", labels=NA,
+     tcl=-0.2, lwd=0, lwd.ticks=1)
+
+axis(1, col="black", at=seq(0,8,by=1),   tcl=-0.45, cex.axis=1.2,
+     labels=c(expression(1),expression(10),expression(100),expression('1K'),expression('10K'),expression('100K'),expression('1M'),expression('10M'),expression('100M')))
+
+```
+
+\newpage
+
 
 # River-level Spawner-Recruit fits
 Here is each river-level stock-recruitment curve comparing estimates with ECA or CPD. The observations are shaded according to their ECA/CPD level (brown = higher ECA, green = lower ECA; scaled to each S-R series). The median expected recruits and their 90% credible intervals are displayed as black solid and dashed lines. The expected recruits at minimum and maximum observed ECA/CPD values for that river are shown in brown and green lines, respectively. The time-series for ECA (bottom-left) is shown with the realized effect on productivity under each model (ECA = blue; CPD = orange; bottom-right).
@@ -1288,13 +1069,9 @@ Here is each river-level stock-recruitment curve comparing estimates with ECA or
 ## Chum
 
 ```{r, sr time-series chm, fig.width=12,fig.height=8, results="asis"}
-ch20r$cuid=as.numeric(factor(ch20r$CU))
 
-f1bh_chm_eca=readRDS(here('stan models','outs','fits','fit1bh_chm_eca.RDS'))
-f1bh_chm_cpd=readRDS(here('stan models','outs','fits','fit1bh_chm_cpd.RDS'))
-
-d1eca=f1bh_chm_eca$draws(variables=c('alpha_j','Rk','b_ECA_cu'),form='draws_matrix')
-d1cpd=f1bh_chm_cpd$draws(variables=c('alpha_j','Rk','b_ECA_cu'),form='draws_matrix')
+d1eca=d4eca
+d1cpd=d4cpd
 
 for(c in 1:length(unique(ch20r$River))){
   cat('\n')  
@@ -1312,19 +1089,20 @@ for(c in 1:length(unique(ch20r$River))){
   #ECA
   plot(Recruits~Spawners,data=rv,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv$River),'(ECA)',sep=' '))
   
+  alpha_t=apply(d1eca[,grepl('alpha_t',colnames(d1eca))==T],1,median)
   alpha_j=d1eca[,colnames(d1eca)== paste('alpha_j[',c,']',sep='')]
   Rk_j=d1eca[,colnames(d1eca)== paste('Rk[',c,']',sep='')]
-  b_ECA=d1eca[,colnames(d1eca)== paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]                                                                          
+  b_ECA=d1eca[,colnames(d1eca)== paste('b_for_rv[',c,']',sep='')]                                                                          
   s_pred=seq(0,max(rv$Spawners),length.out=100)
   
-  RS_pred_m=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,median))*s_pred
-  RS_pred_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
-  RS_pred_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
+  RS_pred_m=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred),2,median))*s_pred
+  RS_pred_l=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
+  RS_pred_u=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
   
   
-  RS_pred_eca_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$ECA_age_proxy_forested_only_std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
+  RS_pred_eca_l=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$sqrt.ECA.std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
   
-  RS_pred_eca_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$ECA_age_proxy_forested_only_std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
+  RS_pred_eca_u=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$sqrt.ECA.std),ncol=length(s_pred),nrow=length(alpha_j+alpha_t)),2,median))*s_pred
   
   lines(RS_pred_m~s_pred,lwd=3)
   lines(RS_pred_l~s_pred,lwd=1,lty=5)
@@ -1337,20 +1115,20 @@ for(c in 1:length(unique(ch20r$River))){
   #CPD
   plot(Recruits~Spawners,data=rv,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv$River),'(CPD)',sep=' '))
   
+   alpha_t=apply(d1cpd[,grepl('alpha_t',colnames(d1cpd))==T],1,median)
   alpha_j=d1cpd[,colnames(d1cpd)== paste('alpha_j[',c,']',sep='')]
   Rk_j=d1cpd[,colnames(d1cpd)== paste('Rk[',c,']',sep='')]
-  b_ECA=d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',unique(rv$cuid),']',sep='')]                                                                          
+  b_ECA=d1cpd[,colnames(d1cpd)==paste('b_for_rv[',c,']',sep='')]                                                                          
   s_pred=seq(0,max(rv$Spawners),length.out=100)
   
-  RS_pred_m=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,median))*s_pred
-  RS_pred_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
-  RS_pred_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
+   RS_pred_m=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred),2,median))*s_pred
+  RS_pred_l=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred),2,quantile,0.05))*s_pred
+  RS_pred_u=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred),2,quantile,0.95))*s_pred
   
   
-  RS_pred_eca_l=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$disturbedarea_prct_cs.std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
+  RS_pred_eca_l=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred)+matrix(b_ECA*min(rv$sqrt.CPD.std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
   
-  RS_pred_eca_u=exp(apply(matrix(alpha_j,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$disturbedarea_prct_cs.std),ncol=length(s_pred),nrow=length(alpha_j)),2,median))*s_pred
-  
+  RS_pred_eca_u=exp(apply(matrix(alpha_j+alpha_t,ncol=length(s_pred),nrow=length(alpha_j))-log(1+as.matrix(exp(alpha_j+alpha_t)/Rk_j)%*%s_pred)+matrix(b_ECA*max(rv$sqrt.CPD.std),ncol=length(s_pred),nrow=length(alpha_j+alpha_t)),2,median))*s_pred
   lines(RS_pred_m~s_pred,lwd=3)
   lines(RS_pred_l~s_pred,lwd=1,lty=5)
   lines(RS_pred_u~s_pred,lwd=1,lty=5)
@@ -1368,13 +1146,13 @@ for(c in 1:length(unique(ch20r$River))){
     text(x=par('usr')[2]-4,y=par('usr')[4]*0.95,'ECA',col='navy')
     text(x=par('usr')[2]-4,y=par('usr')[4]*0.88,'CPD',col='tan2')
   
-  realized_eca=as.matrix(d1eca[,colnames(d1eca)==paste('b_ECA_cu[',unique(rv$cuid),']',sep='')])%*%rv$ECA_age_proxy_forested_only_std
+  realized_eca=as.matrix(d1eca[,colnames(d1eca)==paste('b_for_rv[',c,']',sep='')])%*%rv$sqrt.ECA.std
  realized_eca_m=apply(realized_eca,2,median)
   
-   realized_cpd=as.matrix(d1cpd[,colnames(d1cpd)==paste('b_ECA_cu[',unique(rv$cuid),']',sep='')])%*%as.vector(rv$disturbedarea_prct_cs.std)
+   realized_cpd=as.matrix(d1cpd[,colnames(d1cpd)==paste('b_for_rv[',c,']',sep='')])%*%as.vector(rv$sqrt.CPD.std)
  realized_cpd_m=apply(realized_cpd,2,median)
     
-   plot(realized_eca_m~rv$BroodYear,bty='l',type='n',ylim=c(min(c(realized_eca_m,realized_cpd_m)),max(c(realized_eca_m,realized_cpd_m))*1.2),ylab='Marginal effect on productivity through time',xlab='Brood Year')
+   plot(realized_eca_m~rv$BroodYear,bty='l',type='n',ylim=c(min(c(realized_eca_m,realized_cpd_m)),max(c(realized_eca_m,realized_cpd_m))*1.2),ylab='Marginal effect on productivity',xlab='Brood Year')
    lines(realized_eca_m~BroodYear,data=rv,col='navy',lwd=2)
     points(realized_eca_m~BroodYear,data=rv,col='navy',bg=col_points1,pch=21,cex=1.5) 
   
