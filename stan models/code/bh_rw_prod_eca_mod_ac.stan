@@ -44,7 +44,9 @@ parameters{
 //covariate effects
 real b_ECA; //global (across stock) mean effect of ECA
 vector[C] b_ECA_cu; //CU-specific ECA effect
-real<lower=0> sd_ECA; //variance in CU-level ECA effect
+vector[J] b_ECA_rv; //River-specific ECA effect
+real<lower=0> sigma_ECA_cu; //variance in CU-level ECA effect
+real<lower=0> sigma_ECA_rv; //variance in river-level ECA effect
 
  //variance components
  real<lower=0> mu_sigma; ///mean sigma among all stocks
@@ -99,12 +101,14 @@ model{
    //recruitment capacity for each stock - fit individually with weakly informative priors based on maximum observed recruitment
   for(j in 1:J) Rk[j] ~ lognormal(logRk_pr[j],logRk_pr_sig[j]); //stock-specific recruitment capacity
  
-  //covariate effects
+ //covariate effects
   b_ECA ~ normal(0,1); //standard normal prior for the effect of ECA
-  b_ECA_cu ~ normal(b_ECA,sd_ECA); //CU-specific ECA effects
+  b_ECA_cu ~ normal(b_ECA,sigma_ECA_cu); //CU-specific ECA effects
+  b_ECA_rv ~ normal(b_ECA_cu[C_i],sigma_ECA_rv); //CU-specific ECA effects
   
   //hierarchical variances
-  sd_ECA ~ normal(0,0.5); //variance in stock-level ECA effects
+  sigma_ECA_cu ~ normal(0,0.5); //variance in stock-level ECA effects
+  sigma_ECA_rv ~ normal(0,0.5); //variance in stock-level ECA effects
   
   //variance terms
   mu_sigma ~ normal(0.5,0.5);
