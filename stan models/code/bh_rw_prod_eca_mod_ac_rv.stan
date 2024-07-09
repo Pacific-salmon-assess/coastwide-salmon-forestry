@@ -93,8 +93,8 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
 	e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 	
 	for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
-	  mu2[t] = alpha_t[ii[t]]+alpha_j[j]-log(1+(exp(alpha_t[ii[t]]+alpha_j[j])/Rk[j])*S[t])+b_for_rv[j]*forest_loss[t] + rho[j]*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
-         e_t[t] = R_S[t] - mu2[t];  //residual for stock j at time t
+	  mu2[t] = alpha_t[ii[t]]+alpha_j[j]-log(1+(exp(alpha_t[ii[t]]+alpha_j[j])/Rk[j])*S[t])+b_for_rv[j]*forest_loss[t] + rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+         e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
 	}
   }
   sigmaAR = sigma.*sqrt(1-rho^2); //correct stock sigma for autocorrelation (rho)	

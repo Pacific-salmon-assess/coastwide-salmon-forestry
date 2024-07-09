@@ -34,8 +34,8 @@ parameters{
   real<lower=0> sigma_a_t; //temporal variance in coastwide productivity term
   vector[L-1] a_dev; //stock-level deviations in year-to-year productivity
 
-//capacity
- vector<lower = 0>[J] b; // per capita density dependence by stock
+//BH eq. recruitment
+  vector<lower=0>[J] log_b; //log per capita density dependence - Ricker beta parameter
 
 //covariate effects
  real b_for; //global (across stock) mean effect of forestry metrics
@@ -55,6 +55,7 @@ parameters{
 transformed parameters{
   vector[L] alpha_t; //stock productivity over time
   vector[J] sigmaAR; //sigma - adjusted for rho
+  vector[J] b; // Ricker beta parameter
 
   //parameters estimated from non-centered parameterization
 vector[C] alpha_cu; //persistent CU-level differences in productivity
@@ -69,6 +70,9 @@ vector<lower = 0>[J] sigma; ///stock-level sigma
   vector[N] mu1; //initial expectation at each time for each stock
   vector[N] mu2; //autocorr. adjusted expectation at each time for each stock
   
+
+//
+b=exp(log_b);
 //Transform non-centered parameters into parameter estimates: 
 alpha_cu = sigma_a_cu*z_a_cu; //non-centered estimate for CU time-invariant productivity
 alpha_j = alpha_cu[C_i] + sigma_a_rv*z_a_rv; //non-centered estimate for River time-invariant productivity
@@ -93,7 +97,7 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
 	e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 	
 	for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
-	 mu2[t] = alpha_t[ii[t]]+alpha_j[j]-b[j]*S[t]+b_for_rv[j]*forest_loss[t] + (rho[j]^(ii[start_y[j]+t]-ii[start_y[j]+t-1]))*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+	  mu2[t] = alpha_t[ii[t]]+alpha_j[j]-b[j]*S[t]+b_for_rv[j]*forest_loss[t] + rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
          e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
 	}
   }
@@ -111,8 +115,8 @@ model{
   sigma_a_t ~  normal(0,1); //temporal variance in time-varying global productivity
   a_dev ~ std_normal(); //z-scores for productivity changes in each time-step
   
-  //capacity for each stock - fit individually with weakly informative priors based on maximum observed spawners
-  for(j in 1:J) b[j] ~ lognormal(logbeta_pr[j],logbeta_pr_sig[j]);
+   //recruitment capacity for each stock - fit individually with weakly informative priors based on maximum observed recruitment
+  for(j in 1:J) log_b[j] ~ normal(logbeta_pr[j],logbeta_pr_sig[j]); //stock-specific recruitment capacity
  
  //covariate effects
   b_for ~ normal(0,1); //standard normal prior for the effect of forest loss
@@ -140,13 +144,10 @@ model{
   }
 }
 generated quantities{
+vector[J] Smax;
 vector[N] log_lik; //pointwise log likelihoods
-vector[J] Smax; //abundance that maximizes recruitment
-
-
 for(j in 1:J){
- Smax[j] = 1/b[j];
-
+ Smax[j]=1/b[j];
  log_lik[start_y[j]]=normal_lpdf(R_S[start_y[j]]|mu1[start_y[j]],sigma[j]); //pointwise log likelihood calculation - initial estimates
  
  for(t in (start_y[j]+1):(end_y[j])){
