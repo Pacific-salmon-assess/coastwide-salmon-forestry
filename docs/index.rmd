@@ -136,15 +136,8 @@ pk10r_o$cuid=as.numeric(factor(pk10r_o$CU))
 #two rivers named salmon river... recode
 ch20r$River=ifelse(ch20r$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20r$River)
 ch20r$River=ifelse(ch20r$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20r$River)
-pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_o$River)
-pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_o$River)
-pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_o$River)
-pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_o$River)
-pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_e$River)
-pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_e$River)
-pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_e$River)
-pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_e$River)
-#
+
+
 ch20r$disturbedarea_prct_cs.std=scale(ch20r$disturbedarea_prct_cs)
 
 #normalize ECA 2 - square root transformation (ie. sqrt(x))
@@ -155,13 +148,20 @@ ch20r$sqrt.ECA.std=(ch20r$sqrt.ECA-mean(ch20r$sqrt.ECA))/sd(ch20r$sqrt.ECA)
 ch20r$sqrt.CPD=sqrt(ch20r$disturbedarea_prct_cs)
 ch20r$sqrt.CPD.std=(ch20r$sqrt.CPD-mean(ch20r$sqrt.CPD))/sd(ch20r$sqrt.CPD)
 
-#normalize ECA 2 - square root transformation (ie. sqrt(x))
-pk10r_e$sqrt.ECA=sqrt(pk10r_e$ECA_age_proxy_forested_only)
-pk10r_e$sqrt.ECA.std=(pk10r_e$sqrt.ECA-mean(pk10r_e$sqrt.ECA))/sd(pk10r_e$sqrt.ECA)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_o$River)
+pk10r_o=pk10r_o[order(factor(pk10r_o$River),pk10r_o$BroodYear),]
+rownames(pk10r_o)=seq(1:nrow(pk10r_o))
 
-#normalize CPD 2 - square root transformation (ie. sqrt(x))
-pk10r_e$sqrt.CPD=sqrt(pk10r_e$disturbedarea_prct_cs)
-pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.CPD)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_e$River)
+pk10r_e=pk10r_e[order(factor(pk10r_e$River),pk10r_e$BroodYear),]
+rownames(pk10r_e)=seq(1:nrow(pk10r_e))
+
 
 #normalize ECA 2 - square root transformation (ie. sqrt(x))
 pk10r_o$sqrt.ECA=sqrt(pk10r_o$ECA_age_proxy_forested_only)
@@ -171,7 +171,20 @@ pk10r_o$sqrt.ECA.std=(pk10r_o$sqrt.ECA-mean(pk10r_o$sqrt.ECA))/sd(pk10r_o$sqrt.E
 pk10r_o$sqrt.CPD=sqrt(pk10r_o$disturbedarea_prct_cs)
 pk10r_o$sqrt.CPD.std=(pk10r_o$sqrt.CPD-mean(pk10r_o$sqrt.CPD))/sd(pk10r_o$sqrt.CPD)
 
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.ECA=sqrt(pk10r_e$ECA_age_proxy_forested_only)
+pk10r_e$sqrt.ECA.std=(pk10r_e$sqrt.ECA-mean(pk10r_e$sqrt.ECA))/sd(pk10r_e$sqrt.ECA)
 
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.CPD=sqrt(pk10r_e$disturbedarea_prct_cs)
+pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.CPD)
+
+pk10r_o$Broodline='Odd'
+pk10r_e$Broodline='Even'
+
+pk10r=rbind(pk10r_e,pk10r_o)
+pk10r$River2=paste(pk10r$River,pk10r$Broodline,sep='_')
+pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
 ```
 
 # Fig. 3. d1 global (cross population) effects of ECA/CPD by species ####
@@ -182,30 +195,27 @@ Provisional fig. 3 in main text (global - across stock - effects of ECA/CPD by s
 d_chm_eca=read.csv(here('stan models','outs','fits','posterior','bh_chm_eca.csv'),check.names=F)
 d_chm_cpd=read.csv(here('stan models','outs','fits','posterior','bh_chm_cpd.csv'),check.names=F)
 
-d_pke_eca=read.csv(here('stan models','outs','fits','posterior','bh_pke_eca.csv'),check.names=F)
-d_pke_cpd=read.csv(here('stan models','outs','fits','posterior','bh_pke_cpd.csv'),check.names=F)
+d_pk_eca=read.csv(here('stan models','outs','fits','posterior','bh_pk_eca.csv'),check.names=F)
+d_pk_cpd=read.csv(here('stan models','outs','fits','posterior','bh_pk_cpd.csv'),check.names=F)
 
-d_pko_eca=read.csv(here('stan models','outs','fits','posterior','bh_pko_eca.csv'),check.names=F)
-d_pko_cpd=read.csv(here('stan models','outs','fits','posterior','bh_pko_cpd.csv'),check.names=F)
-
-
-par(mfrow=c(3,2))
+cols=c('#018571','#993404')
+par(mfrow=c(2,2))
 x_n_chm_eca=seq(min(ch20r$sqrt.ECA.std),max(ch20r$sqrt.ECA.std),length.out=100)
 chm_eca_n=(x_n_chm_eca*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
 
 d_alpha_chm_eca=data.frame(d_chm_eca[,grepl('alpha_t',colnames(d_chm_eca))])
 dalpha0_chm_eca=apply(d_alpha_chm_eca,1,median)
 
-pRS_chm_eca=exp(matrix(dalpha0_chm_eca,ncol=100,nrow=nrow(d_chm_eca))+as.matrix(d_chm_eca[,2])%*%x_n_chm_eca-log(1+exp(matrix(dalpha0_chm_eca,ncol=100,nrow=nrow(d_chm_eca)))))/exp(matrix(dalpha0_chm_eca,ncol=100,nrow=nrow(d_chm_eca))+matrix(as.matrix(d_chm_eca[,2])%*%x_n_chm_eca[1],ncol=100,nrow=nrow(d_chm_eca)))
+pRS_chm_eca=exp(matrix(dalpha0_chm_eca,ncol=100,nrow=nrow(d_chm_eca))+as.matrix(d_chm_eca[,2])%*%x_n_chm_eca)/exp(matrix(dalpha0_chm_eca,ncol=100,nrow=nrow(d_chm_eca))+matrix(as.matrix(d_chm_eca[,2])%*%x_n_chm_eca[1],ncol=100,nrow=nrow(d_chm_eca)))
 m_pred_chm_eca=apply(pRS_chm_eca,2,median)
 
-plot(m_pred_chm_eca*100-100~chm_eca_n,bty='l',type='n',ylab='',xlab='',ylim=c(-90,90),col='darkred',lwd=3,yaxt='n',xlim=c(min(chm_eca_n*100),max(chm_eca_n*100)))
+plot(m_pred_chm_eca*100-100~chm_eca_n,bty='l',type='n',ylab='Change in productivity (R/S, %)',xlab='',ylim=c(-90,90),col='darkred',lwd=3,yaxt='n',xlim=c(min(chm_eca_n*100),max(chm_eca_n*100)))
 axis(side=2,at=seq(-90,90,by=15))
 abline(h=0,lwd=0.5,lty=5)
 for(i in 1:nrow(d_chm_eca)){
   lines(pRS_chm_eca[i,]*100-100~c(chm_eca_n*100),col=adjustcolor('darkgray',alpha.f = 0.01))
 }
-lines(m_pred_chm_eca*100-100~c(chm_eca_n*100),lwd=3,col='darkred')
+lines(m_pred_chm_eca*100-100~c(chm_eca_n*100),lwd=3,col=cols[1])
 
 x_n_chm_cpd=seq(min(ch20r$sqrt.CPD.std),max(ch20r$sqrt.CPD.std),length.out=100)
 chm_cpd_n=(x_n_chm_cpd*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
@@ -222,76 +232,42 @@ abline(h=0,lwd=0.5,lty=5)
 for(i in 1:nrow(d_chm_cpd)){
   lines(pRS_chm_cpd[i,]*100-100~chm_cpd_n,col=adjustcolor('darkgray',alpha.f = 0.01))
 }
-lines(m_pred_chm_cpd*100-100~chm_cpd_n,lwd=3,col='darkred')
+lines(m_pred_chm_cpd*100-100~chm_cpd_n,lwd=3,col=cols[1])
 
-x_n_pke_eca=seq(min(pk10r_e$sqrt.ECA.std),max(pk10r_e$sqrt.ECA.std),length.out=100)
-pke_eca_n=(x_n_pke_eca*sd(pk10r_e$sqrt.ECA)+mean(pk10r_e$sqrt.ECA))^2
+x_n_pk_eca=seq(min(pk10r$sqrt.ECA.std),max(pk10r$sqrt.ECA.std),length.out=100)
+pk_eca_n=(x_n_pk_eca*sd(pk10r$sqrt.ECA)+mean(pk10r$sqrt.ECA))^2
 
-d_alpha_pke_eca=data.frame(d_pke_eca[,grepl('alpha_t',colnames(d_pke_eca))])
-dalpha0_pke_eca=apply(d_alpha_pke_eca,1,median)
+d_alpha_pk_eca=data.frame(d_pk_eca[,grepl('alpha_t',colnames(d_pk_eca))])
+dalpha0_pk_eca=apply(d_alpha_pk_eca,1,median)
 
-pRS_pke_eca=exp(matrix(dalpha0_pke_eca,ncol=100,nrow=nrow(d_pke_eca))+as.matrix(d_pke_eca[,2])%*%x_n_pke_eca)/exp(matrix(dalpha0_pke_eca,ncol=100,nrow=nrow(d_pke_eca))+matrix(as.matrix(d_pke_eca[,2])%*%x_n_pke_eca[1],ncol=100,nrow=nrow(d_pke_eca)))
-m_pred_pke_eca=apply(pRS_pke_eca,2,median)
+pRS_pk_eca=exp(matrix(dalpha0_pk_eca,ncol=100,nrow=nrow(d_pk_eca))+as.matrix(d_pk_eca[,2])%*%x_n_pk_eca)/exp(matrix(dalpha0_pk_eca,ncol=100,nrow=nrow(d_pk_eca))+matrix(as.matrix(d_pk_eca[,2])%*%x_n_pk_eca[1],ncol=100,nrow=nrow(d_pk_eca)))
+m_pred_pk_eca=apply(pRS_pk_eca,2,median)
 
-plot(m_pred_pke_eca*100-100~pke_eca_n,bty='l',type='n',ylab='Change in productivity (R/S, %)',xlab='',ylim=c(-90,90),col='darkred',lwd=3,yaxt='n',xlim=c(min(pke_eca_n*100),max(pke_eca_n*100)))
+plot(m_pred_pk_eca*100-100~pk_eca_n,bty='l',type='n',ylab='Change in productivity (R/S, %)',xlab='Equivalent Clearcut Area (% of watershed)',ylim=c(-90,90),col='darkred',lwd=3,yaxt='n',xlim=c(min(pk_eca_n*100),max(pk_eca_n*100)))
 axis(side=2,at=seq(-90,90,by=15))
 abline(h=0,lwd=0.5,lty=5)
-for(i in 1:nrow(d_pke_eca)){
-  lines(pRS_pke_eca[i,]*100-100~c(pke_eca_n*100),col=adjustcolor('darkgray',alpha.f = 0.01))
+for(i in 1:nrow(d_pk_eca)){
+  lines(pRS_pk_eca[i,]*100-100~c(pk_eca_n*100),col=adjustcolor('darkgray',alpha.f = 0.01))
 }
-lines(m_pred_pke_eca*100-100~c(pke_eca_n*100),lwd=3,col='darkred')
+lines(m_pred_pk_eca*100-100~c(pk_eca_n*100),lwd=3,col=cols[2])
 
-x_n_pke_cpd=seq(min(pk10r_e$sqrt.CPD.std),max(pk10r_e$sqrt.CPD.std),length.out=100)
-pke_cpd_n=(x_n_pke_cpd*sd(pk10r_e$sqrt.CPD)+mean(pk10r_e$sqrt.CPD))^2
+x_n_pk_cpd=seq(min(pk10r$sqrt.CPD.std),max(pk10r$sqrt.CPD.std),length.out=100)
+pk_cpd_n=(x_n_pk_cpd*sd(pk10r$sqrt.CPD)+mean(pk10r$sqrt.CPD))^2
 
-d_alpha_pke_cpd=data.frame(d_pke_cpd[,grepl('alpha_t',colnames(d_pke_cpd))])
-dalpha0_pke_cpd=apply(d_alpha_pke_cpd,1,median)
+d_alpha_pk_cpd=data.frame(d_pk_cpd[,grepl('alpha_t',colnames(d_pk_cpd))])
+dalpha0_pk_cpd=apply(d_alpha_pk_cpd,1,median)
 
-pRS_pke_cpd=exp(matrix(dalpha0_pke_cpd,ncol=100,nrow=nrow(d_pke_cpd))+as.matrix(d_pke_cpd[,2])%*%x_n_pke_cpd)/exp(matrix(dalpha0_pke_cpd,ncol=100,nrow=nrow(d_pke_cpd))+matrix(as.matrix(d_pke_cpd[,2])%*%x_n_pke_cpd[1],ncol=100,nrow=nrow(d_pke_cpd)))
-m_pred_pke_cpd=apply(pRS_pke_cpd,2,median)
+pRS_pk_cpd=exp(matrix(dalpha0_pk_cpd,ncol=100,nrow=nrow(d_pk_cpd))+as.matrix(d_pk_cpd[,2])%*%x_n_pk_cpd)/exp(matrix(dalpha0_pk_cpd,ncol=100,nrow=nrow(d_pk_cpd))+matrix(as.matrix(d_pk_cpd[,2])%*%x_n_pk_cpd[1],ncol=100,nrow=nrow(d_pk_cpd)))
+m_pred_pk_cpd=apply(pRS_pk_cpd,2,median)
 
-plot(m_pred_pke_cpd*100-100~pke_cpd_n,bty='l',type='n',ylab='',xlab='',ylim=c(-90,90),col='darkred',lwd=3,yaxt='n',xlim=c(min(pke_cpd_n),max(pke_cpd_n)))
+plot(m_pred_pk_cpd*100-100~pk_cpd_n,bty='l',type='n',ylab='',xlab='Cumulative Disturbed Area (% of watershed)',ylim=c(-90,90),col='darkred',lwd=3,yaxt='n',xlim=c(min(pk_cpd_n),max(pk_cpd_n)))
 axis(side=2,at=seq(-90,90,by=15))
 abline(h=0,lwd=0.5,lty=5)
-for(i in 1:nrow(d_pke_cpd)){
-  lines(pRS_pke_cpd[i,]*100-100~pke_cpd_n,col=adjustcolor('darkgray',alpha.f = 0.01))
+for(i in 1:nrow(d_pk_cpd)){
+  lines(pRS_pk_cpd[i,]*100-100~pk_cpd_n,col=adjustcolor('darkgray',alpha.f = 0.01))
 }
-lines(m_pred_pke_cpd*100-100~pke_cpd_n,lwd=3,col='darkred')
+lines(m_pred_pk_cpd*100-100~pk_cpd_n,lwd=3,col=cols[2])
 
-x_n_pko_eca=seq(min(pk10r_e$sqrt.ECA.std),max(pk10r_e$sqrt.ECA.std),length.out=100)
-pko_eca_n=(x_n_pko_eca*sd(pk10r_e$sqrt.ECA)+mean(pk10r_e$sqrt.ECA))^2
-
-d_alpha_pko_eca=data.frame(d_pko_eca[,grepl('alpha_t',colnames(d_pko_eca))])
-dalpha0_pko_eca=apply(d_alpha_pko_eca,1,median)
-
-pRS_pko_eca=exp(matrix(dalpha0_pko_eca,ncol=100,nrow=nrow(d_pko_eca))+as.matrix(d_pko_eca[,2])%*%x_n_pko_eca)/exp(matrix(dalpha0_pko_eca,ncol=100,nrow=nrow(d_pko_eca))+matrix(as.matrix(d_pko_eca[,2])%*%x_n_pko_eca[1],ncol=100,nrow=nrow(d_pko_eca)))
-m_pred_pko_eca=apply(pRS_pko_eca,2,median)
-
-plot(m_pred_pko_eca*100-100~pko_eca_n,bty='l',type='n',ylab='',xlab='Equivalent clearcut area (%)',ylim=c(-90,90),col='darkred',lwd=3,yaxt='n',xlim=c(min(pko_eca_n*100),max(pko_eca_n*100)))
-axis(side=2,at=seq(-90,90,by=15))
-abline(h=0,lwd=0.5,lty=5)
-for(i in 1:nrow(d_pko_eca)){
-  lines(pRS_pko_eca[i,]*100-100~c(pko_eca_n*100),col=adjustcolor('darkgray',alpha.f = 0.01))
-}
-lines(m_pred_pko_eca*100-100~c(pko_eca_n*100),lwd=3,col='darkred')
-
-x_n_pko_cpd=seq(min(pk10r_e$sqrt.CPD.std),max(pk10r_e$sqrt.CPD.std),length.out=100)
-pko_cpd_n=(x_n_pko_cpd*sd(pk10r_e$sqrt.CPD)+mean(pk10r_e$sqrt.CPD))^2
-
-d_alpha_pko_cpd=data.frame(d_pko_cpd[,grepl('alpha_t',colnames(d_pko_cpd))])
-dalpha0_pko_cpd=apply(d_alpha_pko_cpd,1,median)
-
-pRS_pko_cpd=exp(matrix(dalpha0_pko_cpd,ncol=100,nrow=nrow(d_pko_cpd))+as.matrix(d_pko_cpd[,2])%*%x_n_pko_cpd)/exp(matrix(dalpha0_pko_cpd,ncol=100,nrow=nrow(d_pko_cpd))+matrix(as.matrix(d_pko_cpd[,2])%*%x_n_pko_cpd[1],ncol=100,nrow=nrow(d_pko_cpd)))
-m_pred_pko_cpd=apply(pRS_pko_cpd,2,median)
-
-plot(m_pred_pko_cpd*100-100~pko_cpd_n,bty='l',type='n',ylab='',xlab='Cumulative disturbed area (%)',ylim=c(-90,90),col='darkred',lwd=3,yaxt='n',xlim=c(min(pko_cpd_n),max(pko_cpd_n)))
-axis(side=2,at=seq(-90,90,by=15))
-abline(h=0,lwd=1,lty=5)
-
-for(i in 1:nrow(d_pko_cpd)){
-  lines(pRS_pko_cpd[i,]*100-100~pko_cpd_n,col=adjustcolor('darkgray',alpha.f = 0.01))
-}
-lines(m_pred_pko_cpd*100-100~pko_cpd_n,lwd=3,col='darkred')
 ```
 
 
@@ -417,35 +393,34 @@ mtext(side=3,adj=0,'B',font=2,line=2,cex=1.2)
 # Fig. SX1. Coastwide productivity trends by species ####
 ```{r, fig. Sx1 - draft 1,fig.width=8,fig.height=12}
 d_alpha_chm_cpd=data.frame(d_chm_eca[,grepl('alpha_t',colnames(d_chm_eca))])
-d_alpha_pke_cpd=data.frame(d_pke_cpd[,grepl('alpha_t',colnames(d_pke_cpd))])
-d_alpha_pko_cpd=data.frame(d_pko_cpd[,grepl('alpha_t',colnames(d_pko_cpd))])
+d_alpha_pke_cpd=data.frame(d_pk_cpd[,grepl('alpha_t.1',colnames(d_pk_cpd))])
+d_alpha_pko_cpd=data.frame(d_pk_cpd[,grepl('alpha_t.2',colnames(d_pk_cpd))])
 cols=c('#018571','#993404','#d95f0e')
 
-par(mfrow=c(3,1))
+par(mfrow=c(2,1))
 
-plot(c(0,16)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',bty='l',ylab='Coastwide mean productivity',xlab='Brood cohort year')
-for(i in 1001:1500){
+plot(c(0,12)~c(min(ch20r$BroodYear),max(ch20r$BroodYear)),type='n',bty='l',ylab='Coastwide mean productivity',xlab='Brood cohort year')
+for(i in 1:nrow(d_alpha_chm_cpd)){
   lines(unlist(d_alpha_chm_cpd[i,])~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),col=adjustcolor('darkgray',alpha.f=0.03))
 }
 lines(apply(d_alpha_chm_cpd,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),col=cols[1],lwd=2)
 points(apply(d_alpha_chm_cpd,2,median)~seq(min(ch20r$BroodYear),max(ch20r$BroodYear)),col='white',bg=cols[1],cex=1.5,lwd=0.5,pch=21)
-mtext(side=3,'Chum',font=2,line=0.5,col=cols[1],adj=0,at=1955)
+mtext(side=3,'Chum',font=2,line=0.5,col=cols[1],adj=0,at=2008)
 
 plot(c(-2,5)~c(min(pk10r_e$BroodYear),max(pk10r_e$BroodYear)),type='n',bty='l',ylab='Coastwide mean productivity',xlab='Brood cohort year')
 for(i in 1:nrow(d_alpha_chm_cpd)){
   lines(unlist(d_alpha_pke_cpd[i,])~seq(min(pk10r_e$BroodYear),max(pk10r_e$BroodYear),by=2),col=adjustcolor('darkgray',alpha.f=0.03))
 }
-lines(apply(d_alpha_pke_cpd,2,median)~seq(min(pk10r_e$BroodYear),max(pk10r_e$BroodYear),by=2),col=cols[2],lwd=2)
-points(apply(d_alpha_pke_cpd,2,median)~seq(min(pk10r_e$BroodYear),max(pk10r_e$BroodYear),by=2),col='white',bg=cols[2],cex=1.5,lwd=0.5,pch=21)
-mtext(side=3,'Pink (even)',font=2,line=0.5,col=cols[2],adj=0,at=1955)
-
-plot(c(-2,5)~c(min(pk10r_o$BroodYear),max(pk10r_o$BroodYear)),type='n',bty='l',ylab='Coastwide mean productivity',xlab='Brood cohort year')
 for(i in 1:nrow(d_alpha_pko_cpd)){
   lines(unlist(d_alpha_pko_cpd[i,])~seq(min(pk10r_o$BroodYear),max(pk10r_o$BroodYear),by=2),col=adjustcolor('darkgray',alpha.f=0.03))
 }
+lines(apply(d_alpha_pke_cpd,2,median)~seq(min(pk10r_e$BroodYear),max(pk10r_e$BroodYear),by=2),col=cols[2],lwd=2)
 lines(apply(d_alpha_pko_cpd,2,median)~seq(min(pk10r_o$BroodYear),max(pk10r_o$BroodYear),by=2),col=cols[3],lwd=2)
 points(apply(d_alpha_pko_cpd,2,median)~seq(min(pk10r_o$BroodYear),max(pk10r_o$BroodYear),by=2),col='white',bg=cols[3],cex=1.5,lwd=0.5,pch=21)
-mtext(side=3,'Pink (odd)',font=2,line=0.5,col=cols[3],adj=0,at=1955)
+points(apply(d_alpha_pke_cpd,2,median)~seq(min(pk10r_e$BroodYear),max(pk10r_e$BroodYear),by=2),col='white',bg=cols[2],cex=1.5,lwd=0.5,pch=21)
+mtext(side=3,'Pink (even)',font=2,line=0.5,col=cols[2],adj=0,at=2008)
+mtext(side=3,'Pink (odd)',font=2,line=-0.5,col=cols[3],adj=0,at=2008)
+
 
 
 ```
