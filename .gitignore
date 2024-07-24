@@ -6,5 +6,6 @@
 .csv
 .pdf
 
-outs/
-outs/*.*
+stan models/outs/
+stan models/outs/*.*
+stan models/code/dev/*.*
