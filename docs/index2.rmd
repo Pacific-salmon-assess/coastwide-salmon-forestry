@@ -1764,3 +1764,122 @@ lines(m_pred_pko_cpd*100-100~pko_cpd_n,lwd=3,col='darkred')
 
 To reduce the skew (and thus observation leverage) in the distribution of observed levels of Cumulative Disturbed Area or Equivalent Clearcut Area throughout all the time-series, we applied a square root transformation to each predictor (compared below).
 
+
+
+Provisional fig. 3 alternative in main text (global - across stock - effects of ECA/CPD by species):
+
+```{r, fig. 3 - draft 2,fig.width=12,fig.height=8}
+d_chm_eca=read.csv(here('stan models','outs','fits','posterior','bh_chm_eca.csv'),check.names=F)
+d_chm_cpd=read.csv(here('stan models','outs','fits','posterior','bh_chm_cpd.csv'),check.names=F)
+
+d_pke_eca=read.csv(here('stan models','outs','fits','posterior','bh_pke_eca.csv'),check.names=F)
+d_pke_cpd=read.csv(here('stan models','outs','fits','posterior','bh_pke_cpd.csv'),check.names=F)
+
+d_pko_eca=read.csv(here('stan models','outs','fits','posterior','bh_pko_eca.csv'),check.names=F)
+d_pko_cpd=read.csv(here('stan models','outs','fits','posterior','bh_pko_cpd.csv'),check.names=F)
+
+cols=c('#018571','#993404','#d95f0e')
+
+par(mfrow=c(1,2))
+par(oma=c(0.5,0.5,0.5,1))
+#chum
+x_n_chm_eca=seq(min(ch20r$sqrt.ECA.std),max(ch20r$sqrt.ECA.std),length.out=100)
+chm_eca_n=(x_n_chm_eca*sd(ch20r$sqrt.ECA)+mean(ch20r$sqrt.ECA))^2
+
+d_alpha_chm_eca=data.frame(d_chm_eca[,grepl('alpha_t',colnames(d_chm_eca))])
+dalpha0_chm_eca=apply(d_alpha_chm_eca,1,median)
+
+pRS_chm_eca=exp(matrix(dalpha0_chm_eca,ncol=100,nrow=nrow(d_chm_eca))+as.matrix(d_chm_eca[,2])%*%x_n_chm_eca)/exp(matrix(dalpha0_chm_eca,ncol=100,nrow=nrow(d_chm_eca))+matrix(as.matrix(d_chm_eca[,2])%*%x_n_chm_eca[1],ncol=100,nrow=nrow(d_chm_eca)))
+m_pred_chm_eca=apply(pRS_chm_eca,2,median)
+#pink - even
+x_n_pke_eca=seq(min(pk10r_e$sqrt.ECA.std),max(pk10r_e$sqrt.ECA.std),length.out=100)
+pke_eca_n=(x_n_pke_eca*sd(pk10r_e$sqrt.ECA)+mean(pk10r_e$sqrt.ECA))^2
+
+d_alpha_pke_eca=data.frame(d_pke_eca[,grepl('alpha_t',colnames(d_pke_eca))])
+dalpha0_pke_eca=apply(d_alpha_pke_eca,1,median)
+
+pRS_pke_eca=exp(matrix(dalpha0_pke_eca,ncol=100,nrow=nrow(d_pke_eca))+as.matrix(d_pke_eca[,2])%*%x_n_pke_eca)/exp(matrix(dalpha0_pke_eca,ncol=100,nrow=nrow(d_pke_eca))+matrix(as.matrix(d_pke_eca[,2])%*%x_n_pke_eca[1],ncol=100,nrow=nrow(d_pke_eca)))
+m_pred_pke_eca=apply(pRS_pke_eca,2,median)
+
+#pink - odd
+x_n_pko_eca=seq(min(pk10r_e$sqrt.ECA.std),max(pk10r_e$sqrt.ECA.std),length.out=100)
+pko_eca_n=(x_n_pko_eca*sd(pk10r_e$sqrt.ECA)+mean(pk10r_e$sqrt.ECA))^2
+
+d_alpha_pko_eca=data.frame(d_pko_eca[,grepl('alpha_t',colnames(d_pko_eca))])
+dalpha0_pko_eca=apply(d_alpha_pko_eca,1,median)
+
+pRS_pko_eca=exp(matrix(dalpha0_pko_eca,ncol=100,nrow=nrow(d_pko_eca))+as.matrix(d_pko_eca[,2])%*%x_n_pko_eca)/exp(matrix(dalpha0_pko_eca,ncol=100,nrow=nrow(d_pko_eca))+matrix(as.matrix(d_pko_eca[,2])%*%x_n_pko_eca[1],ncol=100,nrow=nrow(d_pko_eca)))
+m_pred_pko_eca=apply(pRS_pko_eca,2,median)
+
+
+plot(m_pred_chm_eca*100-100~chm_eca_n,bty='l',type='n',ylab='Change in productivity (R/S, %)',xlab='Equivalent clearcut area (%)',ylim=c(-100,100),col='darkred',lwd=3,yaxt='n',xlim=c(min(chm_eca_n*100),max(chm_eca_n*100)))
+axis(side=2,at=seq(-100,100,by=20))
+abline(h=0,lwd=0.5,lty=5)
+for(i in 1:nrow(d_chm_eca)){
+  lines(pRS_chm_eca[i,]*100-100~c(chm_eca_n*100),col=adjustcolor(cols[1],alpha.f = 0.03))
+  lines(pRS_pke_eca[i,]*100-100~c(pke_eca_n*100),col=adjustcolor(cols[2],alpha.f = 0.03))
+  lines(pRS_pko_eca[i,]*100-100~c(pko_eca_n*100),col=adjustcolor(cols[3],alpha.f = 0.03))
+}
+lines(m_pred_chm_eca*100-100~c(chm_eca_n*100),lwd=4,col='white')
+lines(m_pred_chm_eca*100-100~c(chm_eca_n*100),lwd=3,col=cols[1])
+lines(m_pred_pke_eca*100-100~c(pke_eca_n*100),lwd=4,col='white')
+lines(m_pred_pke_eca*100-100~c(pke_eca_n*100),lwd=3,col=cols[2])
+lines(m_pred_pko_eca*100-100~c(pko_eca_n*100),lwd=4,col='white')
+lines(m_pred_pko_eca*100-100~c(pko_eca_n*100),lwd=3,col=cols[3])
+mtext(side=3,adj=0,'A',font=2,line=2,cex=1.2)
+mtext(side=3,'Chum',font=2,at=81,line=-1,col=cols[1],adj=0)
+mtext(side=3,'Pink (even)',font=2,at=81,line=-2,col=cols[2],adj=0)
+mtext(side=3,'Pink (odd)',font=2,at=81,line=-3,col=cols[3],adj=0)
+
+###CPD
+
+#chum
+x_n_chm_cpd=seq(min(ch20r$sqrt.CPD.std),max(ch20r$sqrt.CPD.std),length.out=100)
+chm_cpd_n=(x_n_chm_cpd*sd(ch20r$sqrt.CPD)+mean(ch20r$sqrt.CPD))^2
+
+d_alpha_chm_cpd=data.frame(d_chm_cpd[,grepl('alpha_t',colnames(d_chm_cpd))])
+dalpha0_chm_cpd=apply(d_alpha_chm_cpd,1,median)
+
+pRS_chm_cpd=exp(matrix(dalpha0_chm_cpd,ncol=100,nrow=nrow(d_chm_cpd))+as.matrix(d_chm_cpd[,2])%*%x_n_chm_cpd)/exp(matrix(dalpha0_chm_cpd,ncol=100,nrow=nrow(d_chm_cpd))+matrix(as.matrix(d_chm_cpd[,2])%*%x_n_chm_cpd[1],ncol=100,nrow=nrow(d_chm_cpd)))
+m_pred_chm_cpd=apply(pRS_chm_cpd,2,median)
+
+#pink even
+x_n_pke_cpd=seq(min(pk10r_e$sqrt.CPD.std),max(pk10r_e$sqrt.CPD.std),length.out=100)
+pke_cpd_n=(x_n_pke_cpd*sd(pk10r_e$sqrt.CPD)+mean(pk10r_e$sqrt.CPD))^2
+
+d_alpha_pke_cpd=data.frame(d_pke_cpd[,grepl('alpha_t',colnames(d_pke_cpd))])
+dalpha0_pke_cpd=apply(d_alpha_pke_cpd,1,median)
+
+pRS_pke_cpd=exp(matrix(dalpha0_pke_cpd,ncol=100,nrow=nrow(d_pke_cpd))+as.matrix(d_pke_cpd[,2])%*%x_n_pke_cpd)/exp(matrix(dalpha0_pke_cpd,ncol=100,nrow=nrow(d_pke_cpd))+matrix(as.matrix(d_pke_cpd[,2])%*%x_n_pke_cpd[1],ncol=100,nrow=nrow(d_pke_cpd)))
+m_pred_pke_cpd=apply(pRS_pke_cpd,2,median)
+
+#pink odd
+x_n_pko_cpd=seq(min(pk10r_e$sqrt.CPD.std),max(pk10r_e$sqrt.CPD.std),length.out=100)
+pko_cpd_n=(x_n_pko_cpd*sd(pk10r_e$sqrt.CPD)+mean(pk10r_e$sqrt.CPD))^2
+
+d_alpha_pko_cpd=data.frame(d_pko_cpd[,grepl('alpha_t',colnames(d_pko_cpd))])
+dalpha0_pko_cpd=apply(d_alpha_pko_cpd,1,median)
+ 
+pRS_pko_cpd=exp(matrix(dalpha0_pko_cpd,ncol=100,nrow=nrow(d_pko_cpd))+as.matrix(d_pko_cpd[,2])%*%x_n_pko_cpd)/exp(matrix(dalpha0_pko_cpd,ncol=100,nrow=nrow(d_pko_cpd))+matrix(as.matrix(d_pko_cpd[,2])%*%x_n_pko_cpd[1],ncol=100,nrow=nrow(d_pko_cpd)))
+m_pred_pko_cpd=apply(pRS_pko_cpd,2,median)
+
+#par(oma=c(0.5,0.5,0.5,0))
+plot(m_pred_chm_cpd*100-100~chm_cpd_n,bty='l',type='n',ylab='',xlab='Cumulative disturbed area (%)',ylim=c(-100,100),col='darkred',lwd=3,yaxt='n',xlim=c(min(chm_cpd_n),max(chm_cpd_n)))
+axis(side=2,at=seq(-100,100,by=20))
+abline(h=0,lwd=0.5,lty=5)
+for(i in 1:nrow(d_chm_cpd)){
+ lines(pRS_chm_cpd[i,]*100-100~chm_cpd_n,col=adjustcolor(cols[1],alpha.f = 0.03))
+   lines(pRS_pke_cpd[i,]*100-100~pke_cpd_n,col=adjustcolor(cols[2],alpha.f = 0.03))
+     lines(pRS_pko_cpd[i,]*100-100~pko_cpd_n,col=adjustcolor(cols[3],alpha.f = 0.03))
+}
+lines(m_pred_chm_cpd*100-100~chm_cpd_n,lwd=4,col='white')
+lines(m_pred_chm_cpd*100-100~chm_cpd_n,lwd=3,col=cols[1])
+lines(m_pred_pke_cpd*100-100~pke_cpd_n,lwd=4,col='white')
+lines(m_pred_pke_cpd*100-100~pke_cpd_n,lwd=3,col=cols[2])
+lines(m_pred_pko_cpd*100-100~pko_cpd_n,lwd=4,col='white')
+lines(m_pred_pko_cpd*100-100~pko_cpd_n,lwd=3,col=cols[3])
+mtext(side=3,adj=0,'B',font=2,line=2,cex=1.2)
+
+```
+
+

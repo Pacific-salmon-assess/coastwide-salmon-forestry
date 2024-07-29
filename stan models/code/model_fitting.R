@@ -319,7 +319,7 @@ ric_pk_cpd <- mric_p$sample(data=dl_pk_cpd,
 write.csv(ric_pk_cpd$summary(),'./stan models/outs/summary/ric_pk_cpd.csv')
 ric_pk_cpd$save_object('./stan models/outs/fits/ric_pk_cpd.RDS')
 
-post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max'),format='draws_matrix')
+post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
 write.csv(post_ric_pk_cpd,here('stan models','outs','fits','posterior','ric_pk_cpd.csv'))
 
 
