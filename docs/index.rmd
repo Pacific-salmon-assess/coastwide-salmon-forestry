@@ -121,10 +121,11 @@ $\alpha_{t=1,bl='odd'} \sim N(1.5,2.5)$
 $\alpha_{t=2,..,T,bl='even'} = \alpha_{t-1,bl='even'} + w_{t,1}$
 $\alpha_{t=2,..,T,bl='odd'} = \alpha_{t-1,bl='odd'} + w_{t,2}$
 
-$w_t,1 \sim N(0,\sigma_w_even)$
-$w_t,2 \sim N(0,\sigma_w_odd)$
+$w_t,1 \sim N(0,\sigma_{w,even})$
+$w_t,2 \sim N(0,\sigma_{w,odd})$
 
-$\sigma_w \sim N[0,1)$
+$\sigma_{w,even} \sim N[0,1)$
+$\sigma_{w,odd} \sim N[0,1)$
 
 ```{r prep data,  include=FALSE}
 library(here);library(cmdstanr);library(dplyr)
@@ -1089,7 +1090,7 @@ for(c in 1:length(unique(ch20r$River))){
    realized_cpd_r=as.matrix(r1cpd[,colnames(r1cpd)==paste('b_for_rv[',c,']',sep='')])%*%as.vector(rv$sqrt.CPD.std)
  realized_cpd_m_r=apply(realized_cpd_r,2,median)
     
-   plot(realized_eca_m~rv$BroodYear,bty='l',type='n',ylim=c(min(c(realized_eca_m,realized_cpd_m)),max(c(realized_eca_m,realized_cpd_m))*1.2),ylab='Marginal effect on productivity',xlab='Brood Year')
+   plot(realized_eca_m~rv$BroodYear,bty='l',type='n',ylim=c(min(c(realized_eca_m,realized_cpd_m,realized_cpd_r,realized_eca_r)),max(c(realized_eca_m,realized_cpd_m,realized_cpd_r,realized_eca_r))*1.2),ylab='Marginal effect on productivity',xlab='Brood Year')
    lines(realized_eca_m~BroodYear,data=rv,col='navy',lwd=2)
     points(realized_eca_m~BroodYear,data=rv,col='navy',bg=col_points1,pch=21,cex=1.5) 
   
