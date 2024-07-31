@@ -107,12 +107,24 @@ The Ricker formulation of the model only differs by the density-dependence term,
 
 $log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - S_{t,r}/Smax_r + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
 
-Stock-specific capacity parameter ($\Smax_r$) is estimated independently at the river level, but with informative priors based on observed spawner counts ($S_r$):
+Stock-specific capacity parameter ($Smax_r$) is estimated independently at the river level, but with informative priors based on observed spawner counts ($S_t,r$):
 
-$\Smax_r \sim lognormal(log(0.5*max(S_{t,r})),log(max(S_{t,r}))$
+$\Smax_r \sim lognormal(log(0.5*max(S_{r,r})),log(max(S_{t,r}))$
 
-For Pinks, the 
+For Pinks, the model has two separate coastwide productivity trajectories for the distinct odd/even broodlines, $bl$, but the effects of forestry metrics are shared between broodlines in the same river:
 
+$log(R_{t,r,bl}/S_{t,r,bl}) = \alpha_{t,bl} + \alpha_{r,bl} - log(1+(e^{\alpha_{t,bl}+\alpha_j})/R_{k,r,bl})*S_{t,r,bl}) + \beta_{for,r}*X{t,r,bl} + \epsilon_{t,r,bl}$
+
+$\alpha_{t=1,bl='even'} \sim N(1.5,2.5)$
+$\alpha_{t=1,bl='odd'} \sim N(1.5,2.5)$
+
+$\alpha_{t=2,..,T,bl='even'} = \alpha_{t-1,bl='even'} + w_{t,1}$
+$\alpha_{t=2,..,T,bl='odd'} = \alpha_{t-1,bl='odd'} + w_{t,2}$
+
+$w_t,1 \sim N(0,\sigma_w_even)$
+$w_t,2 \sim N(0,\sigma_w_odd)$
+
+$\sigma_w \sim N[0,1)$
 
 ```{r prep data,  include=FALSE}
 library(here);library(cmdstanr);library(dplyr)
