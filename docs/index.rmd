@@ -109,7 +109,7 @@ $log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - S_{t,r}/Smax_r + \beta_{for,r}*X{t
 
 Stock-specific capacity parameter ($Smax_r$) is estimated independently at the river level, but with informative priors based on observed spawner counts ($S_t,r$):
 
-$\Smax_r \sim lognormal(log(0.5*max(S_{r,r})),log(max(S_{t,r}))$
+$Smax_r \sim lognormal(log(0.5*max(S_{r,r})),log(max(S_{t,r}))$
 
 For Pinks, the model has two separate coastwide productivity trajectories for the distinct odd/even broodlines, $bl$, but the effects of forestry metrics are shared between broodlines in the same river:
 
