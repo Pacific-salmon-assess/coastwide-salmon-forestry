@@ -19,7 +19,7 @@ cmdstanr::set_cmdstan_path(path='C:/Users/greenbergda/Documents/.cmdstan/cmdstan
 #basic model excluding watershed areas:
 
 # load Stan model sets####
-file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_rv2.stan")
+file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_chm.stan")
 mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_ac_rv_pink.stan")
@@ -85,7 +85,7 @@ dl_chm_eca=list(N=nrow(ch20r),
              start_t=L_i$tmin,
              end_t=L_i$tmax,
              pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
-             pSmax_sig=0.25*smax_prior$m.s,
+             pSmax_sig=smax_prior$m.s,
              pRk_mean=0.75*smax_prior$m.r, ##prior for Rk (recruitment capacity) based on max observed spawners
              pRk_sig=smax_prior$m.r)
 
@@ -104,7 +104,7 @@ dl_chm_cpd=list(N=nrow(ch20r),
               start_t=L_i$tmin,
               end_t=L_i$tmax,
               pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
-              pSmax_sig=0.25*smax_prior$m.s,
+              pSmax_sig=smax_prior$m.s,
               pRk_mean=0.75*smax_prior$m.r, #prior for Rk (recruitment capacity) based on max observed spawners
               pRk_sig=smax_prior$m.r)
 
@@ -122,8 +122,8 @@ bh_chm_eca <- mbh$sample(data=dl_chm_eca,
 write.csv(bh_chm_eca$summary(),'./stan models/outs/summary/bh_chm_eca.csv')
 bh_chm_eca$save_object('./stan models/outs/fits/bh_chm_eca.RDS')
 
-post_bh_chm_eca=bh_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
-write.csv(post_bh_chm_eca,here('stan models','outs','fits','posterior','bh_chm_eca.csv'))
+post_bh_chm_eca=bh_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
+write.csv(post_bh_chm_eca,here('stan models','outs','posterior','bh_chm_eca.csv'))
 
 ric_chm_eca <- mric$sample(data=dl_chm_eca,
                                chains = 6, 
@@ -137,8 +137,8 @@ ric_chm_eca <- mric$sample(data=dl_chm_eca,
 write.csv(ric_chm_eca$summary(),'./stan models/outs/summary/ric_chm_eca.csv')
 ric_chm_eca$save_object('./stan models/outs/fits/ric_chm_eca.RDS')
 
-post_ric_chm_eca=fit4ricac_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
-write.csv(dfit4eca,here('stan models','outs','fits','posterior','ric_chm_eca.csv'))
+post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
+write.csv(post_ric_chm_eca,here('stan models','outs','posterior','ric_chm_eca.csv'))
 
 ## CPD predictor ####
 bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
@@ -166,11 +166,11 @@ ric_chm_cpd <- mric$sample(data=dl_chm_cpd,
                            adapt_delta = 0.999,
                            max_treedepth = 20)
 
-write.csv(ric_chm_cpd$summary(),'./stan models/outs/summary/ric_chm_cpd_ac.csv')
-ric_chm_cpd$save_object('./stan models/outs/fits/ric_chm_cpd_ac.RDS')
+write.csv(ric_chm_cpd$summary(),'./stan models/outs/summary/ric_chm_cpd.csv')
+ric_chm_cpd$save_object('./stan models/outs/fits/ric_chm_cpd.RDS')
 
 post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max'),format='draws_matrix')
-write.csv(post_ric_chm_cpd,here('stan models','outs','fits','posterior','ric_chm_cpd_ac.csv'))
+write.csv(post_ric_chm_cpd,here('stan models','outs','posterior','ric_chm_cpd.csv'))
 
 # Pink salmon - even/odd broodlines #####
 pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_o$River)

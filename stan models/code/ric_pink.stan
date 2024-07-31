@@ -40,7 +40,7 @@ parameters{
   vector<lower=0>[2] sigma_a_t; //temporal variance in coastwide productivity term - separate for odd/even broodlines
   matrix[2,L-1] a_dev; //stock-level deviations in year-to-year productivity
 
-//BH eq. recruitment
+//Ricker smax
  vector<lower=0>[J] S_max; //density dependence - inverse of Ricker beta parameter
 
 //covariate effects
@@ -84,8 +84,6 @@ b_for_rv = b_for_cu[C_r] + sigma_for_rv*z_for_rv; //non-centered CU-varying esti
 
 cu_sigma = mu_sigma + sd_sigma_cu*z_sig_cu; //non-centered CU-varying estimate for sigma
 sigma = cu_sigma[C_i] + sd_sigma*z_sig_j; //non-centered CU-varying estimate for sigma
-
-//convert Smax to beta
 
 
  //initial productivities
