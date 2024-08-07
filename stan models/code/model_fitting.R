@@ -293,6 +293,22 @@ bh_pk_eca$save_object('./stan models/outs/fits/bh_pk_eca.RDS')
 post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
 write.csv(post_bh_pk_eca,here('stan models','outs','fits','posterior','bh_pk_eca.csv'))
 
+ric_pk_eca <- mric_p$sample(data=dl_pk_eca,
+                            chains = 6, 
+                            init=0,
+                            iter_warmup = 200,
+                            iter_sampling =500,
+                            refresh = 100,
+                            adapt_delta = 0.999,
+                            max_treedepth = 20)
+
+write.csv(ric_pk_eca$summary(),'./stan models/outs/summary/ric_pk_eca.csv')
+ric_pk_eca$save_object('./stan models/outs/fits/ric_pk_eca.RDS')
+
+post_ric_pk_eca=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
+write.csv(post_ric_pk_eca,here('stan models','outs','fits','posterior','ric_pk_cpd.csv'))
+
+
 bh_pk_cpd <- mbh_p$sample(data=dl_pk_cpd,
                           chains = 6, 
                           iter_warmup = 200,

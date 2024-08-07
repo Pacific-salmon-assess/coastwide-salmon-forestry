@@ -135,6 +135,7 @@ for(j in 1:J){
  for(t in (start_y[j]):(end_y[j])){
  log_lik[t]=normal_lpdf(R_S[t]|mu[t], sigma[j]); //pointwise log likelihood calculation
  }
+ Rk_prior[j] = normal_rng(logRk_pr[j],logRk_pr_sig[j]);
+
 }
-Rk_prior = normal_rng(logRk_pr[j],logRk_pr_sig[j]);
 }
