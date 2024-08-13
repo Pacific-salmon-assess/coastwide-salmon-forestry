@@ -305,8 +305,8 @@ ric_pk_eca <- mric_p$sample(data=dl_pk_eca,
 write.csv(ric_pk_eca$summary(),'./stan models/outs/summary/ric_pk_eca.csv')
 ric_pk_eca$save_object('./stan models/outs/fits/ric_pk_eca.RDS')
 
-post_ric_pk_eca=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
-write.csv(post_ric_pk_eca,here('stan models','outs','fits','posterior','ric_pk_cpd.csv'))
+post_ric_pk_eca=ric_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
+write.csv(post_ric_pk_eca,here('stan models','outs','posterior','ric_pk_eca.csv'))
 
 
 bh_pk_cpd <- mbh_p$sample(data=dl_pk_cpd,
