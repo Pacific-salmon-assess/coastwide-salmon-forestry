@@ -1233,7 +1233,9 @@ for(c in 1:length(unique(pk10r$River))){
   b_ECA=r1eca[,colnames(r1eca)== paste('b_for_rv.',c,'.',sep='')]                           
       
     plot(Recruits~Spawners,data=rv_o,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main='Odd - Ricker (ECA)')
-    
+     
+   s_pred=seq(0,max(rv_o$Spawners),length.out=100)
+  
    RS_pred_m=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred,2,median))*s_pred
   RS_pred_l=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred,2,quantile,0.05))*s_pred
   RS_pred_u=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred,2,quantile,0.95))*s_pred
@@ -1336,7 +1338,7 @@ for(c in 1:length(unique(pk10r$River))){
   lines(RS_pred_eca_l~s_pred,col=adjustcolor(cols[1],alpha.f=0.8),lwd=3)
   lines(RS_pred_eca_u~s_pred,col=adjustcolor(cols[9],alpha.f=0.8),lwd=3)
   
-  points(Recruits~Spawners,data=rv_e,bg=col_points2,pch=21,cex=1.5) 
+  points(Recruits~Spawners,data=rv_e,bg=col_points2,pch=24,cex=1.5) 
  }
   #Odd
   if(nrow(rv_o)>0){
@@ -1363,7 +1365,7 @@ for(c in 1:length(unique(pk10r$River))){
   lines(RS_pred_eca_l~s_pred,col=adjustcolor(cols[1],alpha.f=0.8),lwd=3)
   lines(RS_pred_eca_u~s_pred,col=adjustcolor(cols[9],alpha.f=0.8),lwd=3)
   
-  points(Recruits~Spawners,data=rv_o,bg=col_points2,pch=21,cex=1.5) 
+  points(Recruits~Spawners,data=rv_o,bg=col_points2,pch=24,cex=1.5) 
   }
  
  #Time series of ECA/CPD 
