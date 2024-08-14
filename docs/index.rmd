@@ -679,10 +679,14 @@ for(j in 1:nrow(sc_cu)){
   lines(d$y~d$x,col=adjustcolor('darkblue',alpha.f=0.8))
 }
 
+d_chm_eca2=read.csv(here('stan models','outs','posterior','bh_chm_eca.csv'),check.names=F)
+d_chm_cpd2=read.csv(here('stan models','outs','posterior','bh_chm_cpd.csv'),check.names=F)
 
-par(mfrow=c(1,2))
+par(mfrow=c(2,2))
 hist(d_chm_eca[,2],breaks=30,main='ECA',xlab='effect size')
 hist(d_chm_cpd[,2],breaks=30,main='CPD',xlab='effect size')
+hist(d_chm_eca2[,2],breaks=30,main='ECA (no SC)',xlab='effect size')
+hist(d_chm_cpd2[,2],breaks=30,main='CPD (no SC)',xlab='effect size')
 
 ```
 
@@ -1137,7 +1141,7 @@ for(c in 1:length(unique(pk10r$River))){
   #ECA
   #Even
   if(nrow(rv_e)>0){
-   plot(Recruits~Spawners,data=rv_e,xlim=c(0,max(rv_e$Spawners)),ylim=c(0,max(rv_e$Recruits)),bty='l',type='n',main=paste(unique(rv_e$River),'Even (ECA)',sep=' '))
+   plot(Recruits~Spawners,data=rv_e,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv_e$River),'Even (ECA)',sep=' '))
   
   alpha_t_e=apply(d1eca[,grepl('alpha_t.1',colnames(d1eca))==T],1,median)
   alpha_j_e=d1eca[,colnames(d1eca)== paste('alpha_j.',unique(rv_e$River2.n),'.',sep='')]
@@ -1171,7 +1175,7 @@ for(c in 1:length(unique(pk10r$River))){
   alpha_j_o=d1eca[,colnames(d1eca)== paste('alpha_j.',unique(rv_o$River2.n),'.',sep='')]
   Rk_j_o=d1eca[,colnames(d1eca)== paste('Rk.',unique(rv_o$River2.n),'.',sep='')]
   b_ECA=d1eca[,colnames(d1eca)== paste('b_for_rv.',c,'.',sep='')]                           
-   plot(Recruits~Spawners,data=rv_o,xlim=c(0,max(rv_o$Spawners)),ylim=c(0,max(rv_o$Recruits)),bty='l',type='n',main=paste(unique(rv_o$River),'Odd (ECA)',sep=' '))
+   plot(Recruits~Spawners,data=rv_o,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv_o$River),'Odd (ECA)',sep=' '))
 
   s_pred=seq(0,max(rv_o$Spawners),length.out=100)
   
@@ -1195,13 +1199,15 @@ for(c in 1:length(unique(pk10r$River))){
 }
   #Ricker
  if(nrow(rv_e)>0){ 
-   plot(Recruits~Spawners,data=rv_e,xlim=c(0,max(rv_e$Spawners)),ylim=c(0,max(rv_e$Recruits)),bty='l',type='n',main='Even - Ricker (ECA)')
+   plot(Recruits~Spawners,data=rv_e,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main='Even - Ricker (ECA)')
   
   smax_j_e=d1eca[,colnames(r1eca)== paste('S_max.',unique(rv_e$River2.n),'.',sep='')]
   alpha_t_e=apply(r1eca[,grepl('alpha_t.1',colnames(r1eca))==T],1,median)
   alpha_j_e=d1eca[,colnames(r1eca)== paste('alpha_j.',unique(rv_e$River2.n),'.',sep='')]
 
-  b_ECA=r1eca[,colnames(r1eca)== paste('b_for_rv.',c,'.',sep='')]                                #even                          
+  b_ECA=r1eca[,colnames(r1eca)== paste('b_for_rv.',c,'.',sep='')]                                #even       
+    s_pred=seq(0,max(rv_e$Spawners),length.out=100)
+    
    RS_pred_m=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_e)%*%s_pred,2,median))*s_pred
   RS_pred_l=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_e)%*%s_pred,2,quantile,0.05))*s_pred
   RS_pred_u=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_e)%*%s_pred,2,quantile,0.95))*s_pred
@@ -1226,7 +1232,7 @@ for(c in 1:length(unique(pk10r$River))){
   alpha_j_o=r1eca[,colnames(r1eca)== paste('alpha_j.',unique(rv_o$River2.n),'.',sep='')]
   b_ECA=r1eca[,colnames(r1eca)== paste('b_for_rv.',c,'.',sep='')]                           
       
-    plot(Recruits~Spawners,data=rv_o,xlim=c(0,max(rv_o$Spawners)),ylim=c(0,max(rv_o$Recruits)),bty='l',type='n',main='Odd - Ricker (ECA)')
+    plot(Recruits~Spawners,data=rv_o,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main='Odd - Ricker (ECA)')
     
    RS_pred_m=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred,2,median))*s_pred
   RS_pred_l=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred,2,quantile,0.05))*s_pred
@@ -1249,7 +1255,7 @@ for(c in 1:length(unique(pk10r$River))){
   
   #even
   if(nrow(rv_e)>0){
-  plot(Recruits~Spawners,data=rv_e,xlim=c(0,max(rv_e$Spawners)),ylim=c(0,max(rv_e$Recruits)),bty='l',type='n',main=paste(unique(rv_e$River),'Even (CPD)',sep=' '))
+  plot(Recruits~Spawners,data=rv_e,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv_e$River),'Even (CPD)',sep=' '))
   
    alpha_t_e=apply(d1cpd[,grepl('alpha_t.1',colnames(d1cpd))==T],1,median)
   alpha_j_e=d1cpd[,colnames(d1cpd)== paste('alpha_j.',unique(rv_e$River2.n),'.',sep='')]
@@ -1283,8 +1289,9 @@ for(c in 1:length(unique(pk10r$River))){
   alpha_j_o=d1cpd[,colnames(d1cpd)== paste('alpha_j.',unique(rv_o$River2.n),'.',sep='')]
  Rk_j_o=d1cpd[,colnames(d1cpd)== paste('Rk.',unique(rv_o$River2.n),'.',sep='')]
   
-  
-   plot(Recruits~Spawners,data=rv_o,xlim=c(0,max(rv_o$Spawners)),ylim=c(0,max(rv_o$Recruits)),bty='l',type='n',main=paste(unique(rv_o$River),'Even (CPD)',sep=' '))
+   s_pred=seq(0,max(rv_o$Spawners),length.out=100)
+   
+   plot(Recruits~Spawners,data=rv_o,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main=paste(unique(rv_o$River),'Even (CPD)',sep=' '))
     RS_pred_m=exp(apply(matrix(alpha_j_o+alpha_t_o,ncol=length(s_pred),nrow=length(alpha_j_o))-log(1+as.matrix(exp(alpha_j_o+alpha_t_o)/Rk_j_o)%*%s_pred),2,median))*s_pred
   RS_pred_l=exp(apply(matrix(alpha_j_o+alpha_t_o,ncol=length(s_pred),nrow=length(alpha_j_o))-log(1+as.matrix(exp(alpha_j_o+alpha_t_o)/Rk_j_o)%*%s_pred),2,quantile,0.05))*s_pred
   RS_pred_u=exp(apply(matrix(alpha_j_o+alpha_t_o,ncol=length(s_pred),nrow=length(alpha_j_o))-log(1+as.matrix(exp(alpha_j_o+alpha_t_o)/Rk_j_o)%*%s_pred),2,quantile,0.95))*s_pred
@@ -1301,6 +1308,62 @@ for(c in 1:length(unique(pk10r$River))){
   lines(RS_pred_eca_u~s_pred,col=adjustcolor(cols[9],alpha.f=0.8),lwd=3)
   
   points(Recruits~Spawners,data=rv_o,bg=col_points2,pch=24,cex=1.5) 
+  }
+  
+   #Ricker
+ if(nrow(rv_e)>0){ 
+   plot(Recruits~Spawners,data=rv_e,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main='Even - Ricker (ECA)')
+  
+  smax_j_e=d1eca[,colnames(r1eca)== paste('S_max.',unique(rv_e$River2.n),'.',sep='')]
+  alpha_t_e=apply(r1eca[,grepl('alpha_t.1',colnames(r1eca))==T],1,median)
+  alpha_j_e=d1eca[,colnames(r1eca)== paste('alpha_j.',unique(rv_e$River2.n),'.',sep='')]
+
+  b_ECA=r1eca[,colnames(r1eca)== paste('b_for_rv.',c,'.',sep='')]                                #even       
+    s_pred=seq(0,max(rv_e$Spawners),length.out=100)
+    
+   RS_pred_m=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_e)%*%s_pred,2,median))*s_pred
+  RS_pred_l=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_e)%*%s_pred,2,quantile,0.05))*s_pred
+  RS_pred_u=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_e)%*%s_pred,2,quantile,0.95))*s_pred
+  
+  
+  RS_pred_eca_l=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_e)%*%s_pred+matrix(b_ECA*min(rv$sqrt.CPD.std),ncol=length(s_pred),nrow=length(alpha_j_e)),2,median))*s_pred
+  
+  RS_pred_eca_u=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_e)%*%s_pred+matrix(b_ECA*max(rv$sqrt.CPD.std),ncol=length(s_pred),nrow=length(alpha_j_e+alpha_t_e)),2,median))*s_pred
+  
+  lines(RS_pred_m~s_pred,lwd=3)
+  lines(RS_pred_l~s_pred,lwd=1,lty=5)
+  lines(RS_pred_u~s_pred,lwd=1,lty=5)
+  lines(RS_pred_eca_l~s_pred,col=adjustcolor(cols[1],alpha.f=0.8),lwd=3)
+  lines(RS_pred_eca_u~s_pred,col=adjustcolor(cols[9],alpha.f=0.8),lwd=3)
+  
+  points(Recruits~Spawners,data=rv_e,bg=col_points2,pch=21,cex=1.5) 
+ }
+  #Odd
+  if(nrow(rv_o)>0){
+      smax_j_o=d1eca[,colnames(r1eca)== paste('S_max.',unique(rv_o$River2.n),'.',sep='')]
+  alpha_t_o=apply(r1eca[,grepl('alpha_t.2',colnames(r1eca))==T],1,median)
+  alpha_j_o=r1eca[,colnames(r1eca)== paste('alpha_j.',unique(rv_o$River2.n),'.',sep='')]
+  b_ECA=r1eca[,colnames(r1eca)== paste('b_for_rv.',c,'.',sep='')]                           
+       s_pred=seq(0,max(rv_o$Spawners),length.out=100)
+       
+    plot(Recruits~Spawners,data=rv_o,xlim=c(0,max(rv$Spawners)),ylim=c(0,max(rv$Recruits)),bty='l',type='n',main='Odd - Ricker (ECA)')
+    
+   RS_pred_m=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred,2,median))*s_pred
+  RS_pred_l=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred,2,quantile,0.05))*s_pred
+  RS_pred_u=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred,2,quantile,0.95))*s_pred
+  
+  
+  RS_pred_eca_l=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred+matrix(b_ECA*min(rv$sqrt.CPD.std),ncol=length(s_pred),nrow=length(alpha_j_e)),2,median))*s_pred
+  
+  RS_pred_eca_u=exp(apply(matrix(alpha_j_e+alpha_t_e,ncol=length(s_pred),nrow=length(alpha_j_e))-as.matrix(1/smax_j_o)%*%s_pred+matrix(b_ECA*max(rv$sqrt.CPD.std),ncol=length(s_pred),nrow=length(alpha_j_e+alpha_t_e)),2,median))*s_pred
+  
+  lines(RS_pred_m~s_pred,lwd=3)
+  lines(RS_pred_l~s_pred,lwd=1,lty=5)
+  lines(RS_pred_u~s_pred,lwd=1,lty=5)
+  lines(RS_pred_eca_l~s_pred,col=adjustcolor(cols[1],alpha.f=0.8),lwd=3)
+  lines(RS_pred_eca_u~s_pred,col=adjustcolor(cols[9],alpha.f=0.8),lwd=3)
+  
+  points(Recruits~Spawners,data=rv_o,bg=col_points2,pch=21,cex=1.5) 
   }
  
  #Time series of ECA/CPD 
