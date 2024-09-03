@@ -1,5 +1,8 @@
 #goal - plot the loss in productivity at current cpd levels
 
+#edits - make colors depend on cpd values and have vertical lines at the means
+
+
 # Libraries 
 library(here)
 library(tidyverse)
@@ -196,11 +199,11 @@ cu_names <- data.frame(CU = c("CM-1","CM-2","CM-3","CM-4","CM-5","CM-6",
                                     "Hecate Lowlands",
                                     "Mussel-Kynoch",
                                     "Douglas-Gardner",
-                                    "East QCI",
+                                    "East Haida Gwaii",
                                     "Skidegate",
-                                    "West QCI",
-                                    "North QCI",
-                                    "North QCI-Stanley Creek",
+                                    "West Haida Gwaii",
+                                    "North Haida Gwaii",
+                                    "North Haida Gwaii-Stanley Creek",
                                     "Skeena Estuary",
                                     "Lower Skeena",
                                     "Middle Skeena",
@@ -237,3 +240,60 @@ ggplot(productivity_long %>% filter(productivity_loss < 100),
         strip.text = element_text(size = 13))
 
 ggsave(here('figures','productivity_loss.png'), width = 12, height = 10, dpi = 300)
+
+
+
+#trying without alpha because it should cancel out
+
+
+#loop over all watersheds
+median_productivity <- data.frame()
+#make empty df with 4000 rows
+
+for (i in 1:length(unique(ch20r$River_n))) {
+  river <- unique(ch20r$River_n)[i]
+  print(river)
+  # print(river)
+  #filter data for river
+  river_data <- ch20r %>% filter(River_n == river)
+  # #filter alpha for river
+  # river_alpha <- alpha %>% select(ends_with(paste0("_alpha_j[",river,"]")))
+  #b effect of forestry
+  b <- posterior %>% select(starts_with("b_for_rv")) %>% select(ends_with(paste0("[",river,"]")))
+  #cpd
+  max_cpd <- max(river_data$sqrt.CPD.std)
+  no_forestry <- min(ch20r$sqrt.CPD.std)
+  
+  # #calculate productivity
+  if(i==1){
+    productivity <- (exp(as.matrix(b)%*%
+                           max_cpd)/exp(as.matrix(b)%*%
+                                          no_forestry))*100 - 100}
+  else{
+    productivity <- cbind(productivity, (exp(as.matrix(b)%*%
+                                               max_cpd)/exp(as.matrix(b)%*%
+                                                              no_forestry))*100 - 100)
+  }
+  median_productivity <- rbind(median_productivity, 
+                               data.frame(river = river, median_productivity = median(productivity[,i])))
+  # river_data <- river_data %>% mutate(productivity = exp(river_alpha %*% t(as.matrix(river_data$sqrt.CPD.std))) / (1 + exp(river_alpha %*% t(as.matrix(river_data$sqrt.CPD.std))))
+  # #add productivity to df
+  # df <- rbind(df, river_data)
+}
+
+#change the colnames of productivity to river names, make df long
+
+colnames(productivity) <- unique(ch20r$River_n)
+productivity <- data.frame(productivity) %>% 
+  mutate(sample = rownames(productivity))
+
+productivity_long <- data.frame(productivity) %>% 
+  pivot_longer(everything(), names_to = 'River_n', 
+               values_to = 'productivity_loss') %>% 
+  mutate(River_n = as.numeric(substr(River_n, 2, nchar(River_n)))) %>% 
+  left_join(ch20r %>% select(River_n, River, CU) %>% 
+              distinct(), 
+            by = 'River_n', relationship = "many-to-one")
+
+#looks like the dataset now has more rivers. need to update posterior 
+#to proceed. Going to run the models on the server
