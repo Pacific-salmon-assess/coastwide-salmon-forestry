@@ -104,16 +104,16 @@ dl_chm_cpd=list(N=nrow(ch20r),
 
 
 ## ECA predictor ####
-tic()
-bh_chm_eca <- mbh$sample(data=dl_chm_eca,
-                         chains = 6, 
-                         init=0,
-                         iter_warmup = 200,
-                         iter_sampling =500,
-                         refresh = 100,
-                         adapt_delta = 0.999,
-                         max_treedepth = 20)
-non_parallel_time<-toc()
+# tic()
+# bh_chm_eca <- mbh$sample(data=dl_chm_eca,
+#                          chains = 6, 
+#                          init=0,
+#                          iter_warmup = 200,
+#                          iter_sampling =500,
+#                          refresh = 100,
+#                          adapt_delta = 0.999,
+#                          max_treedepth = 20)
+# non_parallel_time<-toc()
 
 #parallel
 
@@ -192,4 +192,59 @@ bh_chm_cpd$save_object('./stan models/outs/fits/bh_chm_cpd_mk.RDS')
 post_chm_cpd=bh_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
 write.csv(post_chm_cpd,here('stan models','outs','fits','posterior','bh_chm_cpd_mk.csv'))
 
+#sensitivity analysis
+
+file_bh_sensitivity=file.path(here('stan models', 'code', 'bh_chm_sensitivity_analysis.stan'))
+mbh_sensitivity=cmdstanr::cmdstan_model(file_bh_sensitivity) #compile stan code to C++
+
+
+fit_model_chum_eca_bh_sensitivity <- function(alpha_0) {
+  if(Sys.info()[7] == "mariakur") {
+    print("Running on local machine")
+    set_cmdstan_path("C:/Users/mariakur/.cmdstan/cmdstan-2.35.0")
+  } else {
+    print("Running on server")
+    .libPaths(new = "/home/mkuruvil/R_Packages")
+    set_cmdstan_path("/home/mkuruvil/R_Packages/cmdstan-2.35.0")
+  }
+  #data list for fits
+  dl_chm_eca_sensitivity=list(N=nrow(ch20r),
+                  L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
+                  C=length(unique(ch20r$CU)),
+                  J=length(unique(ch20r$River)),
+                  alpha_0_sd = alpha_0,
+                  C_i=as.numeric(factor(cu$CU)), #CU index by stock
+                  ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
+                  R_S=ch20r$ln_RS,
+                  S=ch20r$Spawners, 
+                  forest_loss=ch20r$sqrt.ECA.std, #design matrix for standardized ECA
+                  start_y=N_s[,1],
+                  end_y=N_s[,2],
+                  start_t=L_i$tmin,
+                  end_t=L_i$tmax,
+                  pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
+                  pSmax_sig=smax_prior$m.s,
+                  pRk_mean=0.75*smax_prior$m.r, ##prior for Rk (recruitment capacity) based on max observed spawners
+                  pRk_sig=smax_prior$m.r)
+  bh_chm_eca_parallel_sensitivity <- mbh_sensitivity$sample(
+    data=dl_chm_eca_sensitivity,
+    chains = 6, 
+    init=0,
+    iter_warmup = 200,
+    iter_sampling =500,
+    refresh = 100,
+    adapt_delta = 0.999,
+    max_treedepth = 20)
+  write.csv(model_fit_bh_chm_eca_parallel_sensitivity$summary(),paste0('./stan models/outs/summary/bh_chm_eca_mk_',alpha_0,'.csv'))
+  model_fit_bh_chm_eca_parallel_sensitivity$save_object(paste0('./stan models/outs/fits/bh_chm_eca_mk_',alpha_0,'.RDS'))
+  
+  post_bh_chm_eca=model_fit_bh_chm_eca_parallel$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
+  write.csv(post_bh_chm_eca,here('stan models','outs','posterior',paste0('bh_chm_eca_mk_',alpha_0,'.csv')))
+  
+}
+
+model_fit_bh_chm_eca_parallel_sensitivity <- future_map(.x=list(3,5,7), 
+                                            .f=fit_model_chum_eca_bh_sensitivity,
+                                            .options = furrr_options(seed = 20),
+                                            .progress=TRUE)
 
