@@ -2,23 +2,25 @@
 
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
+  library(cmdstanr)
   set_cmdstan_path("C:/Users/mariakur/.cmdstan/cmdstan-2.35.0")
 } else {
   print("Running on server")
   .libPaths(new = "/home/mkuruvil/R_Packages")
+  library(cmdstanr)
   set_cmdstan_path("/home/mkuruvil/R_Packages/cmdstan-2.35.0")
 }
 
 #for reproducibility
 set.seed(1194)
 
-library(here);library(cmdstanr);library(dplyr)
+library(here);library(dplyr)
 library(rstan)
 library(tidyverse)
 library(tictoc)
 library(future)
 library(furrr)
-source('./stan models/code/funcs.R')
+source(here('stan models','code','funcs.R'))
 
 # load Stan model sets####
 file_bh=file.path(here('stan models', 'code', 'bh_chm.stan'))
@@ -26,7 +28,7 @@ mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 # load datasets####
 
-ch20r <- read.csv("./origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
+ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_reduced_VRI90.csv"))
 
 
 ## data formatting ####
