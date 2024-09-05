@@ -19,14 +19,14 @@ cmdstanr::set_cmdstan_path(path='C:/Users/greenbergda/Documents/.cmdstan/cmdstan
 #basic model excluding watershed areas:
 
 # load Stan model sets####
-file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_chm.stan")
+file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_chm_ac.stan")
 mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_ac_rv_pink.stan")
 mbh_p=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 
-file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_chm_cu.stan")
+file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_chm_ac.stan")
 mric=cmdstanr::cmdstan_model(file_ric) #compile stan code to C++
 
 file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink.stan")
