@@ -9,7 +9,7 @@ ch20r <- read.csv("./origional-ecofish-data-models/Data/Processed/chum_SR_20_hat
 pk10r_e <- read.csv("./origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
 
 #odd year pinks
-pk10r_o <- read.csv("./origional-ecofish-data-models/Data/Processed/pko_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_o <- read.csv("./origional-ecofish-data-models/Data/Processed/PKO_SR_10_hat_yr_reduced_VRI90.csv")
 
 options(mc.cores=8)
 
@@ -26,7 +26,7 @@ file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_ac_r
 mbh_p=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 
-file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_chm.stan")
+file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_chm_cu.stan")
 mric=cmdstanr::cmdstan_model(file_ric) #compile stan code to C++
 
 file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink.stan")
@@ -85,7 +85,7 @@ dl_chm_eca=list(N=nrow(ch20r),
              start_t=L_i$tmin,
              end_t=L_i$tmax,
              pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
-             pSmax_sig=smax_prior$m.s,
+             pSmax_sig=smax_prior$m.s*3,
              pRk_mean=0.75*smax_prior$m.r, ##prior for Rk (recruitment capacity) based on max observed spawners
              pRk_sig=smax_prior$m.r)
 
@@ -104,7 +104,7 @@ dl_chm_cpd=list(N=nrow(ch20r),
               start_t=L_i$tmin,
               end_t=L_i$tmax,
               pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
-              pSmax_sig=smax_prior$m.s,
+              pSmax_sig=smax_prior$m.s*3,
               pRk_mean=0.75*smax_prior$m.r, #prior for Rk (recruitment capacity) based on max observed spawners
               pRk_sig=smax_prior$m.r)
 
