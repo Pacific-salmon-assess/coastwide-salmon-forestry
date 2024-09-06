@@ -22,8 +22,16 @@ cmdstanr::set_cmdstan_path(path='C:/Users/greenbergda/Documents/.cmdstan/cmdstan
 file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_chm_ac.stan")
 mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
-file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_rw_prod_eca_mod_ac_rv_pink.stan")
+file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_pink_ac.stan")
 mbh_p=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
+
+
+file_csh=file.path(cmdstanr::cmdstan_path(),'sr models', "cush_chm_ac.stan")
+mcush=cmdstanr::cmdstan_model(file_csh) #compile stan code to C++
+
+
+file_csh=file.path(cmdstanr::cmdstan_path(),'sr models', "cush_pink_ac.stan")
+mcush_p=cmdstanr::cmdstan_model(file_csh) #compile stan code to C++
 
 
 file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_chm_ac.stan")
@@ -137,7 +145,7 @@ ric_chm_eca <- mric$sample(data=dl_chm_eca,
 write.csv(ric_chm_eca$summary(),'./stan models/outs/summary/ric_chm_eca.csv')
 ric_chm_eca$save_object('./stan models/outs/fits/ric_chm_eca.RDS')
 
-post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
+post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
 write.csv(post_ric_chm_eca,here('stan models','outs','posterior','ric_chm_eca.csv'))
 
 ## CPD predictor ####
