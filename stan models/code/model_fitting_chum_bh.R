@@ -162,16 +162,17 @@ fit_model_chum_eca_bh <- function(dl_chm_eca) {
   mbh=cmdstanr::cmdstan_model(file_bh)
   bh_chm_eca_parallel <- mbh$sample(
     data=dl_chm_eca,
-    chains = 6, 
+    chains = 8, 
     init=0,
     iter_warmup = 200,
     iter_sampling =500,
     refresh = 100,
     adapt_delta = 0.999,
     max_treedepth = 20)
-  write.csv(chm_eca_parallel$summary(),'./stan models/outs/summary/bh_chm_eca_mk.csv')
-  bh_chm_eca_parallel$save_object('./stan models/outs/fits/bh_chm_eca_mk.RDS')
-  
+  print("suceess1")
+  write.csv(bh_chm_eca_parallel$summary(),here("stan models","outs","summary","bh_chm_eca_mk.csv"))
+  bh_chm_eca_parallel$save_object(here("stan models","outs","fits","bh_chm_eca_mk.RDS"))
+  print("suceess2")
   post_bh_chm_eca=bh_chm_eca_parallel$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
   write.csv(post_bh_chm_eca,here('stan models','outs','posterior','bh_chm_eca_mk.csv'))
   
@@ -225,16 +226,17 @@ fit_model_chum_cpd_bh <- function(dl_chm_cpd) {
   mbh=cmdstanr::cmdstan_model(file_bh)
   bh_chm_cpd_parallel <- mbh$sample(
     data=dl_chm_cpd,
-    chains = 6, 
+    chains = 8, 
     init=0,
     iter_warmup = 200,
     iter_sampling =500,
     refresh = 100,
     adapt_delta = 0.999,
     max_treedepth = 20)
-  write.csv(bh_chm_cpd_parallel$summary(),'./stan models/outs/summary/bh_chm_cpd_mk.csv')
-  bh_chm_cpd_parallel$save_object('./stan models/outs/fits/bh_chm_cpd_mk.RDS')
-  
+  print("suceess3")
+  write.csv(bh_chm_cpd_parallel$summary(),here("stan models","outs","summary","bh_chm_cpd_mk.csv"))
+  bh_chm_cpd_parallel$save_object(here("stan models","outs","fits","bh_chm_cpd_mk.RDS"))
+  print("suceess4")
   post_chm_cpd=bh_chm_cpd_parallel$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
   write.csv(post_chm_cpd,here('stan models','outs','posterior','bh_chm_cpd_mk.csv'))
 }
