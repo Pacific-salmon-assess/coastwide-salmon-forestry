@@ -142,7 +142,7 @@ dl_pk_cpd=list(N=nrow(pk10r),
                pRk_sig=smax_prior$m.r)
 
 
-
+print("eca")
 
 
 if(Sys.info()[7] == "mariakur") {
@@ -174,5 +174,39 @@ if(Sys.info()[7] == "mariakur") {
   
   post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
   write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca.csv'))
+  
+}
+
+print("cpd")
+
+if(Sys.info()[7] == "mariakur") {
+  print("Running on local machine")
+  bh_pk_cpd <- mbh_p$sample(data=dl_pk_cpd,
+                            chains = 1, 
+                            iter_warmup = 20,
+                            iter_sampling =50,
+                            refresh = 10,
+                            adapt_delta = 0.999,
+                            max_treedepth = 20)
+  write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_cpd_trial.csv')
+  bh_pk_cpd$save_object('./stan models/outs/fits/bh_pk_cpd_trial.RDS')
+  
+  post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+  write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_trial.csv'))
+  
+} else {
+  bh_pk_cpd <- mbh_p$sample(data=dl_pk_cpd,
+                            chains = 6, 
+                            iter_warmup = 200,
+                            iter_sampling =500,
+                            refresh = 100,
+                            adapt_delta = 0.999,
+                            max_treedepth = 20)
+  
+  write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_cpd.csv')
+  bh_pk_cpd$save_object('./stan models/outs/fits/bh_pk_cpd.RDS')
+  
+  post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+  write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd.csv'))
   
 }
