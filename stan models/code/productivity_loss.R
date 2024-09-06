@@ -138,14 +138,14 @@ for (i in 1:length(unique(ch20r$River_n))) {
 #change the colnames of productivity to river names, make df long
 
 colnames(productivity) <- unique(ch20r$River_n)
-productivity <- data.frame(productivity) %>% 
-  mutate(sample = rownames(productivity))
+# productivity <- data.frame(productivity) %>% 
+#   mutate(sample = rownames(productivity))
 
 productivity_long <- data.frame(productivity) %>% 
   pivot_longer(everything(), names_to = 'River_n', 
                values_to = 'productivity_loss') %>% 
   mutate(River_n = as.numeric(substr(River_n, 2, nchar(River_n)))) %>% 
-  left_join(ch20r %>% select(River_n, River, CU) %>% 
+  left_join(ch20r %>% select(River_n, River, CU, max_cpd) %>% 
               distinct(), 
             by = 'River_n', relationship = "many-to-one")
 
@@ -241,6 +241,58 @@ ggplot(productivity_long %>% filter(productivity_loss < 100),
 
 ggsave(here('figures','productivity_loss.png'), width = 12, height = 10, dpi = 300)
 
+#make same figure with colors depending on cpd values
+means <- productivity_long %>%
+  filter(productivity_loss < 100) %>%
+  group_by(CU_name, River) %>%
+  summarize(mean_loss = mean(productivity_loss, na.rm = TRUE))
+calculate_density_at_mean <- function(df) {
+  dens <- density(df$productivity_loss)
+  mean_value <- mean(df$productivity_loss, na.rm = TRUE)
+  # Find the density height closest to the mean value
+  closest_x <- which.min(abs(dens$x - mean_value))
+  tibble(mean_loss = mean_value, density_height = dens$y[closest_x])
+}
+
+# Add density height to means
+density_means <- productivity_long %>%
+  filter(productivity_loss < 100) %>%
+  group_by(CU_name, River) %>%
+  group_modify(~ calculate_density_at_mean(.x))
+
+ggplot(productivity_long %>% filter(productivity_loss < 100), 
+       aes(x=productivity_loss, fill = max_cpd, group = River))+
+  geom_density(linewidth = 0, alpha = 0.5, color = NA)+
+  # Add vertical lines for the mean of each distribution
+  # geom_vline(data = means, aes(xintercept = mean_loss, group = River), 
+  #            color = "gray", linewidth = 0.5, alpha = 0.5) +
+  geom_segment(data = density_means, aes(x = mean_loss, xend = mean_loss, 
+                                         y = 0, yend = density_height), 
+               color = "slategray", linewidth = 0.5, alpha = 0.7) +
+  facet_wrap(~CU_name, ncol = 4, scales = "free")+
+  scale_x_continuous(n.breaks = 3, breaks = waiver())+
+  scale_fill_gradient2(low = "#5ab4ac",
+                       mid = "gray",
+                       high = "#d8b365", name = "CPD",
+                       guide = guide_colorbar(direction = "horizontal"))+#low = "darkgreen", high = "gray")+
+  labs(x='Change in productivity (%)',
+       y='Density')+
+  theme_classic()+
+  theme(#legend.position="bottom-right",
+        legend.position = c(0.94, 0.01),  # Position at bottom right inside the plot
+        legend.justification = c(1, 0),   # Align the legend
+        legend.background = element_rect(fill = "white", color = "black"), # Optional: add a border and background for clarity
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        strip.text = element_text(size = 13))
+
+
+ggsave(here('figures','productivity_loss2.png'), width = 12, height = 10, dpi = 300)
 
 
 #trying without alpha because it should cancel out
