@@ -34,8 +34,8 @@ parameters{
   real<lower=0> sigma_a_t; //temporal variance in coastwide productivity term
   vector[L-1] a_dev; //stock-level deviations in year-to-year productivity
 
-//BH eq. recruitment
-  vector<lower=0>[J] Rk; //equilibrium recruitment for BH
+//Cushing density-dependence
+  vector<lower=0>[J] b; //Cushing density term
 
 //covariate effects
  real b_for; //global (across stock) mean effect of forestry metrics
@@ -89,11 +89,11 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
 
 //residual productivity deviations
    for(j in 1:J){ //for every stock
-    mu1[start_y[j]]=alpha_t[start_t[j]]+alpha_j[j]-log(1+(exp(alpha_t[start_t[j]]+alpha_j[j])/Rk[j])*S[start_y[j]])+b_for_rv[j]*forest_loss[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+    mu1[start_y[j]]=alpha_t[start_t[j]]+alpha_j[j]+b[j]*log(S[start_y[j]])+b_for_rv[j]*forest_loss[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
     e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 
     for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
-      mu2[t]  = alpha_t[ii[t]]+alpha_j[j]-log(1+(exp(alpha_t[ii[t]]+alpha_j[j])/Rk[j])*S[t])+b_for_rv[j]*forest_loss[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+      mu2[t]  = alpha_t[ii[t]]+alpha_j[j]+b[j]*log(S[t])+b_for_rv[j]*forest_loss[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
 	}
   }
@@ -111,8 +111,7 @@ model{
   sigma_a_t ~  normal(0,1); //temporal variance in time-varying global productivity
   a_dev ~ std_normal(); //z-scores for productivity changes in each time-step
   
-   //recruitment capacity for each stock - fit individually with weakly informative priors based on maximum observed recruitment
-  for(j in 1:J) Rk[j] ~ lognormal(logRk_pr[j],logRk_pr_sig[j]); //stock-specific recruitment capacity
+  for(j in 1:J) b[j] ~ normal(0,1); //stock-specific recruitment capacity
  
  //covariate effects
   b_for ~ normal(0,1); //standard normal prior for the effect of forest loss
