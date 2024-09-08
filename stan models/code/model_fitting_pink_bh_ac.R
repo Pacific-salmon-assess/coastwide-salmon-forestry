@@ -27,10 +27,10 @@ file_bh=file.path(here('stan models', 'code', 'bh_pink_ac_mk.stan'))
 mbh_p=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 #even year pinks
-pk10r_e <- read.csv("./origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_reduced_VRI90.csv"))
 
 #odd year pinks
-pk10r_o <- read.csv("./origional-ecofish-data-models/Data/Processed/PKO_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","PKO_SR_10_hat_yr_reduced_VRI90.csv"))
 
 options(mc.cores=8)
 
@@ -168,12 +168,34 @@ if(Sys.info()[7] == "mariakur") {
                             refresh = 100,
                             adapt_delta = 0.999,
                             max_treedepth = 20)
+  tryCatch(
+        #try to do this
+        {
+        #some expression
+          write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_ac.csv"))
+          bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_ac.RDS"))
   
-  write.csv(bh_pk_eca$summary(),'./stan models/outs/summary/bh_pk_eca.csv')
-  bh_pk_eca$save_object('./stan models/outs/fits/bh_pk_eca.RDS')
+          post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+          write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_ac.csv'))
+        },
+        #if an error occurs, tell me the error
+        error=function(e) {
+            message('An Error Occurred')
+            print(e)
+        },
+        #if a warning occurs, tell me the warning
+        warning=function(w) {
+            message('A Warning Occurred')
+            print(w)
+            write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_ac.csv"))
+            bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_ac.RDS"))
   
-  post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
-  write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca.csv'))
+            post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+            write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_ac.csv'))
+        }
+    )
+  
+  
   
 }
 
@@ -188,6 +210,7 @@ if(Sys.info()[7] == "mariakur") {
                             refresh = 10,
                             adapt_delta = 0.999,
                             max_treedepth = 20)
+  
   write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_cpd_trial.csv')
   bh_pk_cpd$save_object('./stan models/outs/fits/bh_pk_cpd_trial.RDS')
   
@@ -202,11 +225,33 @@ if(Sys.info()[7] == "mariakur") {
                             refresh = 100,
                             adapt_delta = 0.999,
                             max_treedepth = 20)
+  tryCatch(
+        #try to do this
+        {
+        #some expression
+          write.csv(bh_pk_cpd$summary(),here("stan models","outs","summary","bh_pk_cpd_ac.csv"))
+          bh_pk_cpd$save_object("stan models","outs","fits","bh_pk_cpd_ac.RDS")
   
-  write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_cpd.csv')
-  bh_pk_cpd$save_object('./stan models/outs/fits/bh_pk_cpd.RDS')
+          post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+          write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_ac.csv'))
+        },
+        #if an error occurs, tell me the error
+        error=function(e) {
+            message('An Error Occurred')
+            print(e)
+        },
+        #if a warning occurs, tell me the warning
+        warning=function(w) {
+            message('A Warning Occurred')
+            print(w)
+            write.csv(bh_pk_cpd$summary(),here("stan models","outs","summary","bh_pk_cpd_ac.csv"))
+            bh_pk_cpd$save_object("stan models","outs","fits","bh_pk_cpd_ac.RDS")
   
-  post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
-  write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd.csv'))
+            post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+            write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_ac.csv'))
+        }
+    )
+  
+  
   
 }
