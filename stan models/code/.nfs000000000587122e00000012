@@ -1,0 +1,175 @@
+nohup: ignoring input
+[1] "Running on server"
+This is cmdstanr version 0.8.1.9000
+- CmdStanR documentation and vignettes: mc-stan.org/cmdstanr
+- Use set_cmdstan_path() to set the path to CmdStan
+- Use install_cmdstan() to install CmdStan
+CmdStan path set to: /home/mkuruvil/R_Packages/cmdstan-2.35.0
+here() starts at /home/mkuruvil/coastwide-salmon-forestry
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+Loading required package: StanHeaders
+
+rstan version 2.32.6 (Stan version 2.32.2)
+
+For execution on a local, multicore CPU with excess RAM we recommend calling
+options(mc.cores = parallel::detectCores()).
+To avoid recompilation of unchanged Stan programs, we recommend calling
+rstan_options(auto_write = TRUE)
+For within-chain threading using `reduce_sum()` or `map_rect()` Stan functions,
+change `threads_per_chain` option:
+rstan_options(threads_per_chain = 1)
+
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ forcats   1.0.0     ✔ readr     2.1.4
+✔ ggplot2   3.5.1     ✔ stringr   1.5.0
+✔ lubridate 1.9.3     ✔ tibble    3.2.1
+✔ purrr     1.0.2     ✔ tidyr     1.3.0
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ tidyr::extract() masks rstan::extract()
+✖ dplyr::filter()  masks stats::filter()
+✖ dplyr::lag()     masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+[1] "eca"
+Running MCMC with 1 chain...
+
+Chain 1 WARNING: There aren't enough warmup iterations to fit the 
+Chain 1          three stages of adaptation as currently configured. 
+Chain 1          Reducing each adaptation stage to 15%/75%/10% of 
+Chain 1          the given number of warmup iterations: 
+Chain 1            init_buffer = 3 
+Chain 1            adapt_window = 15 
+Chain 1            term_buffer = 2 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[1] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[1] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[5] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[24] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Iteration:  1 / 70 [  1%]  (Warmup) 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[1] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[5] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Iteration: 10 / 70 [ 14%]  (Warmup) 
+Chain 1 Iteration: 20 / 70 [ 28%]  (Warmup) 
+Chain 1 Iteration: 21 / 70 [ 30%]  (Sampling) 
+Chain 1 Iteration: 30 / 70 [ 42%]  (Sampling) 
+Chain 1 Iteration: 40 / 70 [ 57%]  (Sampling) 
+Chain 1 Iteration: 50 / 70 [ 71%]  (Sampling) 
+Chain 1 Iteration: 60 / 70 [ 85%]  (Sampling) 
+Chain 1 Iteration: 70 / 70 [100%]  (Sampling) 
+Chain 1 finished in 1699.2 seconds.
+A Warning Occurred
+<simpleWarning: The ESS has been capped to avoid unstable estimates.>
+[1] NA
+[1] "cpd"
+Running MCMC with 1 chain...
+
+Chain 1 Rejecting initial value:
+Chain 1   Error evaluating the log probability at the initial value.
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[2] is -0.894955, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[2] is -0.894955, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Rejecting initial value:
+Chain 1   Error evaluating the log probability at the initial value.
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[1] is -0.816343, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[1] is -0.816343, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Rejecting initial value:
+Chain 1   Error evaluating the log probability at the initial value.
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[14] is -0.000137096, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[14] is -0.000137096, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Rejecting initial value:
+Chain 1   Error evaluating the log probability at the initial value.
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigma[5] is -0.447895, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 76, column 0 to column 27)
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigma[5] is -0.447895, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 76, column 0 to column 27)
+Chain 1 Rejecting initial value:
+Chain 1   Error evaluating the log probability at the initial value.
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[1] is -3.19575, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[1] is -3.19575, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Rejecting initial value:
+Chain 1   Error evaluating the log probability at the initial value.
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[1] is -0.273159, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: cu_sigma[1] is -0.273159, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 75, column 0 to column 28)
+Chain 1 Rejecting initial value:
+Chain 1   Error evaluating the log probability at the initial value.
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigma[1] is -1.92278, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 76, column 0 to column 27)
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigma[1] is -1.92278, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 76, column 0 to column 27)
+Chain 1 WARNING: There aren't enough warmup iterations to fit the
+Chain 1          three stages of adaptation as currently configured.
+Chain 1          Reducing each adaptation stage to 15%/75%/10% of
+Chain 1          the given number of warmup iterations:
+Chain 1            init_buffer = 3
+Chain 1            adapt_window = 15
+Chain 1            term_buffer = 2
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[3] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[3] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[3] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[12] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Iteration:  1 / 70 [  1%]  (Warmup) 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[1] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: bh_pink_ac_mk_model_namespace::log_prob: sigmaAR[3] is -nan, but must be greater than or equal to 0.000000 (in '/tmp/Rtmpe8mKse/model-2bf0928af2078.stan', line 77, column 0 to column 29)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 1 Iteration: 10 / 70 [ 14%]  (Warmup) 
+Chain 1 Iteration: 20 / 70 [ 28%]  (Warmup) 
+Chain 1 Iteration: 21 / 70 [ 30%]  (Sampling) 
+Chain 1 Iteration: 30 / 70 [ 42%]  (Sampling) 
+Chain 1 Iteration: 40 / 70 [ 57%]  (Sampling) 
+Chain 1 Iteration: 50 / 70 [ 71%]  (Sampling) 
+Chain 1 Iteration: 60 / 70 [ 85%]  (Sampling) 
+Chain 1 Iteration: 70 / 70 [100%]  (Sampling) 
+Chain 1 finished in 1647.4 seconds.
+A Warning Occurred
+<simpleWarning: The ESS has been capped to avoid unstable estimates.>
+[1] NA
