@@ -27,10 +27,10 @@ file_ric=file.path(here('stan models', 'code', 'ric_pink_ac_mk.stan'))
 mric_p=cmdstanr::cmdstan_model(file_ric) #compile stan code to C++
 
 #even year pinks
-pk10r_e <- read.csv("./origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_reduced_VRI90.csv"))
 
 #odd year pinks
-pk10r_o <- read.csv("./origional-ecofish-data-models/Data/Processed/PKO_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","PKO_SR_10_hat_yr_reduced_VRI90.csv"))
 
 options(mc.cores=8)
 
