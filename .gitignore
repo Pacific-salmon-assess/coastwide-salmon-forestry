@@ -10,3 +10,4 @@ stan models/code/dev/
 stan models/outs/summary/
 stan models/outs/fits/
 stan models/outs/loo/
+.Rhistory
