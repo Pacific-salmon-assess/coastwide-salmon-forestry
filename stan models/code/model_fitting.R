@@ -183,7 +183,7 @@ post_cush_chm_eca=cush_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','
 write.csv(post_cush_chm_eca,here('stan models','outs','posterior','cush_chm_eca.csv'))
 
 ### static productivity models ####
-bh_chm_eca_st <- mbh$sample(data=dl_chm_eca_st,
+bh_chm_eca_st <- mbh_st$sample(data=dl_chm_eca_st,
                          chains = 6, 
                          init=0,
                          iter_warmup = 200,
@@ -211,7 +211,7 @@ ric_chm_eca_st <- mric_st$sample(data=dl_chm_eca,
 write.csv(ric_chm_eca_st$summary(),'./stan models/outs/summary/ric_chm_eca_st.csv')
 ric_chm_eca_st$save_object('./stan models/outs/fits/ric_chm_eca_st.RDS')
 
-post_ric_chm_ec_sta=ric_chm_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Smax','sigma'),format='draws_matrix')
+post_ric_chm_eca_st=ric_chm_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Smax','sigma'),format='draws_matrix')
 write.csv(post_ric_chm_eca_st,here('stan models','outs','posterior','ric_chm_eca_st.csv'))
 
 cush_chm_eca_st <- mcush_st$sample(data=dl_chm_eca,

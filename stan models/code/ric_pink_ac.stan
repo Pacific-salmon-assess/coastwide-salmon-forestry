@@ -40,9 +40,9 @@ parameters{
   vector<lower=0>[2] sigma_a_t; //temporal variance in coastwide productivity term - separate for odd/even broodlines
   matrix[2,L-1] a_dev; //stock-level deviations in year-to-year productivity
 
-//Cushing density-dependence
-  vector<lower=0>[J] b; //Cushing density term
-
+//
+  vector<lower=0>[J] Smax; 
+  
 //covariate effects
 real b_for; //global (across stock) mean effect of forestry metrics
  vector[C] z_for_cu; //CU-specific forestry z-score deviation
@@ -75,6 +75,7 @@ vector[R] b_for_rv; //River-specific forestry effect
 vector<lower=0>[C] cu_sigma; ///CU-level sigma
 vector<lower = 0>[J] sigma; ///stock-level sigma
 vector<lower = 0>[J] sigmaAR; ///stock-level sigma
+vector<lower=0>[J] b; 
 
 alpha_cu = sigma_a_cu*z_a_cu; //non-centered estimate for CU time-invariant productivity
 alpha_j = alpha_cu[C_i]+ sigma_a_j*z_a_j; //non-centered estimate for River time-invariant productivity
