@@ -85,7 +85,7 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_j; //non-centered CU-varying estimate for
 
 //residual productivity deviations
    for(j in 1:J){ //for every stock
-   b[j]=1/Smax[j];
+
    mu1[start_y[j]]=alpha_j[j]+b[j]*log(S[start_y[j]])+b_for_rv[R_i[j]]*forest_loss[start_y[j]];
    e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
    
