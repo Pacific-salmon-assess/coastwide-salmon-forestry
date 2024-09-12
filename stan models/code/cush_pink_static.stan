@@ -36,8 +36,7 @@ parameters{
   vector[J] z_a_j; //River-specific  z-score deviation
   real<lower=0> sigma_a_cu; //variance in long-term productivity among CUs
   real<lower=0> sigma_a_j; //variance in long-term productivity among stocks
-  matrix[2,L-1] a_dev; //stock-level deviations in year-to-year productivity
-
+ 
 //Cushing density-dependence
   vector<lower=0>[J] b; //Cushing density term
   
@@ -52,7 +51,7 @@ real b_for; //global (across stock) mean effect of forestry metrics
  real<lower=0> mu_sigma; ///mean sigma among all stocks
  vector[C] z_sig_cu; //persistent CU-level differences in productivity
  vector[J] z_sig_j; //persistent river-level differences in productivity
- real<lower=0> sd_sigma[C]; ///variance in sigma within CUs (pooled among CUs)
+ real<lower=0> sd_sigma; ///variance in sigma within CUs (pooled among CUs)
  real<lower=0> sd_sigma_cu; ///variance in sigma among CUs
  
  vector<lower = -1,upper=1>[J] rho; //autocorrelation parameter
@@ -81,7 +80,7 @@ b_for_cu = b_for + sigma_for_cu*z_for_cu; //non-centered CU-varying estimate for
 b_for_rv = b_for_cu[C_r] + sigma_for_rv*z_for_rv; //non-centered CU-varying estimate for forestry effects
 
 cu_sigma = mu_sigma + sd_sigma_cu*z_sig_cu; //non-centered CU-varying estimate for sigma
-sigma = cu_sigma[C_i] + sd_sigma[C_i]*z_sig_j; //non-centered CU-varying estimate for sigma
+sigma = cu_sigma[C_i] + sd_sigma*z_sig_j; //non-centered CU-varying estimate for sigma
 
 
 //residual productivity deviations
