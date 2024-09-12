@@ -182,17 +182,17 @@ print("cpd")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_pk_cpd <- mric_p$sample(data=dl_pk_cpd,
-                            chains = 1, 
-                            iter_warmup = 20,
-                            iter_sampling =50,
-                            refresh = 10,
+                            chains = 6, 
+                            iter_warmup = 200,
+                            iter_sampling =500,
+                            refresh = 100,
                             adapt_delta = 0.999,
                             max_treedepth = 20)
-  write.csv(ric_pk_cpd$summary(),here("stan models","outs","summary","ric_pk_cpd_trial.csv"))
-  ric_pk_cpd$save_object(here("stan models","outs","fits","ric_pk_cpd_trial.RDS"))
+  write.csv(ric_pk_cpd$summary(),here("stan models","outs","summary","ric_pk_cpd.csv"))
+  ric_pk_cpd$save_object(here("stan models","outs","fits","ric_pk_cpd.RDS"))
   
   post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_pk_cpd,here('stan models','outs','posterior','ric_pk_cpd_trial.csv'))
+  write.csv(post_ric_pk_cpd,here('stan models','outs','posterior','ric_pk_cpd.csv'))
   
 } else {
   ric_pk_cpd <- mric_p$sample(data=dl_pk_cpd,
@@ -203,8 +203,9 @@ if(Sys.info()[7] == "mariakur") {
                             adapt_delta = 0.999,
                             max_treedepth = 20)
   
-  write.csv(ric_pk_cpd$summary(),'./stan models/outs/summary/ric_pk_cpd_ac.csv')
-  ric_pk_cpd$save_object('./stan models/outs/fits/ric_pk_cpd_ac.RDS')
+  write.csv(ric_pk_cpd$summary(),here('stan models','outs','summary',
+                                      'ric_pk_cpd_ac.csv'))
+  ric_pk_cpd$save_object(here('stan models','outs','fits','ric_pk_cpd_ac.RDS'))
   
   post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
   write.csv(post_ric_pk_cpd,here('stan models','outs','posterior','ric_pk_cpd_ac.csv'))
