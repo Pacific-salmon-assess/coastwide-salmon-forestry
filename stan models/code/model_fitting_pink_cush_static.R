@@ -158,7 +158,7 @@ if(Sys.info()[7] == "mariakur") {
  write.csv(cush_pk_eca_st$summary(),here("stan models","outs","summary","cush_pk_eca_st_trial.csv"))
  cush_pk_eca_st$save_object(here("stan models","outs","fits","cush_pk_eca_st_trial.RDS"))
 
- post_cush_pk_eca_st=cush_pk_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','b','sigma'),format='draws_matrix')
+ post_cush_pk_eca_st=cush_pk_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','b','sigma'),format='draws_matrix')
  write.csv(post_cush_pk_eca_st,here('stan models','outs','posterior','cush_pk_eca_st_trial.csv'))
 
 } else {
@@ -173,7 +173,7 @@ if(Sys.info()[7] == "mariakur") {
  write.csv(cush_pk_eca_st$summary(),here("stan models","outs","summary","cush_pk_eca_ac.csv"))
  cush_pk_eca_st$save_object(here("stan models","outs","fits","cush_pk_eca_ac.RDS"))
 
- post_cush_pk_eca_st=cush_pk_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','b','sigma'),format='draws_matrix')
+ post_cush_pk_eca_st=cush_pk_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','b','sigma'),format='draws_matrix')
  write.csv(post_cush_pk_eca_st,here('stan models','outs','posterior','cush_pk_eca_ac.csv'))
 
 }
@@ -192,7 +192,7 @@ if(Sys.info()[7] == "mariakur") {
  write.csv(cush_pk_cpd_st$summary(),here("stan models","outs","summary","cush_pk_cpd_ac_trial.csv"))
  cush_pk_cpd_st$save_object(here("stan models","outs","fits","cush_pk_cpd_ac_trial.RDS"))
 
- post_cush_pk_cpd_st=cush_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','b','sigma'),format='draws_matrix')
+ post_cush_pk_cpd_st=cush_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','b','sigma'),format='draws_matrix')
  write.csv(post_cush_pk_cpd_st,here('stan models','outs','posterior','cush_pk_cpd_ac_trial.csv'))
 
 } else {
@@ -207,7 +207,7 @@ if(Sys.info()[7] == "mariakur") {
  write.csv(cush_pk_cpd_st$summary(),here("stan models","outs","summary","cush_pk_cpd_ac.csv"))
  cush_pk_cpd_st$save_object(here("stan models","outs","fits","cush_pk_cpd_ac.RDS"))
 
- post_cush_pk_cpd_st=cush_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','b','sigma'),format='draws_matrix')
+ post_cush_pk_cpd_st=cush_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','b','sigma'),format='draws_matrix')
  write.csv(post_cush_pk_cpd_st,here('stan models','outs','posterior','cush_pk_cpd_ac.csv'))
 
 }
