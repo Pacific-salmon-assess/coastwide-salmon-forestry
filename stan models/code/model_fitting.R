@@ -196,7 +196,7 @@ bh_chm_eca_st <- mbh_st$sample(data=dl_chm_eca,
 write.csv(bh_chm_eca_st$summary(),'./stan models/outs/summary/bh_chm_eca_st.csv')
 bh_chm_eca_st$save_object('./stan models/outs/fits/bh_chm_eca_st.RDS')
 
-post_bh_chm_eca_st=bh_chm_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
+post_bh_chm_eca_st=bh_chm_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')
 write.csv(post_bh_chm_eca_st,here('stan models','outs','posterior','bh_chm_eca.csv'))
 
 
