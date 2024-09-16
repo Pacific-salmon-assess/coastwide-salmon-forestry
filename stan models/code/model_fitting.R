@@ -279,7 +279,7 @@ post_cush_chm_cpd=cush_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','
 write.csv(post_cush_chm_cpd,here('stan models','outs','posterior','cush_chm_cpd.csv'))
 
 ### static productivity models ####
-bh_chm_cpd_st <- mbh$sample(data=dl_chm_cpd_st,
+bh_chm_cpd_st <- mbh$sample(data=dl_chm_cpd,
                             chains = 6, 
                             init=0,
                             iter_warmup = 200,
@@ -291,7 +291,7 @@ bh_chm_cpd_st <- mbh$sample(data=dl_chm_cpd_st,
 write.csv(bh_chm_cpd_st$summary(),'./stan models/outs/summary/bh_chm_cpd_st.csv')
 bh_chm_cpd_st$save_object('./stan models/outs/fits/bh_chm_cpd_st.RDS')
 
-post_bh_chm_cpd_st=bh_chm_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
+post_bh_chm_cpd_st=bh_chm_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')
 write.csv(post_bh_chm_cpd_st,here('stan models','outs','posterior','bh_chm_cpd.csv'))
 
 
