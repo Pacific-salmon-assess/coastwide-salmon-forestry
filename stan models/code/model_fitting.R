@@ -19,6 +19,7 @@ cmdstanr::set_cmdstan_path(path='C:/Users/greenbergda/Documents/.cmdstan/cmdstan
 #basic model excluding watershed areas:
 
 # load Stan model sets####
+#BH
 file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_chm_ac.stan") #timevarying models w/ river-level autocorrelated residuals
 mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
@@ -183,7 +184,7 @@ post_cush_chm_eca=cush_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','
 write.csv(post_cush_chm_eca,here('stan models','outs','posterior','cush_chm_eca.csv'))
 
 ### static productivity models ####
-bh_chm_eca_st <- mbh_st$sample(data=dl_chm_eca_st,
+bh_chm_eca_st <- mbh_st$sample(data=dl_chm_eca,
                          chains = 6, 
                          init=0,
                          iter_warmup = 200,

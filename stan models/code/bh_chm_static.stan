@@ -92,7 +92,7 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
 model{
   //priors
   //productivity
-   alpha_0 ~ normal(1.5,2); //global intrinsic productivity for all stocks at time t=1;
+   alpha0 ~ normal(1.5,2); //global intrinsic productivity for all stocks at time t=1;
    z_a_cu ~ std_normal(); //std normal prior for CU-deviations
    z_a_rv ~ std_normal(); //std normal prior for River-deviations
     
