@@ -19,6 +19,7 @@ cmdstanr::set_cmdstan_path(path='C:/Users/greenbergda/Documents/.cmdstan/cmdstan
 #basic model excluding watershed areas:
 
 # load Stan model sets####
+#BH
 file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_chm_ac.stan") #timevarying models w/ river-level autocorrelated residuals
 mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
@@ -183,7 +184,7 @@ post_cush_chm_eca=cush_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','
 write.csv(post_cush_chm_eca,here('stan models','outs','posterior','cush_chm_eca.csv'))
 
 ### static productivity models ####
-bh_chm_eca_st <- mbh_st$sample(data=dl_chm_eca_st,
+bh_chm_eca_st <- mbh_st$sample(data=dl_chm_eca,
                          chains = 6, 
                          init=0,
                          iter_warmup = 200,
@@ -195,7 +196,7 @@ bh_chm_eca_st <- mbh_st$sample(data=dl_chm_eca_st,
 write.csv(bh_chm_eca_st$summary(),'./stan models/outs/summary/bh_chm_eca_st.csv')
 bh_chm_eca_st$save_object('./stan models/outs/fits/bh_chm_eca_st.RDS')
 
-post_bh_chm_eca_st=bh_chm_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
+post_bh_chm_eca_st=bh_chm_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')
 write.csv(post_bh_chm_eca_st,here('stan models','outs','posterior','bh_chm_eca.csv'))
 
 
@@ -278,7 +279,7 @@ post_cush_chm_cpd=cush_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','
 write.csv(post_cush_chm_cpd,here('stan models','outs','posterior','cush_chm_cpd.csv'))
 
 ### static productivity models ####
-bh_chm_cpd_st <- mbh$sample(data=dl_chm_cpd_st,
+bh_chm_cpd_st <- mbh$sample(data=dl_chm_cpd,
                             chains = 6, 
                             init=0,
                             iter_warmup = 200,
@@ -290,7 +291,7 @@ bh_chm_cpd_st <- mbh$sample(data=dl_chm_cpd_st,
 write.csv(bh_chm_cpd_st$summary(),'./stan models/outs/summary/bh_chm_cpd_st.csv')
 bh_chm_cpd_st$save_object('./stan models/outs/fits/bh_chm_cpd_st.RDS')
 
-post_bh_chm_cpd_st=bh_chm_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
+post_bh_chm_cpd_st=bh_chm_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')
 write.csv(post_bh_chm_cpd_st,here('stan models','outs','posterior','bh_chm_cpd.csv'))
 
 

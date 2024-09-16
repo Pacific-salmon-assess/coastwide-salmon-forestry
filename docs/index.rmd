@@ -130,14 +130,14 @@ $\sigma_{w,odd} \sim N[0,1)$
 ```{r prep data,  include=FALSE}
 library(here);library(cmdstanr);library(dplyr)
 
-ch20r <- read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
+ch20r <- read.csv("./origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
 ch20r$cuid=as.numeric(factor(ch20r$CU))
 #even year pinks
-pk10r_e <- read.csv("../origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_e <- read.csv("./origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
 pk10r_e$cuid=as.numeric(factor(pk10r_e$CU))
 
 #odd year pinks
-pk10r_o <- read.csv("../origional-ecofish-data-models/Data/Processed/pko_SR_10_hat_yr_reduced_VRI90.csv")
+pk10r_o <- read.csv("./origional-ecofish-data-models/Data/Processed/pko_SR_10_hat_yr_reduced_VRI90.csv")
 pk10r_o$cuid=as.numeric(factor(pk10r_o$CU))
 
 #two rivers named salmon river... recode
@@ -192,6 +192,90 @@ pk10r_e$Broodline='Even'
 pk10r=rbind(pk10r_e,pk10r_o)
 pk10r$River2=paste(pk10r$River,pk10r$Broodline,sep='_')
 pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
+```
+
+
+# Comparison of foresty effects across density-dependent forms and with/without coastwide time-varying productivity
+
+Chum - equivalent clearcut area:
+```{r,dd_tv comp, chm eca}
+bh_chm_eca_tv=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac.csv'),check.names=F)
+bh_chm_eca_st=read.csv(here('stan models','outs','posterior','bh_chm_eca_st.csv'),check.names=F)
+
+ric_chm_eca_tv=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac.csv'),check.names=F)
+ric_chm_eca_st=read.csv(here('stan models','outs','posterior','bh_chm_eca_st.csv'),check.names=F)
+
+cush_chm_eca_tv=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac.csv'),check.names=F)
+cush_chm_eca_st=read.csv(here('stan models','outs','posterior','bh_chm_eca_st.csv'),check.names=F)
+
+par(mfrow=c(3,2))
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect (BH, time-varying)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(bh_chm_eca_tv[,2],bw=0.02)
+for(j in 3:24){
+  d=density(bh_chm_eca_tv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect (BH, static)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(bh_chm_eca_st[,2],bw=0.02)
+for(j in 3:24){
+  d=density(bh_chm_eca_st[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect (Ricker, time-varying)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(bh_chm_eca_tv[,2],bw=0.02)
+for(j in 3:24){
+  d=density(bh_chm_eca_tv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect (Ricker, static)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(bh_chm_eca_st[,2],bw=0.02)
+for(j in 3:24){
+  d=density(bh_chm_eca_st[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect (Cushing, time-varying)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(cush_chm_eca_tv[,2],bw=0.02)
+for(j in 3:24){
+  d=density(bh_chm_eca_tv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect (Cushing, static)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(cush_chm_eca_st[,2],bw=0.02)
+for(j in 3:24){
+  d=density(bh_chm_eca_st[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+df=data.frame(scenario=c('BH','BH (static)','Ricker','Ricker (static)','Cushing','Cushing (static)'),median=NA,l95=NA,u95=NA,l80=NA,u80=NA)
+df[1,2]=
+
+
+```
+
+Chum - cumulative % disturbed:
+
+Pink - equivalent clearcut area:
+```{r,dd_tv comp}
+
+
 ```
 
 # Fig. 3. Global (cross population) effects of ECA/CPD by species ####
@@ -590,7 +674,28 @@ points(apply(pk_bfor_cpd,2,median)~rv_pk$m.CPD,col=adjustcolor('black',alpha.f=0
 
 ```
 
+# Fig. SX4. Response to forestry vs. scale of forestry in watershed####
 
+```{r, fig. Sx3 - draft 1,fig.width=8,fig.height=11.50}
+chm_rv=data.frame(unique(ch20r$WATERSHED_CDE),unique(ch20r$River))
+p_rv=data.frame(unique(pk10r$WATERSHED_CDE),unique(pk10r$River))
+
+p_rv2=chm_rv[chm_rv[,1]%in%p_rv[,1],]
+ch_id=match(p_rv2[,2],levels(factor(ch20r$River)))
+p_id=match(p_rv2[,2],levels(factor(pk10r$River)))
+
+chm_bfor_cpd2=data.frame(d_chm_cpd[,colnames(d_chm_cpd)%in%paste('b_for_rv[',ch_id,']',sep='')])
+p_bfor_cpd2=data.frame(d_pk_cpd[,colnames(d_pk_cpd)%in%paste('b_for_rv[',p_id,']',sep='')])
+m_chm_bfor_cpd2=apply(chm_bfor_cpd2,2,median)
+m_p_bfor_cpd2=apply(p_bfor_cpd2,2,median)
+
+
+p_rv2$bfor.chm=m_chm_bfor_cpd2[match(paste('b_for_rv.',ch_id,'.',sep=''),names(m_chm_bfor_cpd2))]
+p_rv2$bfor.pk=m_p_bfor_cpd2[match(paste('b_for_rv.',p_id,'.',sep=''),names(m_p_bfor_cpd2))]
+
+plot(p_rv2$bfor.chm~p_rv2$bfor.pk)
+
+```
 
 # Chum south coast CUs - effects of ECA/CPD ####
 
