@@ -822,3 +822,10 @@ Chain 5 finished in 82288.4 seconds.
 Chain 1 Iteration: 400 / 700 [ 57%]  (Sampling) 
 Chain 1 Iteration: 500 / 700 [ 71%]  (Sampling) 
 Chain 1 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 1 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 1 finished in 210843.0 seconds.
+
+All 6 chains finished successfully.
+Mean chain execution time: 74677.4 seconds.
+Total execution time: 210843.6 seconds.
+
