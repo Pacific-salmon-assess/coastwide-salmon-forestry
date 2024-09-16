@@ -144,60 +144,60 @@ dl_pk_cpd=list(N=nrow(pk10r),
 
 print("eca")
 
-#
-#if(Sys.info()[7] == "mariakur") {
-#  print("Running on local machine")
-#  bh_pk_eca <- mbh_p$sample(data=dl_pk_eca,
-#                            chains = 1, 
-#                            iter_warmup = 20,
-#                            iter_sampling =50,
-#                            refresh = 10,
-#                            adapt_delta = 0.999,
-#                            max_treedepth = 20)
-#  write.csv(bh_pk_eca$summary(),'./stan models/outs/summary/bh_pk_eca_trial.csv')
-#  bh_pk_eca$save_object('./stan models/outs/fits/bh_pk_eca_trial.RDS')
-#  
-#  post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
-#  write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_trial.csv'))
-#  
-#} else {
-#  bh_pk_eca <- mbh_p$sample(data=dl_pk_eca,
-#                            chains = 6, 
-#                            iter_warmup = 200,
-#                            iter_sampling =500,
-#                            refresh = 100,
-#                            adapt_delta = 0.999,
-#                            max_treedepth = 20)
-#  tryCatch(
-#        #try to do this
-#        {
-#        #some expression
-#          write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_ac.csv"))
-#          bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_ac.RDS"))
-#  
-#          post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
-#          write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_ac.csv'))
-#        },
-#        #if an error occurs, tell me the error
-#        error=function(e) {
-#            message('An Error Occurred')
-#            print(e)
-#        },
-#        #if a warning occurs, tell me the warning
-#        warning=function(w) {
-#            message('A Warning Occurred')
-#            print(w)
-#            write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_ac.csv"))
-#            bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_ac.RDS"))
-#  
-#            post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
-#            write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_ac.csv'))
-#        }
-#    )
-#  
-#  
-#  
-#}
+
+if(Sys.info()[7] == "mariakur") {
+  print("Running on local machine")
+  bh_pk_eca <- mbh_p$sample(data=dl_pk_eca,
+                            chains = 1, 
+                            iter_warmup = 20,
+                            iter_sampling =50,
+                            refresh = 10,
+                            adapt_delta = 0.999,
+                            max_treedepth = 20)
+  write.csv(bh_pk_eca$summary(),'./stan models/outs/summary/bh_pk_eca_trial.csv')
+  bh_pk_eca$save_object('./stan models/outs/fits/bh_pk_eca_trial.RDS')
+  
+  post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+  write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_trial.csv'))
+  
+} else {
+  bh_pk_eca <- mbh_p$sample(data=dl_pk_eca,
+                            chains = 6, 
+                            iter_warmup = 200,
+                            iter_sampling =500,
+                            refresh = 100,
+                            adapt_delta = 0.999,
+                            max_treedepth = 20)
+  tryCatch(
+        #try to do this
+        {
+        #some expression
+          write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_ac.csv"))
+          bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_ac.RDS"))
+  
+          post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+          write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_ac.csv'))
+        },
+        #if an error occurs, tell me the error
+        error=function(e) {
+            message('An Error Occurred')
+            print(e)
+        },
+        #if a warning occurs, tell me the warning
+        warning=function(w) {
+            message('A Warning Occurred')
+            print(w)
+            write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_ac.csv"))
+            bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_ac.RDS"))
+  
+            post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+            write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_ac.csv'))
+        }
+    )
+  
+  
+  
+}
 
 print("cpd")
 
