@@ -113,7 +113,7 @@ dl_chm_eca=list(N=nrow(ch20r),
              start_t=L_i$tmin,
              end_t=L_i$tmax,
              pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
-             pSmax_sig=smax_prior$m.s*3,
+             pSmax_sig=smax_prior$m.s*2,
              pRk_mean=0.75*smax_prior$m.r, ##prior for Rk (recruitment capacity) based on max observed spawners
              pRk_sig=smax_prior$m.r)
 
@@ -132,7 +132,7 @@ dl_chm_cpd=list(N=nrow(ch20r),
               start_t=L_i$tmin,
               end_t=L_i$tmax,
               pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
-              pSmax_sig=smax_prior$m.s*3,
+              pSmax_sig=smax_prior$m.s*2,
               pRk_mean=0.75*smax_prior$m.r, #prior for Rk (recruitment capacity) based on max observed spawners
               pRk_sig=smax_prior$m.r)
 
@@ -292,7 +292,7 @@ write.csv(bh_chm_cpd_st$summary(),'./stan models/outs/summary/bh_chm_cpd_st.csv'
 bh_chm_cpd_st$save_object('./stan models/outs/fits/bh_chm_cpd_st.RDS')
 
 post_bh_chm_cpd_st=bh_chm_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')
-write.csv(post_bh_chm_cpd_st,here('stan models','outs','posterior','bh_chm_cpd.csv'))
+write.csv(post_bh_chm_cpd_st,here('stan models','outs','posterior','bh_chm_cpd_st.csv'))
 
 
 ric_chm_cpd_st <- mric_st$sample(data=dl_chm_cpd,
