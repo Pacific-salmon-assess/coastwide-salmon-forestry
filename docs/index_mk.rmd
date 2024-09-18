@@ -1,0 +1,251 @@
+---
+title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
+author: ''
+date: "Apr. 2024"
+output:
+  html_document:
+    collapsed: no
+    fig_caption: yes
+    highlight: espresso
+    number_sections: yes
+    smooth_scroll: yes
+    theme: sandstone
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+options(max.print=23)
+library(cmdstanr)
+```
+
+# Overview
+
+Summaries of estimate of forestry effect
+
+```{r}
+library(here);library(dplyr); library(stringr)
+
+#read summary
+
+bh_pk_eca_st = read.csv(here("stan models","outs","summary","bh_pk_eca_st.csv"))
+
+#print variables that start with "b", show 23 rows
+print(bh_pk_eca_st %>% filter(variable %>% str_detect("b_for")))
+
+
+
+```
+
+
+
+```{r}
+
+
+bh_pk_cpd_st = read.csv(here("stan models","outs","summary","bh_pk_cpd_st.csv"))
+
+#print variables that start with "b", show 23 rows
+print(bh_pk_cpd_st %>% filter(variable %>% str_detect("b_for")))
+
+
+
+```
+
+```{r}
+
+
+bh_pk_eca_ac = read.csv(here("stan models","outs","summary","bh_pk_eca_ac.csv"))
+
+#print variables that start with "b", show 23 rows
+print(bh_pk_eca_ac %>% filter(variable %>% str_detect("b_for")))
+
+
+
+```
+
+
+```{r}
+
+
+bh_pk_cpd_ac = read.csv(here("stan models","outs","summary","bh_pk_cpd_ac.csv"))
+
+#print variables that start with "b", show 23 rows
+print(bh_pk_cpd_ac %>% filter(variable %>% str_detect("b_for")))
+
+
+
+```
+
+
+```{r}
+
+
+cush_pk_eca_ac = read.csv(here("stan models",
+                               "outs","summary","cush_pk_eca_ac.csv"))
+
+#print variables that start with "b", show 23 rows
+print(cush_pk_eca_ac %>% filter(variable %>% str_detect("b_for")))
+
+
+
+```
+
+
+
+```{r}
+
+
+cush_pk_cpd_ac = read.csv(here("stan models",
+                               "outs","summary","cush_pk_cpd_ac.csv"))
+
+#print variables that start with "b", show 23 rows
+print(cush_pk_cpd_ac %>% filter(variable %>% str_detect("b_for")))
+
+
+
+```
+
+# Posterior distributions of effect of forestry on Pink Salmon
+
+## Beverton-Holt
+```{r}
+library(ggplot2); library(ggpubr)
+
+#read summary
+
+post_bh_pk_eca_st = read.csv(here("stan models","outs","posterior","bh_pk_eca_st.csv"))
+
+p1 <- ggplot(post_bh_pk_eca_st, aes(x=b_for)) + 
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste( "Beverton-Holt, without ", alpha[t])), 
+       x="Effect of ECA", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+post_bh_pk_cpd_st = read.csv(here("stan models","outs","posterior","bh_pk_cpd_st.csv"))
+
+p2 <- ggplot(post_bh_pk_cpd_st, aes(x=b_for)) + 
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste("Beverton-Holt, without ", alpha[t])), 
+       x="Effect of CPD", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+
+post_bh_pk_eca_ac = read.csv(here("stan models",
+                                  "outs","posterior","bh_pk_eca_ac.csv"))
+
+
+p3 <- ggplot(post_bh_pk_eca_ac, aes(x=b_for)) +
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste("Beverton-Holt, with ", alpha[t])), 
+       x="Effect of ECA", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+post_bh_pk_cpd_ac = read.csv(here("stan models",
+                                  "outs","posterior","bh_pk_cpd_ac.csv"))
+
+p4 <- ggplot(post_bh_pk_cpd_ac, aes(x=b_for)) +
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste("Beverton-Holt, with ", alpha[t])), 
+       x="Effect of CPD", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+ggarrange(p1,p2,p3,p4,ncol=2, nrow = 2)
+
+```
+
+
+## Cushing model
+
+```{r}
+
+post_cush_pk_eca_st = read.csv(here("stan models",
+                                    "outs","posterior","cush_pk_eca_st.csv"))
+
+p5 <- ggplot(post_cush_pk_eca_st, aes(x=b_for)) + 
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste("Cushing, without ", alpha[t])), 
+       x="Effect of ECA", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+
+post_cush_pk_cpd_st = read.csv(here("stan models",
+                                    "outs","posterior","cush_pk_cpd_st.csv"))
+
+p6 <- ggplot(post_cush_pk_cpd_st, aes(x=b_for)) +
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste("Cushing, without ", alpha[t])), 
+       x="Effect of CPD", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+post_cush_pk_eca_ac = read.csv(here("stan models",
+                                    "outs","posterior","cush_pk_eca_ac.csv"))
+
+p7 <- ggplot(post_cush_pk_eca_ac, aes(x=b_for)) +
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste("Cushing, with ", alpha[t])), 
+       x="Effect of ECA", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+post_cush_pk_cpd_ac = read.csv(here("stan models",
+                                    "outs","posterior","cush_pk_cpd_ac.csv"))
+
+p8 <- ggplot(post_cush_pk_cpd_ac, aes(x=b_for)) +
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste("Cushing, with ", alpha[t])), 
+       x="Effect of CPD", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+
+ggarrange(p5,p6,p7,p8,ncol=2, nrow = 2)
+
+
+
+```
