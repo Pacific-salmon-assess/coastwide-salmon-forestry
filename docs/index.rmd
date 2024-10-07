@@ -199,7 +199,7 @@ pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
 bh_chm_eca=read.csv(here('stan models','outs','posterior','bh_chm_eca.csv'),check.names=F)
 bh_chm_eca_st=read.csv(here('stan models','outs','posterior','bh_chm_eca_st.csv'),check.names=F)
 
-ric_chm_eca=read.csv(here('stan models','outs','posterior','ric_chm_eca_ac.csv'),check.names=F)
+ric_chm_eca=read.csv(here('stan models','outs','posterior','ric_chm_eca.csv'),check.names=F)
 ric_chm_eca_st=read.csv(here('stan models','outs','posterior','ric_chm_eca_st.csv'),check.names=F)
 
 csh_chm_eca=read.csv(here('stan models','outs','posterior','cush_chm_eca.csv'),check.names=F)
