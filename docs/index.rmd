@@ -194,6 +194,91 @@ pk10r$River2=paste(pk10r$River,pk10r$Broodline,sep='_')
 pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
 ```
 
+# Static vs. time-varying across model forms - Chum
+```{r, chm tv/st}
+bh_chm_eca=read.csv(here('stan models','outs','posterior','bh_chm_eca.csv'),check.names=F)
+bh_chm_eca_st=read.csv(here('stan models','outs','posterior','bh_chm_eca_st.csv'),check.names=F)
+
+ric_chm_eca=read.csv(here('stan models','outs','posterior','ric_chm_eca.csv'),check.names=F)
+ric_chm_eca_st=read.csv(here('stan models','outs','posterior','ric_chm_eca_st.csv'),check.names=F)
+
+csh_chm_eca=read.csv(here('stan models','outs','posterior','cush_chm_eca.csv'),check.names=F)
+csh_chm_eca_st=read.csv(here('stan models','outs','posterior','cush_chm_eca_st.csv'),check.names=F)
+
+bh_chm_cpd=read.csv(here('stan models','outs','posterior','bh_chm_cpd.csv'),check.names=F)
+bh_chm_cpd_st=read.csv(here('stan models','outs','posterior','bh_chm_cpd_st.csv'),check.names=F)
+
+ric_chm_cpd=read.csv(here('stan models','outs','posterior','ric_chm_cpd.csv'),check.names=F)
+ric_chm_cpd_st=read.csv(here('stan models','outs','posterior','ric_chm_cpd_st.csv'),check.names=F)
+
+csh_chm_cpd=read.csv(here('stan models','outs','posterior','cush_chm_cpd.csv'),check.names=F)
+csh_chm_cpd_st=read.csv(here('stan models','outs','posterior','cush_chm_cpd_st.csv'),check.names=F)
+
+
+par(mfrow=c(3,2))
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes (time-varying, Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(ric_chm_eca[,2],bw=0.02)
+for(j in 3:24){
+  d=density(ric_chm_eca[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes (static, Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(ric_chm_eca_st[,2],bw=0.02)
+for(j in 3:24){
+  d=density(ric_chm_eca_st[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+
+
+#ricker - cpd
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes (time-varying, Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(ric_chm_cpd[,2],bw=0.02)
+for(j in 3:24){
+  d=density(ric_chm_cpd[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes (static, Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(ric_chm_cpd_st[,2],bw=0.02)
+for(j in 3:24){
+  d=density(ric_chm_cpd_st[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+#cushing
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes (time-varying, Cushing)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(csh_chm_cpd[,2],bw=0.02)
+for(j in 3:24){
+  d=density(csh_chm_cpd[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes (static, Cushing)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0cpd=density(csh_chm_cpd_st[,2],bw=0.02)
+for(j in 3:24){
+  d=density(csh_chm_cpd_st[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0cpd$y~d0cpd$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+```
+
+
+
+
+
 # Fig. 3_1. (Beverton-Holt) Global effects of ECA/CPD by species ( conditional on time-varying productivity trends) ####
 
 Provisional fig. 3 in main text (global - across stock - effects of ECA/CPD by species):

@@ -43,7 +43,7 @@ file_csh=file.path(cmdstanr::cmdstan_path(),'sr models', "cush_pink_ac.stan")
 mcush_p=cmdstanr::cmdstan_model(file_csh) #compile stan code to C++
 
 file_csh_st=file.path(cmdstanr::cmdstan_path(),'sr models', "cush_pink_static.stan")
-mcush_p_st=cmdstanr::cmdstan_model(file_csh) #compile stan code to C++
+mcush_p_st=cmdstanr::cmdstan_model(file_csh_st) #compile stan code to C++
 
 
 #Ricker forms
@@ -107,7 +107,7 @@ dl_chm_eca=list(N=nrow(ch20r),
              ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
              R_S=ch20r$ln_RS,
              S=ch20r$Spawners, 
-             forest_loss=ch20r$sqrt.ECA.std, #design matrix for standardized ECA
+             forest_loss=ch20r$ECA_age_proxy_forested_only_std, #design matrix for standardized ECA
              start_y=N_s[,1],
              end_y=N_s[,2],
              start_t=L_i$tmin,
@@ -125,7 +125,7 @@ dl_chm_cpd=list(N=nrow(ch20r),
               ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
               R_S=ch20r$ln_RS,
               S=ch20r$Spawners, 
-              forest_loss=as.vector(ch20r$sqrt.CPD.std), #design matrix for standardized ECA
+              forest_loss=as.vector(scale(ch20r$disturbedarea_prct_cs)), #design matrix for standardized ECA
               ECA=as.vector(ch20r$sqrt.CPD.std), #design matrix for standardized ECA
               start_y=N_s[,1],
               end_y=N_s[,2],
@@ -197,7 +197,7 @@ write.csv(bh_chm_eca_st$summary(),'./stan models/outs/summary/bh_chm_eca_st.csv'
 bh_chm_eca_st$save_object('./stan models/outs/fits/bh_chm_eca_st.RDS')
 
 post_bh_chm_eca_st=bh_chm_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')
-write.csv(post_bh_chm_eca_st,here('stan models','outs','posterior','bh_chm_eca.csv'))
+write.csv(post_bh_chm_eca_st,here('stan models','outs','posterior','bh_chm_eca_st.csv'))
 
 
 ric_chm_eca_st <- mric_st$sample(data=dl_chm_eca,
@@ -259,7 +259,7 @@ ric_chm_cpd <- mric$sample(data=dl_chm_cpd,
 write.csv(ric_chm_cpd$summary(),'./stan models/outs/summary/ric_chm_cpd.csv')
 ric_chm_cpd$save_object('./stan models/outs/fits/ric_chm_cpd.RDS')
 
-post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max'),format='draws_matrix')
+post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax'),format='draws_matrix')
 write.csv(post_ric_chm_cpd,here('stan models','outs','posterior','ric_chm_cpd.csv'))
 
 
@@ -307,7 +307,7 @@ ric_chm_cpd_st <- mric_st$sample(data=dl_chm_cpd,
 write.csv(ric_chm_cpd_st$summary(),'./stan models/outs/summary/ric_chm_cpd_st.csv')
 ric_chm_cpd_st$save_object('./stan models/outs/fits/ric_chm_cpd_st.RDS')
 
-post_ric_chm_ec_sta=ric_chm_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Smax','sigma'),format='draws_matrix')
+post_ric_chm_cpd_st=ric_chm_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Smax','sigma'),format='draws_matrix')
 write.csv(post_ric_chm_cpd_st,here('stan models','outs','posterior','ric_chm_cpd_st.csv'))
 
 cush_chm_cpd_st <- mcush_st$sample(data=dl_chm_cpd,
@@ -319,11 +319,11 @@ cush_chm_cpd_st <- mcush_st$sample(data=dl_chm_cpd,
                                    adapt_delta = 0.999,
                                    max_treedepth = 20)
 
-write.csv(cush_chm_cpd_st$summary(),'./stan models/outs/summary/cush_chm_cpd.csv')
+write.csv(cush_chm_cpd_st$summary(),'./stan models/outs/summary/cush_chm_cpd_st.csv')
 cush_chm_cpd_st$save_object('./stan models/outs/fits/cush_chm_cpd_static.RDS')
 
 post_cush_chm_cpd_st=cush_chm_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','b','sigma'),format='draws_matrix')
-write.csv(post_cush_chm_cpd,here('stan models','outs','posterior','cush_chm_cpd_st.csv'))
+write.csv(post_cush_chm_cpd_st,here('stan models','outs','posterior','cush_chm_cpd_st.csv'))
 
 
 # Pink salmon - even/odd broodlines #####
