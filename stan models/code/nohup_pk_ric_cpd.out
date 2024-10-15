@@ -990,3 +990,39 @@ Chain 1 Iteration: 400 / 700 [ 57%]  (Sampling)
 Chain 2 Iteration: 400 / 700 [ 57%]  (Sampling) 
 Chain 4 Iteration: 400 / 700 [ 57%]  (Sampling) 
 Chain 1 Iteration: 500 / 700 [ 71%]  (Sampling) 
+Chain 2 Iteration: 500 / 700 [ 71%]  (Sampling) 
+Chain 5 Iteration: 400 / 700 [ 57%]  (Sampling) 
+Chain 4 Iteration: 500 / 700 [ 71%]  (Sampling) 
+Chain 1 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 2 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 6 Iteration: 400 / 700 [ 57%]  (Sampling) 
+Chain 4 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 1 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 1 finished in 963351.0 seconds.
+Chain 2 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 2 finished in 1008440.0 seconds.
+Chain 5 Iteration: 500 / 700 [ 71%]  (Sampling) 
+Chain 4 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 4 finished in 1094930.0 seconds.
+Chain 6 Iteration: 500 / 700 [ 71%]  (Sampling) 
+Chain 5 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 6 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 5 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 5 finished in 1712210.0 seconds.
+Chain 6 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 6 finished in 1884890.0 seconds.
+
+All 6 chains finished successfully.
+Mean chain execution time: 1145428.5 seconds.
+Total execution time: 1884893.4 seconds.
+
+Warning: 3 of 6 chains had an E-BFMI less than 0.3.
+See https://mc-stan.org/misc/warnings for details.
+
+Error in file(file, ifelse(append, "a", "w")) : 
+  cannot open the connection
+Calls: write.csv -> eval.parent -> eval -> eval -> <Anonymous> -> file
+In addition: Warning message:
+In file(file, ifelse(append, "a", "w")) :
+  cannot open file './stan models/outs/summary/ric_pk_cpd_ac.csv': No such file or directory
+Execution halted
