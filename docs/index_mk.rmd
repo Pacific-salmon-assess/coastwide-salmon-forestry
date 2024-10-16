@@ -249,3 +249,20 @@ ggarrange(p5,p6,p7,p8,ncol=2, nrow = 2)
 
 
 ```
+
+```{r}
+#read summary
+
+post_bh_chm_eca_npgo = read.csv(here("stan models","outs","posterior","bh_chm_eca_npgo.csv"))
+
+p1 <- ggplot(post_bh_chm_eca_npgo, aes(x=b_for)) + 
+  geom_histogram(binwidth = 0.1, fill="salmon", color="black") +
+  labs(title=expression(paste( "Beverton-Holt, with NPGO")), 
+       x="Effect of ECA", y="Frequency")+
+  geom_vline(xintercept = 0, color="slategray", linetype="dashed")+
+  theme_classic()+
+  scale_x_continuous(limits=c(-1,1))
+
+p1
+
+```
