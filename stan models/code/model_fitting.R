@@ -54,14 +54,12 @@ file_ric2=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_chm_static.stan")
 mric_st=cmdstanr::cmdstan_model(file_ric2) #compile stan code to C++
 
 
-file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink_ac.stan")
+file_ric=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink_noac.stan")
 mric_p=cmdstanr::cmdstan_model(file_ric) #compile stan code to C++
 
-file_ric_st=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink_static.stan")
+file_ric_st=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink_static_noac.stan")
 mric_p_st=cmdstanr::cmdstan_model(file_ric_st) #compile stan code to C++
 
-file_ric_st=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink_static_noac.stan")
-mric_p_st2=cmdstanr::cmdstan_model(file_ric_st) #compile stan code to C++
 
 
 #Chum salmon####
@@ -491,11 +489,11 @@ ric_pk_eca_st <- mric_p_st2$sample(data=dl_pk_eca,
                             adapt_delta = 0.9,
                             max_treedepth = 20)
 
-write.csv(ric_pk_eca$summary(),'./stan models/outs/summary/ric_pk_eca.csv')
-ric_pk_eca$save_object('./stan models/outs/fits/ric_pk_eca.RDS')
+write.csv(ric_pk_eca_st$summary(),'./stan models/outs/summary/ric_pk_st_eca.csv')
+ric_pk_eca_st$save_object('./stan models/outs/fits/ric_pk_st_eca.RDS')
 
-post_ric_pk_eca=ric_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
-write.csv(post_ric_pk_eca,here('stan models','outs','posterior','ric_pk_eca.csv'))
+post_ric_pk_eca_st=ric_pk_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
+write.csv(post_ric_pk_eca_st,here('stan models','outs','posterior','ric_pk_st_eca.csv'))
 
 bh_pk_cpd <- mbh_p$sample(data=dl_pk_cpd,
                           chains = 6, 
