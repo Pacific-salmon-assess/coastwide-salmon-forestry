@@ -3,7 +3,7 @@ source('./stan models/code/funcs.R')
 
 # load datasets####
 
-ch20r <- read.csv("./origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_reduced_VRI90.csv")
+ch20r <- read.csv("./origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr.csv")
 
 #even year pinks
 pk10r_e <- read.csv("./origional-ecofish-data-models/Data/Processed/pke_SR_10_hat_yr_reduced_VRI90.csv")
@@ -60,6 +60,9 @@ mric_p=cmdstanr::cmdstan_model(file_ric) #compile stan code to C++
 file_ric_st=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink_static.stan")
 mric_p_st=cmdstanr::cmdstan_model(file_ric_st) #compile stan code to C++
 
+file_ric_st=file.path(cmdstanr::cmdstan_path(),'sr models', "ric_pink_static_noac.stan")
+mric_p_st2=cmdstanr::cmdstan_model(file_ric_st) #compile stan code to C++
+
 
 #Chum salmon####
 
@@ -113,7 +116,7 @@ dl_chm_eca=list(N=nrow(ch20r),
              start_t=L_i$tmin,
              end_t=L_i$tmax,
              pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
-             pSmax_sig=smax_prior$m.s*2,
+             pSmax_sig=smax_prior$m.s*3,
              pRk_mean=0.75*smax_prior$m.r, ##prior for Rk (recruitment capacity) based on max observed spawners
              pRk_sig=smax_prior$m.r)
 
@@ -144,7 +147,7 @@ bh_chm_eca <- mbh$sample(data=dl_chm_eca,
                                         iter_warmup = 200,
                                         iter_sampling =500,
                                         refresh = 100,
-                                        adapt_delta = 0.999,
+                                        adapt_delta = 0.9,
                                         max_treedepth = 20)
 
 write.csv(bh_chm_eca$summary(),'./stan models/outs/summary/bh_chm_eca.csv')
@@ -159,7 +162,7 @@ ric_chm_eca <- mric$sample(data=dl_chm_eca,
                                iter_warmup = 200,
                                iter_sampling =500,
                                refresh = 100,
-                               adapt_delta = 0.999,
+                               adapt_delta = 0.9,
                                max_treedepth = 20)
 
 write.csv(ric_chm_eca$summary(),'./stan models/outs/summary/ric_chm_eca.csv')
@@ -174,7 +177,7 @@ cush_chm_eca <- mcush$sample(data=dl_chm_eca,
                              iter_warmup = 200,
                              iter_sampling =500,
                              refresh = 100,
-                             adapt_delta = 0.999,
+                             adapt_delta = 0.9,
                              max_treedepth = 20)
 
 write.csv(cush_chm_eca$summary(),'./stan models/outs/summary/cush_chm_eca.csv')
@@ -190,7 +193,7 @@ bh_chm_eca_st <- mbh_st$sample(data=dl_chm_eca,
                          iter_warmup = 200,
                          iter_sampling =500,
                          refresh = 100,
-                         adapt_delta = 0.999,
+                         adapt_delta = 0.9,
                          max_treedepth = 20)
 
 write.csv(bh_chm_eca_st$summary(),'./stan models/outs/summary/bh_chm_eca_st.csv')
@@ -206,7 +209,7 @@ ric_chm_eca_st <- mric_st$sample(data=dl_chm_eca,
                            iter_warmup = 200,
                            iter_sampling =500,
                            refresh = 100,
-                           adapt_delta = 0.999,
+                           adapt_delta = 0.9,
                            max_treedepth = 20)
 
 write.csv(ric_chm_eca_st$summary(),'./stan models/outs/summary/ric_chm_eca_st.csv')
@@ -221,7 +224,7 @@ cush_chm_eca_st <- mcush_st$sample(data=dl_chm_eca,
                              iter_warmup = 200,
                              iter_sampling =500,
                              refresh = 100,
-                             adapt_delta = 0.999,
+                             adapt_delta = 0.9,
                              max_treedepth = 20)
 
 write.csv(cush_chm_eca_st$summary(),'./stan models/outs/summary/cush_chm_eca.csv')
@@ -237,7 +240,7 @@ bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
                                iter_warmup = 200,
                                iter_sampling =500,
                                refresh = 100,
-                               adapt_delta = 0.999,
+                               adapt_delta = 0.9,
                                max_treedepth = 20)
 
 write.csv(bh_chm_cpd$summary(),'./stan models/outs/summary/bh_chm_cpd.csv')
@@ -253,7 +256,7 @@ ric_chm_cpd <- mric$sample(data=dl_chm_cpd,
                            iter_warmup = 200,
                            iter_sampling =500,
                            refresh = 100,
-                           adapt_delta = 0.999,
+                           adapt_delta = 0.9,
                            max_treedepth = 20)
 
 write.csv(ric_chm_cpd$summary(),'./stan models/outs/summary/ric_chm_cpd.csv')
@@ -269,7 +272,7 @@ cush_chm_cpd <- mcush$sample(data=dl_chm_cpd,
                            iter_warmup = 200,
                            iter_sampling =500,
                            refresh = 100,
-                           adapt_delta = 0.999,
+                           adapt_delta = 0.9,
                            max_treedepth = 20)
 
 write.csv(cush_chm_cpd$summary(),'./stan models/outs/summary/cush_chm_cpd.csv')
@@ -285,7 +288,7 @@ bh_chm_cpd_st <- mbh$sample(data=dl_chm_cpd,
                             iter_warmup = 200,
                             iter_sampling =500,
                             refresh = 100,
-                            adapt_delta = 0.999,
+                            adapt_delta = 0.9,
                             max_treedepth = 20)
 
 write.csv(bh_chm_cpd_st$summary(),'./stan models/outs/summary/bh_chm_cpd_st.csv')
@@ -301,7 +304,7 @@ ric_chm_cpd_st <- mric_st$sample(data=dl_chm_cpd,
                                  iter_warmup = 200,
                                  iter_sampling =500,
                                  refresh = 100,
-                                 adapt_delta = 0.999,
+                                 adapt_delta = 0.9,
                                  max_treedepth = 20)
 
 write.csv(ric_chm_cpd_st$summary(),'./stan models/outs/summary/ric_chm_cpd_st.csv')
@@ -316,7 +319,7 @@ cush_chm_cpd_st <- mcush_st$sample(data=dl_chm_cpd,
                                    iter_warmup = 200,
                                    iter_sampling =500,
                                    refresh = 100,
-                                   adapt_delta = 0.999,
+                                   adapt_delta = 0.9,
                                    max_treedepth = 20)
 
 write.csv(cush_chm_cpd_st$summary(),'./stan models/outs/summary/cush_chm_cpd_st.csv')
@@ -407,7 +410,7 @@ dl_pk_eca=list(N=nrow(pk10r),
                 end_y=N_s[,2],
                 start_t=L_all$tmin,
                 pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
-                pSmax_sig=smax_prior$m.s,
+                pSmax_sig=smax_prior$m.s*5,
                 pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
                 pRk_sig=smax_prior$m.r)
 
@@ -429,7 +432,7 @@ dl_pk_cpd=list(N=nrow(pk10r),
                end_y=N_s[,2],
                start_t=L_all$tmin,
                pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
-               pSmax_sig=smax_prior$m.s,
+               pSmax_sig=smax_prior$m.s*5,
                pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
                pRk_sig=smax_prior$m.r)
 
@@ -439,7 +442,7 @@ bh_pk_eca <- mbh_p$sample(data=dl_pk_eca,
                          iter_warmup = 200,
                          iter_sampling =500,
                          refresh = 100,
-                         adapt_delta = 0.999,
+                         adapt_delta = 0.9,
                          max_treedepth = 20)
 
 write.csv(bh_pk_eca$summary(),'./stan models/outs/summary/bh_pk_eca.csv')
@@ -454,7 +457,7 @@ ric_pk_eca <- mric_p$sample(data=dl_pk_eca,
                             iter_warmup = 200,
                             iter_sampling =500,
                             refresh = 100,
-                            adapt_delta = 0.999,
+                            adapt_delta = 0.9,
                             max_treedepth = 20)
 
 write.csv(ric_pk_eca$summary(),'./stan models/outs/summary/ric_pk_eca.csv')
@@ -463,13 +466,43 @@ ric_pk_eca$save_object('./stan models/outs/fits/ric_pk_eca.RDS')
 post_ric_pk_eca=ric_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
 write.csv(post_ric_pk_eca,here('stan models','outs','posterior','ric_pk_eca.csv'))
 
+#static versions
+
+bh_pk_eca_st <- mbh_p_st$sample(data=dl_pk_eca,
+                          chains = 6, 
+                          iter_warmup = 200,
+                          iter_sampling =500,
+                          refresh = 100,
+                          adapt_delta = 0.9,
+                          max_treedepth = 20)
+
+write.csv(bh_pk_eca$summary(),'./stan models/outs/summary/bh_pk_eca.csv')
+bh_pk_eca$save_object('./stan models/outs/fits/bh_pk_eca.RDS')
+
+post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+write.csv(post_bh_pk_eca,here('stan models','outs','fits','posterior','bh_pk_eca.csv'))
+
+ric_pk_eca_st <- mric_p_st2$sample(data=dl_pk_eca,
+                            chains = 6, 
+                            init=0,
+                            iter_warmup = 200,
+                            iter_sampling =500,
+                            refresh = 100,
+                            adapt_delta = 0.9,
+                            max_treedepth = 20)
+
+write.csv(ric_pk_eca$summary(),'./stan models/outs/summary/ric_pk_eca.csv')
+ric_pk_eca$save_object('./stan models/outs/fits/ric_pk_eca.RDS')
+
+post_ric_pk_eca=ric_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
+write.csv(post_ric_pk_eca,here('stan models','outs','posterior','ric_pk_eca.csv'))
 
 bh_pk_cpd <- mbh_p$sample(data=dl_pk_cpd,
                           chains = 6, 
                           iter_warmup = 200,
                           iter_sampling =500,
                           refresh = 100,
-                          adapt_delta = 0.999,
+                          adapt_delta = 0.9,
                           max_treedepth = 20)
 
 write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_cpd.csv')
@@ -484,16 +517,45 @@ ric_pk_cpd <- mric_p$sample(data=dl_pk_cpd,
                           iter_warmup = 200,
                           iter_sampling =500,
                           refresh = 100,
-                          adapt_delta = 0.999,
+                          adapt_delta = 0.9,
                           max_treedepth = 20)
 
 write.csv(ric_pk_cpd$summary(),'./stan models/outs/summary/ric_pk_cpd.csv')
-ric_pk_cpd$save_object('./stan models/outs/fits/ric_pk_cpd.RDS')
+ric_pk_cpd$save_object('./stan models/outs/fits/ric_pk_st_cpd.RDS')
 
 post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
 write.csv(post_ric_pk_cpd,here('stan models','outs','fits','posterior','ric_pk_cpd.csv'))
 
+#static versions
 
+bh_pk_cpd_st <- mbh_p_st$sample(data=dl_pk_cpd,
+                                chains = 6, 
+                                iter_warmup = 200,
+                                iter_sampling =500,
+                                refresh = 100,
+                                adapt_delta = 0.9,
+                                max_treedepth = 20)
+
+write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_st_cpd.csv')
+bh_pk_cpd$save_object('./stan models/outs/fits/bh_pk_st_cpd.RDS')
+
+post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+write.csv(post_bh_pk_cpd,here('stan models','outs','fits','posterior','bh_pk_st_cpd.csv'))
+
+ric_pk_cpd_st <- mric_p_st2$sample(data=dl_pk_cpd,
+                                   chains = 6, 
+                                   init=0,
+                                   iter_warmup = 200,
+                                   iter_sampling =500,
+                                   refresh = 100,
+                                   adapt_delta = 0.9,
+                                   max_treedepth = 20)
+
+write.csv(ric_pk_cpd$summary(),'./stan models/outs/summary/ric_pk_st_cpd.csv')
+ric_pk_cpd$save_object('./stan models/outs/fits/ric_pk_st_cpd.RDS')
+
+post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','S_max','sigma'),format='draws_matrix')
+write.csv(post_ric_pk_cpd,here('stan models','outs','posterior','ric_pk_st_cpd.csv'))
 
 #Chum salmon + south coast####
 
@@ -579,7 +641,7 @@ bh_chm_eca <- mbh$sample(data=dl_chm_eca,
                          iter_warmup = 200,
                          iter_sampling =500,
                          refresh = 100,
-                         adapt_delta = 0.999,
+                         adapt_delta = 0.9,
                          max_treedepth = 20)
 
 write.csv(bh_chm_eca$summary(),'./stan models/outs/summary/bh_chm_eca_sc.csv')
@@ -594,7 +656,7 @@ ric_chm_eca <- mric$sample(data=dl_chm_eca,
                            iter_warmup = 200,
                            iter_sampling =500,
                            refresh = 100,
-                           adapt_delta = 0.999,
+                           adapt_delta = 0.9,
                            max_treedepth = 20)
 
 write.csv(ric_chm_eca$summary(),'./stan models/outs/summary/ric_chm_eca.csv')
@@ -610,7 +672,7 @@ bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
                          iter_warmup = 200,
                          iter_sampling =500,
                          refresh = 100,
-                         adapt_delta = 0.999,
+                         adapt_delta = 0.9,
                          max_treedepth = 20)
 
 write.csv(bh_chm_cpd$summary(),'./stan models/outs/summary/bh_chm_cpd_sc.csv')
@@ -626,7 +688,7 @@ ric_chm_cpd <- mric$sample(data=dl_chm_cpd,
                            iter_warmup = 200,
                            iter_sampling =500,
                            refresh = 100,
-                           adapt_delta = 0.999,
+                           adapt_delta = 0.9,
                            max_treedepth = 20)
 
 write.csv(ric_chm_cpd$summary(),'./stan models/outs/summary/ric_chm_cpd.csv')
