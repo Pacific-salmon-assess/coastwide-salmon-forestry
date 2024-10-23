@@ -28,7 +28,7 @@ mric=cmdstanr::cmdstan_model(file_ric) #compile stan code to C++
 
 # load datasets####
 
-ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_reduced_VRI90.csv"))
+ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr.csv"))
 
 
 options(mc.cores=8)
@@ -100,11 +100,11 @@ if(Sys.info()[7] == "mariakur") {
                             refresh = 10,
                             adapt_delta = 0.999,
                             max_treedepth = 20)
-  write.csv(ric_chm_eca$summary(),'./stan models/outs/summary/ric_chm_eca_trial.csv')
-  ric_chm_eca$save_object('./stan models/outs/fits/ric_chm_eca_trial.RDS')
+  write.csv(ric_chm_eca$summary(),'./stan models/outs/summary/ric_chm_eca_trial_oct24.csv')
+  ric_chm_eca$save_object('./stan models/outs/fits/ric_chm_eca_trial_oct24.RDS')
   
   post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_chm_eca,here('stan models','outs','posterior','ric_chm_eca_trial.csv'))
+  write.csv(post_ric_chm_eca,here('stan models','outs','posterior','ric_chm_eca_trial_oct24.csv'))
   
 } else {
   ric_chm_eca <- mric$sample(data=dl_chm_eca,
@@ -115,10 +115,65 @@ if(Sys.info()[7] == "mariakur") {
                             adapt_delta = 0.999,
                             max_treedepth = 20)
   
-  write.csv(ric_chm_eca$summary(),here("stan models","outs","summary","ric_chm_eca_ac.csv"))
-  ric_chm_eca$save_object(here("stan models","outs","fits","ric_chm_eca_ac.RDS"))
+  write.csv(ric_chm_eca$summary(),here("stan models","outs","summary","ric_chm_eca_ac_oct24.csv"))
+  ric_chm_eca$save_object(here("stan models","outs","fits","ric_chm_eca_ac_oct24.RDS"))
   
   post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_chm_eca,here('stan models','outs','posterior','ric_chm_eca_ac.csv'))
+  write.csv(post_ric_chm_eca,here('stan models','outs','posterior','ric_chm_eca_ac_oct24.csv'))
+  
+}
+
+#data list for fits
+dl_chm_cpd=list(N=nrow(ch20r),
+                L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
+                C=length(unique(ch20r$CU)),
+                J=length(unique(ch20r$River)),
+                C_i=as.numeric(factor(cu$CU)), #CU index by stock
+                ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
+                R_S=ch20r$ln_RS,
+                S=ch20r$Spawners, 
+                forest_loss=ch20r$sqrt.CPD.std, #design matrix for standardized ECA
+                start_y=N_s[,1],
+                end_y=N_s[,2],
+                start_t=L_i$tmin,
+                end_t=L_i$tmax,
+                pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
+                pSmax_sig=smax_prior$m.s,
+                pRk_mean=0.75*smax_prior$m.r, ##prior for Rk (recruitment capacity) based on max observed spawners
+                pRk_sig=smax_prior$m.r)
+                
+
+print("cpd")
+
+
+if(Sys.info()[7] == "mariakur") {
+  print("Running on local machine")
+  ric_chm_cpd <- mric$sample(data=dl_chm_cpd,
+                            chains = 1, 
+                            iter_warmup = 20,
+                            iter_sampling =50,
+                            refresh = 10,
+                            adapt_delta = 0.999,
+                            max_treedepth = 20)
+  write.csv(ric_chm_cpd$summary(),'./stan models/outs/summary/ric_chm_cpd_trial_oct24.csv')
+  ric_chm_cpd$save_object('./stan models/outs/fits/ric_chm_cpd_trial_oct24.RDS')
+  
+  post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
+  write.csv(post_ric_chm_cpd,here('stan models','outs','posterior','ric_chm_cpd_trial_oct24.csv'))
+  
+} else {
+  ric_chm_cpd <- mric$sample(data=dl_chm_cpd,
+                            chains = 6, 
+                            iter_warmup = 200,
+                            iter_sampling =500,
+                            refresh = 100,
+                            adapt_delta = 0.999,
+                            max_treedepth = 20)
+  
+  write.csv(ric_chm_cpd$summary(),here("stan models","outs","summary","ric_chm_cpd_ac_oct24.csv"))
+  ric_chm_cpd$save_object(here("stan models","outs","fits","ric_chm_cpd_ac_oct24.RDS"))
+  
+  post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
+  write.csv(post_ric_chm_cpd,here('stan models','outs','posterior','ric_chm_cpd_ac_oct24.csv'))
   
 }

@@ -28,7 +28,7 @@ mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 # load datasets####
 
-ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_reduced_VRI90.csv"))
+ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr.csv"))
 
 
 options(mc.cores=8)
@@ -329,11 +329,11 @@ if(Sys.info()[7] == "mariakur") {
                               refresh = 10,
                               adapt_delta = 0.999,
                               max_treedepth = 20)
-  write.csv(bh_chm_eca$summary(),'./stan models/outs/summary/bh_chm_eca_ac_trial.csv')
-  bh_chm_eca$save_object('./stan models/outs/fits/bh_chm_eca_ac_trial.RDS')
+  write.csv(bh_chm_eca$summary(),'./stan models/outs/summary/bh_chm_eca_ac_trial_oct24.csv')
+  bh_chm_eca$save_object('./stan models/outs/fits/bh_chm_eca_ac_trial_oct24.RDS')
   
   post_bh_chm_eca=bh_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
-  write.csv(post_bh_chm_eca,here('stan models','outs','posterior','bh_chm_eca_ac_trial.csv'))
+  write.csv(post_bh_chm_eca,here('stan models','outs','posterior','bh_chm_eca_ac_trial_oct24.csv'))
   
 } else {
   bh_chm_eca <- mbh$sample(data=dl_chm_eca,
@@ -344,10 +344,44 @@ if(Sys.info()[7] == "mariakur") {
                               adapt_delta = 0.999,
                               max_treedepth = 20)
   
-  write.csv(bh_chm_eca$summary(),here("stan models","outs","summary","bh_chm_eca_ac.csv"))
-  bh_chm_eca$save_object(here("stan models","outs","fits","bh_chm_eca_ac.RDS"))
+  write.csv(bh_chm_eca$summary(),here("stan models","outs","summary","bh_chm_eca_ac_oct24.csv"))
+  bh_chm_eca$save_object(here("stan models","outs","fits","bh_chm_eca_ac_oct24.RDS"))
   
   post_bh_chm_eca=bh_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
-  write.csv(post_bh_chm_eca,here('stan models','outs','posterior','bh_chm_eca_ac.csv'))
+  write.csv(post_bh_chm_eca,here('stan models','outs','posterior','bh_chm_eca_ac_oct24.csv'))
+  
+}
+
+print("cpd")
+
+if(Sys.info()[7] == "mariakur") {
+  print("Running on local machine")
+  bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
+                              chains = 1, 
+                              iter_warmup = 20,
+                              iter_sampling =50,
+                              refresh = 10,
+                              adapt_delta = 0.999,
+                              max_treedepth = 20)
+  write.csv(bh_chm_cpd$summary(),'./stan models/outs/summary/bh_chm_cpd_ac_trial_oct24.csv')
+  bh_chm_cpd$save_object('./stan models/outs/fits/bh_chm_cpd_ac_trial_oct24.RDS')
+  
+  post_bh_chm_cpd=bh_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
+  write.csv(post_bh_chm_cpd,here('stan models','outs','posterior','bh_chm_cpd_ac_trial_oct24.csv'))
+  
+} else {
+  bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
+                              chains = 6, 
+                              iter_warmup = 200,
+                              iter_sampling =500,
+                              refresh = 100,
+                              adapt_delta = 0.999,
+                              max_treedepth = 20)
+  
+  write.csv(bh_chm_cpd$summary(),here("stan models","outs","summary","bh_chm_cpd_ac_oct24.csv"))
+  bh_chm_cpd$save_object(here("stan models","outs","fits","bh_chm_cpd_ac_oct24.RDS"))
+  
+  post_bh_chm_cpd=bh_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk','sigma'),format='draws_matrix')
+  write.csv(post_bh_chm_cpd,here('stan models','outs','posterior','bh_chm_cpd_ac_oct24.csv'))
   
 }
