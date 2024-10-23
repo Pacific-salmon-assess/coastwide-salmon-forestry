@@ -234,6 +234,24 @@ for(j in 3:24){
 lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
 abline(v=0,lwd=2)
 
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes (time-varying, Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(ric_chm_eca[,2],bw=0.02)
+for(j in 3:24){
+  d=density(ric_chm_eca[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
+plot(c(0,10)~c(-1.5,1.5),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes (static, Ricker)',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(ric_chm_eca_st[,2],bw=0.02)
+for(j in 3:24){
+  d=density(ric_chm_eca_st[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.6))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+abline(v=0,lwd=2)
+
 
 
 #ricker - cpd
