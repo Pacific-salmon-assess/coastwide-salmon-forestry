@@ -26,7 +26,7 @@ mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_chm_static.stan") #timevarying models w/ river-level autocorrelated residuals
 mbh_st=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
-file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_pink_ac.stan")  #timevarying models w/ river-level autocorrelated residua
+file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_pink_noac.stan")  #timevarying models w/ river-level autocorrelated residua
 mbh_p=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 file_bh=file.path(cmdstanr::cmdstan_path(),'sr models', "bh_pink_static.stan")  #timevarying models w/ river-level autocorrelated residua
@@ -408,7 +408,7 @@ dl_pk_eca=list(N=nrow(pk10r),
                 end_y=N_s[,2],
                 start_t=L_all$tmin,
                 pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
-                pSmax_sig=smax_prior$m.s*5,
+                pSmax_sig=smax_prior$m.s*2,
                 pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
                 pRk_sig=smax_prior$m.r)
 
@@ -430,7 +430,7 @@ dl_pk_cpd=list(N=nrow(pk10r),
                end_y=N_s[,2],
                start_t=L_all$tmin,
                pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
-               pSmax_sig=smax_prior$m.s*5,
+               pSmax_sig=smax_prior$m.s*2,
                pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
                pRk_sig=smax_prior$m.r)
 
