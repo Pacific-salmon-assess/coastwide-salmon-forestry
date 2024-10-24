@@ -1,0 +1,296 @@
+---
+title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
+author: ''
+date: "Apr. 2024"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    collapsed: no
+    fig_caption: yes
+    highlight: espresso
+    number_sections: yes
+    smooth_scroll: yes
+    theme: sandstone
+    toc: yes
+    toc_float: yes
+---
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=TRUE)
+options(max.print=23)
+library(cmdstanr)
+library(here);library(dplyr); library(stringr)
+```
+
+# Overview
+
+## Beverton-Holt Model with time-varying coastwide productivity
+
+
+```{r}
+
+ch20rsc <-read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr.csv")
+
+d_chm_eca=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac_oct24.csv'),check.names=F)
+
+d_chm_cpd=read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_oct24.csv'),check.names=F)
+
+
+d_rv=d_chm_eca[,grepl('b_for_rv',colnames(d_chm_eca))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+sc_cu=subset(cu,CU %in% c('CM-4'))
+jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+
+
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(d_chm_eca[,2],bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_rv)){ #22 cus
+  d=density(d_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+#separating the ones from South coast
+for(j in 1:nrow(sc_cu)){
+  d=density(d_rv[,jj[j]],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkblue',alpha.f=0.8))
+}
+
+
+d_rv=d_chm_cpd[,grepl('b_for_rv',colnames(d_chm_cpd))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+sc_cu=subset(cu,CU %in% c('CM-4'))
+jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(d_chm_cpd[,2],bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_rv)){ #22 cus
+  d=density(d_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+
+```
+
+
+## Ricker Model with time-varying coastwide productivity
+
+```{r}
+
+d_chm_eca=read.csv(here('stan models','outs','posterior','ric_chm_eca_ac_oct24.csv'),check.names=F)
+
+
+d_rv=d_chm_eca[,grepl('b_for_rv',colnames(d_chm_eca))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+sc_cu=subset(cu,CU %in% c('CM-4'))
+jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+
+
+plot(c(0,20)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(d_chm_eca[,2],bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_rv)){ #22 cus
+  d=density(d_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+
+
+```
+
+## Beverton-Holt Model with NPGO
+
+```{r}
+
+d_chm_eca=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo.csv'),check.names=F)
+
+
+d_rv=d_chm_eca[,grepl('b_for_rv',colnames(d_chm_eca))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+sc_cu=subset(cu,CU %in% c('CM-4'))
+jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+
+
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(d_chm_eca[,2],bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_rv)){ #22 cus
+  d=density(d_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+
+d_chm_cpd =read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo.csv'),check.names=F)
+d_rv=d_chm_cpd[,grepl('b_for_rv',colnames(d_chm_cpd))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+sc_cu=subset(cu,CU %in% c('CM-4'))
+jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+
+plot(c(0,10)~c(-2,2),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(d_chm_cpd[,2],bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_rv)){ #22 cus
+  d=density(d_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+
+
+
+```
+
+### Effect of NPGO
+
+
+```{r}
+d_chm_eca=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo.csv'),check.names=F)
+
+
+d_npgo_rv=d_chm_eca[,grepl('b_npgo_rv',colnames(d_chm_eca))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+
+plot(c(0,20)~c(-0.75,0.75),bty='l',type='n',ylab='Posterior density',main='NPGO effect sizes by River',ylim=c(0,20),yaxt='n',xlab='Standardized coefficients')
+d0npgo=density(d_chm_eca$b_npgo,bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_npgo_rv)){ #22 cus
+  d=density(d_npgo_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0npgo$y~d0npgo$x,col='darkred',lwd=3)
+
+
+d_chm_cpd =read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo.csv'),check.names=F)
+
+d_npgo_rv=d_chm_cpd[,grepl('b_npgo_rv',colnames(d_chm_cpd))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+
+plot(c(0,20)~c(-0.75,0.75),bty='l',type='n',ylab='Posterior density',main='NPGO effect sizes by River',ylim=c(0,20),yaxt='n',xlab='Standardized coefficients')
+d0npgo=density(d_chm_cpd$b_npgo,bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_npgo_rv)){ #22 cus
+  d=density(d_npgo_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0npgo$y~d0npgo$x,col='darkred',lwd=3)
+
+
+
+
+```
+
+
+## Ricker Model with NPGO
+
+```{r}
+
+d_chm_eca=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo.csv'),check.names=F)
+
+d_chm_cpd =read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo.csv'),check.names=F)
+
+
+d_rv=d_chm_eca[,grepl('b_for_rv',colnames(d_chm_eca))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+sc_cu=subset(cu,CU %in% c('CM-4'))
+jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+
+plot(c(0,20)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(d_chm_eca[,2],bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_rv)){ #22 cus
+  d=density(d_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+
+
+d_rv=d_chm_cpd[,grepl('b_for_rv',colnames(d_chm_cpd))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+sc_cu=subset(cu,CU %in% c('CM-4'))
+jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+
+plot(c(0,20)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+d0eca=density(d_chm_cpd[,2],bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_rv)){ #22 cus
+  d=density(d_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+
+
+
+
+```
+
+
+
+### Effect of NPGO
+
+
+```{r}
+d_chm_eca=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo.csv'),check.names=F)
+
+
+d_npgo_rv=d_chm_eca[,grepl('b_npgo_rv',colnames(d_chm_eca))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+
+plot(c(0,20)~c(-0.75,0.75),bty='l',type='n',ylab='Posterior density',main='NPGO effect sizes by River',ylim=c(0,20),yaxt='n',xlab='Standardized coefficients')
+d0npgo=density(d_chm_eca$b_npgo,bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_npgo_rv)){ #22 cus
+  d=density(d_npgo_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0npgo$y~d0npgo$x,col='darkred',lwd=3)
+
+
+d_chm_cpd =read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo.csv'),check.names=F)
+
+d_npgo_rv=d_chm_cpd[,grepl('b_npgo_rv',colnames(d_chm_cpd))]
+cu=distinct(ch20rsc,River,.keep_all = T)
+
+plot(c(0,20)~c(-0.75,0.75),bty='l',type='n',ylab='Posterior density',main='NPGO effect sizes by River',ylim=c(0,20),yaxt='n',xlab='Standardized coefficients')
+d0npgo=density(d_chm_cpd$b_npgo,bw=0.02)
+abline(v=0,lwd=2)
+for(j in 1:ncol(d_npgo_rv)){ #22 cus
+  d=density(d_npgo_rv[,j],bw=0.02)
+  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+}
+lines(d0npgo$y~d0npgo$x,col='darkred',lwd=3)
+
+
+
+
+```
