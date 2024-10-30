@@ -1967,3 +1967,16 @@ Chain 6 Iteration: 400 / 700 [ 57%]  (Sampling)
 Chain 3 Iteration: 500 / 700 [ 71%]  (Sampling) 
 Chain 2 Iteration: 300 / 700 [ 42%]  (Sampling) 
 Chain 1 Iteration: 500 / 700 [ 71%]  (Sampling) 
+Chain 6 Iteration: 500 / 700 [ 71%]  (Sampling) 
+Chain 1 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 6 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 3 Iteration: 600 / 700 [ 85%]  (Sampling) 
+Chain 2 Iteration: 400 / 700 [ 57%]  (Sampling) 
+Chain 1 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 1 finished in 624573.0 seconds.
+Chain 5 Iteration: 300 / 700 [ 42%]  (Sampling) 
+Chain 6 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 6 finished in 646970.0 seconds.
+Chain 3 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 3 finished in 806914.0 seconds.
+Chain 2 Iteration: 500 / 700 [ 71%]  (Sampling) 
