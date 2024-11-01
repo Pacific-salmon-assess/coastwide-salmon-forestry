@@ -2,3 +2,11 @@ cmdstanr
 here
 dplyr
 stringr
+ggplot2
+tidyverse
+tibble
+tidyr
+readr
+purrr
+forcats
+lubridate

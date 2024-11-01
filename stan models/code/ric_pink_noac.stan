@@ -4,18 +4,18 @@ data{
   int C; //number of CUs
   int R; //number of rivers
   int J;//number of river-level stocks
-  int B_i[C]; //Broodline index for each CU
-  int C_i[J]; //CU index for each stock
-  int C_r[R]; //CU index for each stock
-  int R_i[J]; //River index for each stock
-  int BL[J]; //index of odd (1) or even (2) broodines
-  int ii[N]; //index of brood years
+  array[C] int B_i; //Broodline index for each CU
+  array[J] int C_i; //CU index for each stock
+  array[R] int C_r; //CU index for each stock
+  array[J] int R_i; //River index for each stock
+  array[J] int BL; //index of odd (1) or even (2) broodines
+  array[N] int ii; //index of brood years
   vector[N] R_S; //matrix of productivity among stocks - log(recruits per spawner)
   vector[N] S; //vector of spawners
   vector[N] forest_loss; //vector of stock-specific forest loss through time
-  int start_t[J]; //observations per stock
-  int start_y[J];       // ragged start point for observations (N)
-  int end_y[J];         // ragged end points for observations (N)
+  array[J] int start_t; //observations per stock
+  array[J] int start_y;       // ragged start point for observations (N)
+  array[J] int end_y;         // ragged end points for observations (N)
    array[J] real pSmax_mean; //priors on smax - based on observed spawner abundance
   array[J] real pSmax_sig; //priors on sigma for smax - based on observed spawner abundance
 }
@@ -73,7 +73,7 @@ vector[C] b_for_cu; //CU-specific forestry effect
 vector[R] b_for_rv; //River-specific forestry effect
 vector<lower=0>[C] cu_sigma; ///CU-level sigma
 vector<lower = 0>[J] sigma; ///stock-level sigma
-vector<lower = 0>[J] sigmaAR; ///stock-level sigma
+//vector<lower = 0>[J] sigmaAR; ///stock-level sigma
 vector<lower=0>[J] b; 
 
 alpha_cu = sigma_a_cu*z_a_cu; //non-centered estimate for CU time-invariant productivity
