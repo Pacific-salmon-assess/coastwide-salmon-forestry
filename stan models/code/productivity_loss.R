@@ -9,7 +9,7 @@ library(tidyverse)
 library(ggplot2)
 
 #data
-ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_reduced_VRI90.csv"))
+ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_npgo.csv"))
 ch20r$cuid=as.numeric(factor(ch20r$CU))
 
 
@@ -53,7 +53,7 @@ ch20r %>%
 
 posterior =read.csv(here('stan models',
                         'outs','posterior',
-                        'bh_chm_cpd.csv'),check.names=F)
+                        'bh_chm_cpd_ac_oct24.csv'),check.names=F)
 
 
 #time varying alpha and river specific alpha
@@ -271,6 +271,7 @@ ggplot(productivity_long %>% filter(productivity_loss < 100),
                color = "slategray", linewidth = 0.5, alpha = 0.7) +
   facet_wrap(~CU_name, ncol = 4, scales = "free")+
   scale_x_continuous(n.breaks = 3, breaks = waiver())+
+  # scale_y_continuous(n.breaks = 3, breaks = waiver(), limits = c(0, 0.1))+
   scale_fill_gradient2(low = "#5ab4ac",
                        mid = "gray",
                        high = "#d8b365", name = "CPD",
@@ -278,8 +279,8 @@ ggplot(productivity_long %>% filter(productivity_loss < 100),
   labs(x='Change in productivity (%)',
        y='Density')+
   theme_classic()+
-  theme(#legend.position="bottom-right",
-        legend.position = c(0.94, 0.01),  # Position at bottom right inside the plot
+  theme(legend.position="bottom",
+        #legend.position = c(0.94, 0.01),  # Position at bottom right inside the plot
         legend.justification = c(1, 0),   # Align the legend
         legend.background = element_rect(fill = "white", color = "black"), # Optional: add a border and background for clarity
         legend.title = element_text(size = 12),

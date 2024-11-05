@@ -55,6 +55,95 @@ library(ggplot2)
 library(tidyverse)
 ```
 
+## Introduction
+
+```{r}
+#plot time series of Viner River Spawners
+
+ch20rsc <-read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_w_npgo.csv")
+
+viner <- ch20rsc %>% 
+  filter(River == "VINER SOUND CREEK") %>% 
+  select(BroodYear, Spawners, Recruits,
+         ECA_age_proxy_forested_only,disturbedarea_prct_cs)
+
+#plot time series of Viner River Spawners with points for every year with data and
+#line joining thr points
+
+ggplot(viner %>% 
+         filter(BroodYear <= 1991), aes(BroodYear, Spawners)) +
+  geom_point() +
+  geom_line(lty = 'dashed', alpha = 0.5) +
+  geom_point(data = viner %>% 
+         filter(BroodYear >= 1991), aes(BroodYear, Spawners), col = "red")+
+  geom_line(data = viner %>% 
+         filter(BroodYear >= 1991), aes(BroodYear, Spawners), lty = 'dashed', alpha = 0.5, col = "red") +
+  labs(title = 'Viner Sound Creek', 
+       x = 'Year', y = 'Number of adult chum returning') +
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        ) 
+
+ggsave(here('figures','viner_spawners_extended.png'), width = 6, height = 4, dpi = 300)
+
+ggplot(viner %>% 
+         filter(BroodYear > 1985), aes(BroodYear,  ECA_age_proxy_forested_only)) +
+  geom_point() +
+  geom_line(lty = 'dashed', alpha = 0.5) +
+  labs(title = 'Viner Sound Creek', 
+       x = 'Year', y = 'Equivalent clear cut area') +
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        ) 
+#time series of ECA and CPD for Viner Sound Creek
+
+ggplot(viner, aes(BroodYear, disturbedarea_prct_cs)) +
+  geom_point(aes(col = "CPD")) +
+  geom_line(aes( col = "CPD"), lty = 'dashed', alpha = 0.5) +
+  geom_point(aes(BroodYear, ECA_age_proxy_forested_only*100, col = "ECA"))+
+  geom_line(aes(BroodYear, ECA_age_proxy_forested_only*100,col = "ECA"), lty = 'dashed')+
+  scale_color_manual("Forestry metric", values = c("ECA" = "#377771", "CPD" = "#ED6A5E"))+
+  labs(title = 'Viner Sound Creek', 
+       x = 'Year', y = 'Cumulative percentile disturbed/\nEquivalent clearcut area*100') +
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+ggsave(here('figures','viner_eca_cpd.png'), width = 6, height = 4, dpi = 300)
+
+#plot Recruits on y axis and Spawners on x axis
+
+ggplot(viner, aes(Spawners, Recruits)) +
+  geom_point(size = 2, alpha = 0.5) +
+  labs(title = 'Viner Sound Creek', 
+       x = 'Number of spawners', y = 'Number of recruits') +
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+ggsave(here('figures','viner_spawners_recruits.png'), width = 6, height = 4, dpi = 300)
+
+
+```
 
 
 ## Beverton-Holt Model with time-varying coastwide productivity
@@ -105,7 +194,7 @@ eca_ca <- ch20rsc %>% select(River, River_n,CU, ECA_age_proxy_forested_only) %>%
 
 d_chm_eca_rv <- left_join(d_chm_eca_rv, eca_ca, by = 'CU')
   
-
+#colored by max in cu
 ggplot() +
   geom_density(data= d_chm_eca_rv, aes(eca_effect, color = eca_cu_max, group = River),alpha = 0.05, linewidth = 0.2) +
   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
@@ -125,7 +214,8 @@ ggplot() +
         axis.text.y = element_text(size = 12),
         plot.title = element_text(size = 16, hjust = 0.5)
         ) 
-  
+
+ggsave(here('figures','eca_effect_sizes_bh_chm_ac_eca.png'), width = 6, height = 4, dpi = 300)
 
 d_chm_cpd_rv <- d_chm_cpd %>% 
   select(starts_with('b_for_rv')) %>%
@@ -148,7 +238,7 @@ d_chm_cpd_rv <- d_chm_cpd %>%
               summarize(cpd_cu_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
             by = 'CU')
 
-
+#colored by max in cu
 ggplot() +
   geom_density(data= d_chm_cpd_rv, aes(cpd_effect, color = cpd_cu_max, group = River),alpha = 0.05, linewidth = 0.2) +
   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
@@ -167,7 +257,10 @@ ggplot() +
         axis.text.x = element_text(size = 12),
         axis.text.y = element_text(size = 12),
         plot.title = element_text(size = 16, hjust = 0.5)
-        ) 
+
+              ) 
+
+ggsave(here('figures','cpd_effect_sizes_bh_chm_ac_cpd.png'), width = 6, height = 4, dpi = 300)
 
 #plot time varying productivity alpha
 
@@ -179,6 +272,8 @@ d_chm_cpd_alpha <- d_chm_cpd %>%
                names_prefix = 'alpha_t',
                values_to = 'alpha_t') %>%
   mutate(year = as.numeric(str_extract(year, '\\d+')) + min(ch20rsc$BroodYear) -1)
+
+
 
 #plot time series of all alpha_t, median of all alpha_t
 
@@ -206,8 +301,8 @@ ggplot() +
 
 ric_chm_eca=read.csv(here('stan models','outs','posterior','ric_chm_eca_ac_oct24.csv'),check.names=F)
 
-#reading Dan's model outputs
-ric_chm_cpd=read.csv(here('stan models','outs','posterior','ric_chm_cpd.csv'),check.names=F)
+#reading my model outputs
+ric_chm_cpd=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ac_oct24.csv'),check.names=F)
 
 ric_chm_eca_rv <- ric_chm_eca %>% 
   select(starts_with('b_for')) %>%
@@ -224,7 +319,11 @@ ric_chm_eca_rv <- ric_chm_eca %>%
                         CU = first(CU),
                         eca_max = 100*max(ECA_age_proxy_forested_only, na.rm = TRUE)),
             by = 'River_n') %>% 
-  mutate(eca_bin = as.factor(cut(eca_max, breaks = 10, labels = FALSE)))
+  mutate(eca_bin = as.factor(cut(eca_max, breaks = 10, labels = FALSE))) %>% 
+  left_join(ch20rsc %>% select(River, River_n,CU,ECA_age_proxy_forested_only) %>%
+              group_by(CU) %>%
+              summarize(eca_cu_max = max(ECA_age_proxy_forested_only, na.rm = TRUE)),
+            by = 'CU')
 
 
 
@@ -243,12 +342,39 @@ ric_chm_cpd_rv <- ric_chm_cpd %>%
                         CU = first(CU),
                         cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
             by = 'River_n') %>% 
-  mutate(cpd_bin = as.factor(cut(cpd_max, breaks = 10, labels = FALSE)))
+  mutate(cpd_bin = as.factor(cut(cpd_max, breaks = 10, labels = FALSE))) %>% 
+  left_join(ch20rsc %>% select(River, River_n,CU,disturbedarea_prct_cs) %>%
+              group_by(CU) %>%
+              summarize(cpd_cu_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
+            by = 'CU')
 
 
-
+#colored by max in river
 ggplot() +
   geom_density(data= ric_chm_eca_rv, aes(eca_effect, color = eca_max, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'ECA effect sizes by River', 
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1, 1) +
+  scale_color_gradient2(name = 'Max ECA in River (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(ric_chm_eca$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+ggsave(here('figures','eca_effect_sizes_ric_chm_ac_eca_river.png'), width = 6, height = 4, dpi = 300)
+
+
+
+#colored by max in cu
+ggplot() +
+  geom_density(data= ric_chm_eca_rv, aes(eca_effect, color = eca_cu_max*100, group = River),alpha = 0.05, linewidth = 0.2) +
   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
   labs(title = 'ECA effect sizes by River', 
        x = 'Standardized coefficients', y = 'Posterior density') +
@@ -265,9 +391,34 @@ ggplot() +
         plot.title = element_text(size = 16, hjust = 0.5)
         )
 
+ggsave(here('figures','eca_effect_sizes_ric_chm_ac_eca_cu.png'), width = 6, height = 4, dpi = 300)
 
+#color by river
 ggplot() +
   geom_density(data= ric_chm_cpd_rv, aes(cpd_effect, color = cpd_max, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'CPD effect sizes by River', 
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1, 1) +
+  scale_color_gradient2(name = 'Max CPD in River (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(ric_chm_cpd$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+ggsave(here('figures','cpd_effect_sizes_ric_chm_ac_cpd_river.png'), width = 6, height = 4, dpi = 300)
+
+
+#colored by max in cu
+ggplot() +
+  geom_density(data= ric_chm_cpd_rv, aes(cpd_effect, color = cpd_cu_max, group = River),alpha = 0.05, linewidth = 0.2) +
   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
   labs(title = 'CPD effect sizes by River', 
        x = 'Standardized coefficients', y = 'Posterior density') +
@@ -283,6 +434,9 @@ ggplot() +
         axis.text.y = element_text(size = 12),
         plot.title = element_text(size = 16, hjust = 0.5)
         )
+
+ggsave(here('figures','cpd_effect_sizes_ric_chm_ac_cpd_cu.png'), width = 6, height = 4, dpi = 300)
+
 
 #plot time varying productivity alpha
 
@@ -353,7 +507,7 @@ bh_chm_cpd_npgo=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo.
 #using ggplot2, plot the effect sizes of ECA and CPD by river
 
 bh_chm_eca_npgo_rv <- bh_chm_eca_npgo %>% 
-  select(starts_with('b_for')) %>%
+  select(starts_with('b_for_rv')) %>%
   pivot_longer(cols = everything(), 
                names_to = 'River', 
                names_prefix = 'b_for_rv',
@@ -367,11 +521,38 @@ bh_chm_eca_npgo_rv <- bh_chm_eca_npgo %>%
                         CU = first(CU),
                         eca_max = 100*max(ECA_age_proxy_forested_only, na.rm = TRUE)),
             by = 'River_n') %>% 
-  mutate(eca_bin = as.factor(cut(eca_max, breaks = 10, labels = FALSE)))
+  mutate(eca_bin = as.factor(cut(eca_max, breaks = 10, labels = FALSE))) %>% 
+  left_join(ch20rsc %>% select(River, River_n,CU,ECA_age_proxy_forested_only) %>%
+              group_by(CU) %>%
+              summarize(eca_cu_max = max(ECA_age_proxy_forested_only, na.rm = TRUE)),
+            by = 'CU')
 
 
 ggplot() +
   geom_density(data= bh_chm_eca_npgo_rv, aes(eca_effect, color = eca_max, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'ECA effect sizes by River', 
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1.5, 1.5) +
+  scale_color_gradient2(name = 'Max ECA in River (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(bh_chm_eca_npgo$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+ggsave(here('figures','eca_effect_sizes_bh_chm_npgo_eca_color_river.png'), width = 6, height = 4, dpi = 300)
+
+
+#colored by max in cu
+
+ggplot() +
+  geom_density(data= bh_chm_eca_npgo_rv, aes(eca_effect, color = eca_cu_max*100, group = River),alpha = 0.05, linewidth = 0.2) +
   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
   labs(title = 'ECA effect sizes by River', 
        x = 'Standardized coefficients', y = 'Posterior density') +
@@ -388,8 +569,16 @@ ggplot() +
         plot.title = element_text(size = 16, hjust = 0.5)
         )
 
+ggsave(here('figures','eca_effect_sizes_bh_chm_npgo_eca_color_cu.png'), width = 6, height = 4, dpi = 300)
+
+
+
+
+
+
+
 bh_chm_cpd_npgo_rv <- bh_chm_cpd_npgo %>%
-  select(starts_with('b_for')) %>%
+  select(starts_with('b_for_rv')) %>%
   pivot_longer(cols = everything(), 
                names_to = 'River', 
                names_prefix = 'b_for_rv',
@@ -403,11 +592,39 @@ bh_chm_cpd_npgo_rv <- bh_chm_cpd_npgo %>%
                         CU = first(CU),
                         cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
             by = 'River_n') %>% 
-  mutate(cpd_bin = as.factor(cut(cpd_max, breaks = 10, labels = FALSE)))
+  mutate(cpd_bin = as.factor(cut(cpd_max, breaks = 10, labels = FALSE))) %>% 
+  left_join(ch20rsc %>% select(River, River_n,CU,disturbedarea_prct_cs) %>%
+              group_by(CU) %>%
+              summarize(cpd_cu_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
+            by = 'CU')
 
 
 ggplot() +
   geom_density(data= bh_chm_cpd_npgo_rv, aes(cpd_effect, color = cpd_max, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'CPD effect sizes by River', 
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1.5, 1.5) +
+  scale_color_gradient2(name = 'Max CPD in River (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(bh_chm_cpd_npgo$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+ggsave(here('figures','cpd_effect_sizes_bh_chm_npgo_cpd_color_river.png'), width = 6, height = 4, dpi = 300)
+
+
+
+#color by max in cu
+
+ggplot() +
+  geom_density(data= bh_chm_cpd_npgo_rv, aes(cpd_effect, color = cpd_cu_max, group = River),alpha = 0.05, linewidth = 0.2) +
   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
   labs(title = 'CPD effect sizes by River', 
        x = 'Standardized coefficients', y = 'Posterior density') +
@@ -424,6 +641,7 @@ ggplot() +
         plot.title = element_text(size = 16, hjust = 0.5)
         )
 
+ggsave(here('figures','cpd_effect_sizes_bh_chm_npgo_cpd_color_cu.png'), width = 6, height = 4, dpi = 300)
 
 
 ```
@@ -515,39 +733,204 @@ lines(d0npgo$y~d0npgo$x,col='darkred',lwd=3)
 
 ```{r}
 
-d_chm_eca=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo.csv'),check.names=F)
+ric_chm_eca_npgo=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo.csv'),check.names=F)
 
-d_chm_cpd =read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo.csv'),check.names=F)
+ric_chm_cpd_npgo =read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo.csv'),check.names=F)
+
+ric_chm_eca_npgo_rv <- ric_chm_eca_npgo %>% 
+  select(starts_with('b_for_rv')) %>%
+  pivot_longer(cols = everything(), 
+               names_to = 'River', 
+               names_prefix = 'b_for_rv',
+               values_to = 'eca_effect') %>%
+  mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+  select(-River) %>%
+  left_join(ch20rsc %>% select(River, River_n,CU, ECA_age_proxy_forested_only) %>%
+              group_by(River) %>%
+              summarize(River_n = first(River_n),
+                        River = first(River),
+                        CU = first(CU),
+                        eca_max = 100*max(ECA_age_proxy_forested_only, na.rm = TRUE)),
+            by = 'River_n') %>% 
+  mutate(eca_bin = as.factor(cut(eca_max, breaks = 10, labels = FALSE))) %>% 
+  left_join(ch20rsc %>% select(River, River_n,CU,ECA_age_proxy_forested_only) %>%
+              group_by(CU) %>%
+              summarize(eca_cu_max = max(ECA_age_proxy_forested_only, na.rm = TRUE)),
+            by = 'CU')
+
+#color by river
+ggplot() +
+  geom_density(data= ric_chm_eca_npgo_rv, aes(eca_effect, color = eca_max, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'ECA effect sizes by River', 
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1, 1) +
+  scale_color_gradient2(name = 'Max ECA in River (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(ric_chm_eca_npgo$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+ggsave(here('figures','eca_effect_sizes_ric_chm_npgo_eca_color_river.png'), width = 6, height = 4, dpi = 300)
+
+#color by cu
+
+ggplot() +
+  geom_density(data= ric_chm_eca_npgo_rv, aes(eca_effect, color = eca_cu_max*100, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'ECA effect sizes by River', 
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1, 1) +
+  scale_color_gradient2(name = 'Max ECA in CU (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(ric_chm_eca_npgo$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+ggsave(here('figures','eca_effect_sizes_ric_chm_npgo_eca_color_cu.png'), width = 6, height = 4, dpi = 300)
 
 
-d_rv=d_chm_eca[,grepl('b_for_rv',colnames(d_chm_eca))]
-cu=distinct(ch20rsc,River,.keep_all = T)
-sc_cu=subset(cu,CU %in% c('CM-4'))
-jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
-
-plot(c(0,20)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
-d0eca=density(d_chm_eca[,2],bw=0.02)
-abline(v=0,lwd=2)
-for(j in 1:ncol(d_rv)){ #22 cus
-  d=density(d_rv[,j],bw=0.02)
-  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
-}
-lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
 
 
-d_rv=d_chm_cpd[,grepl('b_for_rv',colnames(d_chm_cpd))]
-cu=distinct(ch20rsc,River,.keep_all = T)
-sc_cu=subset(cu,CU %in% c('CM-4'))
-jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+ric_chm_cpd_npgo_rv <- ric_chm_cpd_npgo %>% 
+  select(starts_with('b_for_rv')) %>%
+  pivot_longer(cols = everything(), 
+               names_to = 'River', 
+               names_prefix = 'b_for_rv',
+               values_to = 'cpd_effect') %>%
+  mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+  select(-River) %>%
+  left_join(ch20rsc %>% select(River, River_n,CU,disturbedarea_prct_cs) %>%
+              group_by(River) %>%
+              summarize(River_n = first(River_n),
+                        River = first(River),
+                        CU = first(CU),
+                        cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
+            by = 'River_n') %>% 
+  mutate(cpd_bin = as.factor(cut(cpd_max, breaks = 10, labels = FALSE))) %>% 
+  left_join(ch20rsc %>% select(River, River_n,CU,disturbedarea_prct_cs) %>%
+              group_by(CU) %>%
+              summarize(cpd_cu_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
+            by = 'CU')
+  
+  
+#color by river
+ggplot() +
+  geom_density(data= ric_chm_cpd_npgo_rv, aes(cpd_effect, color = cpd_max, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'CPD effect sizes by River',
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1, 1) +
+  scale_color_gradient2(name = 'Max CPD in River (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(ric_chm_cpd_npgo$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+        
+        
+ggsave(here('figures','cpd_effect_sizes_ric_chm_npgo_cpd_color_river.png'), width = 6, height = 4, dpi = 300)
+        
 
-plot(c(0,20)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
-d0eca=density(d_chm_cpd[,2],bw=0.02)
-abline(v=0,lwd=2)
-for(j in 1:ncol(d_rv)){ #22 cus
-  d=density(d_rv[,j],bw=0.02)
-  lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
-}
-lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+#color by cu
+
+ggplot() +
+  geom_density(data= ric_chm_cpd_npgo_rv, aes(cpd_effect, color = cpd_cu_max, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'CPD effect sizes by River',
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1, 1) +
+  scale_color_gradient2(name = 'Max CPD in CU (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(ric_chm_cpd_npgo$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+ggsave(here('figures','cpd_effect_sizes_ric_chm_npgo_cpd_color_cu.png'), width = 6, height = 4, dpi = 300)
+
+
+
+
+#make some plot but color according to CU
+
+
+ggplot() +
+  geom_density(data= ric_chm_cpd_npgo_rv, aes(cpd_effect, color = CU, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'CPD effect sizes by River',
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1, 1) +
+  # scale_color_gradient2(name = 'Max CPD in CU (%)',
+  #                       low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 50,
+                       lmin = 10, lmax = 75) +
+  # scale_color_hue(name = 'CU') +
+  geom_density(aes(ric_chm_cpd_npgo$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'none',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+ggsave(here('figures','cpd_effect_sizes_ric_chm_npgo_cpd_color_cu_name.png'), width = 6, height = 4, dpi = 300)
+         
+         
+         
+         # 
+# d_rv=d_chm_eca[,grepl('b_for_rv',colnames(d_chm_eca))]
+# cu=distinct(ch20rsc,River,.keep_all = T)
+# sc_cu=subset(cu,CU %in% c('CM-4'))
+# jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+# 
+# plot(c(0,20)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='ECA effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+# d0eca=density(d_chm_eca[,2],bw=0.02)
+# abline(v=0,lwd=2)
+# for(j in 1:ncol(d_rv)){ #22 cus
+#   d=density(d_rv[,j],bw=0.02)
+#   lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+# }
+# lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
+# 
+# 
+# d_rv=d_chm_cpd[,grepl('b_for_rv',colnames(d_chm_cpd))]
+# cu=distinct(ch20rsc,River,.keep_all = T)
+# sc_cu=subset(cu,CU %in% c('CM-4'))
+# jj=as.numeric(rownames(cu[cu$CU=='CM-4',]))
+# 
+# plot(c(0,20)~c(-1,1),bty='l',type='n',ylab='Posterior density',main='CPD effect sizes by River',ylim=c(0,10),yaxt='n',xlab='Standardized coefficients')
+# d0eca=density(d_chm_cpd[,2],bw=0.02)
+# abline(v=0,lwd=2)
+# for(j in 1:ncol(d_rv)){ #22 cus
+#   d=density(d_rv[,j],bw=0.02)
+#   lines(d$y~d$x,col=adjustcolor('darkgray',alpha.f=0.2))
+# }
+# lines(d0eca$y~d0eca$x,col='darkred',lwd=3)
 
 
 

@@ -116,7 +116,7 @@ dl_pk_eca=list(N=nrow(pk10r),
                end_y=N_s[,2],
                start_t=L_all$tmin,
                pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
-               pSmax_sig=smax_prior$m.s,
+               pSmax_sig=smax_prior$m.s*3,
                pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
                pRk_sig=smax_prior$m.r)
 
@@ -139,7 +139,7 @@ dl_pk_cpd=list(N=nrow(pk10r),
                end_y=N_s[,2],
                start_t=L_all$tmin,
                pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
-               pSmax_sig=smax_prior$m.s,
+               pSmax_sig=smax_prior$m.s*3,
                pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
                pRk_sig=smax_prior$m.r)
 
@@ -159,7 +159,7 @@ if(Sys.info()[7] == "mariakur") {
   write.csv(bh_pk_eca$summary(),'./stan models/outs/summary/bh_pk_eca_noac_w_npgo_trial.csv')
   bh_pk_eca$save_object('./stan models/outs/fits/bh_pk_eca_noac_w_npgo_trial.RDS')
   
-  post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+  post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
   write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo_trial.csv'))
   
 } else {
@@ -177,7 +177,7 @@ if(Sys.info()[7] == "mariakur") {
           write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_noac_w_npgo.csv"))
           bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_noac_w_npgo.RDS"))
   
-          post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+          post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
           write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo.csv'))
         },
         #if an error occurs, tell me the error
@@ -192,7 +192,7 @@ if(Sys.info()[7] == "mariakur") {
             write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_noac_w_npgo.csv"))
             bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_noac_w_npgo.RDS"))
   
-            post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+            post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
             write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo.csv'))
         }
     )
@@ -216,7 +216,7 @@ if(Sys.info()[7] == "mariakur") {
   write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_cpd_noac_w_npgo_trial.csv')
   bh_pk_cpd$save_object('./stan models/outs/fits/bh_pk_cpd_noac_w_npgo_trial.RDS')
   
-  post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+  post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
   write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo_trial.csv'))
   
 } else {
@@ -234,7 +234,7 @@ if(Sys.info()[7] == "mariakur") {
           write.csv(bh_pk_cpd$summary(),here("stan models","outs","summary","bh_pk_cpd_noac_w_npgo.csv"))
           bh_pk_cpd$save_object(here("stan models","outs","fits","bh_pk_cpd_noac_w_npgo.RDS"))
   
-          post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+          post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
           write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo.csv'))
         },
         #if an error occurs, tell me the error
@@ -249,7 +249,7 @@ if(Sys.info()[7] == "mariakur") {
             write.csv(bh_pk_cpd$summary(),here("stan models","outs","summary","bh_pk_cpd_noac_w_npgo.csv"))
             bh_pk_cpd$save_object(here("stan models","outs","fits","bh_pk_cpd_noac_w_npgo.RDS"))
   
-            post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Rk'),format='draws_matrix')
+            post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk'),format='draws_matrix')
             write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo.csv'))
         }
     )

@@ -158,7 +158,7 @@ if(Sys.info()[7] == "mariakur") {
   write.csv(ric_pk_eca$summary(),here("stan models","outs","summary","ric_pk_eca_noac_trial.csv"))
   ric_pk_eca$save_object(here("stan models","outs","fits","ric_pk_eca_noac_trial.RDS"))
   
-  post_ric_pk_eca=ric_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
+  post_ric_pk_eca=ric_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
   write.csv(post_ric_pk_eca,here('stan models','outs','posterior','ric_pk_eca_noac_trial.csv'))
   
 } else {
@@ -171,10 +171,10 @@ if(Sys.info()[7] == "mariakur") {
                               adapt_delta = 0.999,
                               max_treedepth = 20)
   
-  write.csv(ric_pk_eca$summary(),'./stan models/outs/summary/ric_pk_eca_noac.csv')
-  ric_pk_eca$save_object('./stan models/outs/fits/ric_pk_eca_noac.RDS')
+  write.csv(ric_pk_eca$summary(),here("stan models","outs","summary","ric_pk_eca_noac.csv"))
+  ric_pk_eca$save_object(here("stan models","outs","fits","ric_pk_eca_noac.RDS"))
   
-  post_ric_pk_eca=ric_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
+  post_ric_pk_eca=ric_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
   write.csv(post_ric_pk_eca,here('stan models','outs','posterior','ric_pk_eca_noac.csv'))
   
 }
@@ -195,7 +195,7 @@ if(Sys.info()[7] == "mariakur") {
   write.csv(ric_pk_cpd$summary(),here("stan models","outs","summary","ric_pk_cpd_noac_trial.csv"))
   ric_pk_cpd$save_object(here("stan models","outs","fits","ric_pk_cpd_noac_trial.RDS"))
   
-  post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
+  post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
   write.csv(post_ric_pk_cpd,here('stan models','outs','posterior','ric_pk_cpd_noac_trial.csv'))
   
 } else {
@@ -208,10 +208,10 @@ if(Sys.info()[7] == "mariakur") {
                             adapt_delta = 0.999,
                             max_treedepth = 20)
   
-  write.csv(ric_pk_cpd$summary(),'./stan models/outs/summary/ric_pk_cpd_noac.csv')
-  ric_pk_cpd$save_object('./stan models/outs/fits/ric_pk_cpd_noac.RDS')
+  write.csv(ric_pk_cpd$summary(),here("stan models","outs","summary","ric_pk_cpd_noac.csv"))
+  ric_pk_cpd$save_object(here("stan models","outs","fits","ric_pk_cpd_noac.RDS"))
   
-  post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma'),format='draws_matrix')
+  post_ric_pk_cpd=ric_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','Smax','sigma','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
   write.csv(post_ric_pk_cpd,here('stan models','outs','posterior','ric_pk_cpd_noac.csv'))
   
 }

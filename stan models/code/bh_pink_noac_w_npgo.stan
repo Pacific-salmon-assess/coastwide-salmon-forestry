@@ -140,13 +140,18 @@ model{
   
   //covariate effects
   b_for ~ normal(0,1); //standard normal prior for the effect of forest loss
+  b_npgo ~ normal(0,1); //standard normal prior for the effect of npgo
   z_for_cu ~ std_normal(); //std normal prior for CU-deviations
   z_for_rv ~ std_normal(); //std normal prior for River-deviations
+  z_npgo_cu ~ std_normal(); //std normal prior for CU-deviations
+  z_npgo_rv ~ std_normal(); //std normal prior for River-deviations
   
   
   //hierarchical variances
   sigma_for_cu ~ normal(0,1); //variance in stock-level forest loss effects
   sigma_for_rv ~ normal(0,1); //variance in stock-level forest loss effects
+  sigma_npgo_cu ~ normal(0,1); //variance in stock-level npgo effects
+  sigma_npgo_rv ~ normal(0,1); //variance in stock-level npgo effects
   
   //variance terms
   mu_sigma ~ normal(1,1);
@@ -161,7 +166,7 @@ model{
  for(j in 1:J){
   R_S[start_y[j]]~ normal(mu1[start_y[j]],sigma[j]); //initial fit for each stock
   
-  R_S[(start_y[j]+1):end_y[j]] ~ normal(mu2[(start_y[j]+1):end_y[j]], sigma[j]); //subsequent samples including autocorrelation
+  R_S[(start_y[j]+1):end_y[j]] ~ normal(mu2[(start_y[j]+1):end_y[j]], sigma[j]); //subsequent samples not including autocorrelation
   }
 }
 generated quantities{
