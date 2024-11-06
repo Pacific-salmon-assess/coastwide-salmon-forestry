@@ -1982,3 +1982,5 @@ Chain 3 finished in 806914.0 seconds.
 Chain 2 Iteration: 500 / 700 [ 71%]  (Sampling) 
 Chain 2 Iteration: 600 / 700 [ 85%]  (Sampling) 
 Chain 5 Iteration: 400 / 700 [ 57%]  (Sampling) 
+Chain 2 Iteration: 700 / 700 [100%]  (Sampling) 
+Chain 2 finished in 1389710.0 seconds.
