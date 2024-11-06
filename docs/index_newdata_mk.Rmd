@@ -496,6 +496,60 @@ ggplot() +
 
 ```
 
+## Dan's model output
+
+```{r}
+ric_chm_cpd=read.csv(here('stan models','outs','posterior','ric_chm_cpd.csv'),check.names=F)
+
+ric_chm_cpd_rv <- ric_chm_cpd %>% 
+  select(starts_with('b_for')) %>%
+  pivot_longer(cols = everything(), 
+               names_to = 'River', 
+               names_prefix = 'b_for_rv',
+               values_to = 'cpd_effect') %>%
+  mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+  select(-River) %>%
+  left_join(ch20rsc %>% select(River, River_n,CU,disturbedarea_prct_cs) %>%
+              group_by(River) %>%
+              summarize(River_n = first(River_n),
+                        River = first(River),
+                        CU = first(CU),
+                        cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
+            by = 'River_n') %>% 
+  mutate(cpd_bin = as.factor(cut(cpd_max, breaks = 10, labels = FALSE))) %>% 
+  left_join(ch20rsc %>% select(River, River_n,CU,disturbedarea_prct_cs) %>%
+              group_by(CU) %>%
+              summarize(cpd_cu_max = max(disturbedarea_prct_cs, na.rm = TRUE)),
+            by = 'CU')
+
+#colored by max in cu
+ggplot() +
+  geom_density(data= ric_chm_cpd_rv, aes(cpd_effect, color = cpd_cu_max, group = River),alpha = 0.05, linewidth = 0.2) +
+  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+  labs(title = 'CPD effect sizes by River', 
+       x = 'Standardized coefficients', y = 'Posterior density') +
+  xlim(-1, 1) +
+  scale_color_gradient2(name = 'Max CPD in CU (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  geom_density(aes(ric_chm_cpd$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+  theme_classic()+
+  theme(legend.position = 'right',
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+# ggsave(here('figures','cpd_effect_sizes_ric_chm_ac_cpd_cu.png'), width = 6, height = 4, dpi = 300)
+
+
+
+```
+
+
+
+
 ## Beverton-Holt Model with NPGO
 
 ```{r}
