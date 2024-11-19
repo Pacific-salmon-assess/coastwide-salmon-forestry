@@ -9,4 +9,6 @@
 stan models/code/dev/
 stan models/outs/fits/
 stan models/outs/loo/
+docs/index_newdata_mk_cache/
+docs/index_newdata_mk_files/
 .Rhistory
