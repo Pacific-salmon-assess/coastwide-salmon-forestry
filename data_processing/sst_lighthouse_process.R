@@ -234,27 +234,41 @@ pko_salmon_data <- read.csv(here("origional-ecofish-data-models","Data","Process
 
 
 pke_cu_data <- pke_cu_data %>% 
-  select(CU_NAME, FULL_CU_IN, SITE_NAME, Y_LAT, X_LONG) %>% 
+  select(CU_NAME, FULL_CU_IN, SITE_NAME, Y_LAT, X_LONG, GFE_ID) %>% 
   distinct() 
 
+#check if there are multiple rows for each combination of Y_LAT and X_LONG
+pke_cu_data %>% 
+  group_by(Y_LAT, X_LONG) %>% 
+  summarize(n = n(), CU_NAME = unique(CU_NAME), SITE_NAME = unique(SITE_NAME), GFE_ID = unique(GFE_ID)) %>%
+  filter(n > 1)
+
+
+
 pke_salmon_data <- pke_salmon_data %>% 
-  left_join(pke_cu_data, by = c("CU" = "FULL_CU_IN", "River" = "SITE_NAME"))
+  left_join(pke_cu_data, by = c("CU" = "FULL_CU_IN", "GFE_ID" = "GFE_ID"))
 
 pko_cu_data <- pko_cu_data %>%
-  select(CU_NAME, FULL_CU_IN, SITE_NAME, Y_LAT, X_LONG) %>% 
+  select(CU_NAME, FULL_CU_IN, SITE_NAME, Y_LAT, X_LONG, GFE_ID) %>% 
   distinct()
 
+pko_cu_data %>% 
+  group_by(Y_LAT, X_LONG) %>% 
+  summarize(n = n(), CU_NAME = unique(CU_NAME), SITE_NAME = unique(SITE_NAME), GFE_ID = unique(GFE_ID)) %>%
+  filter(n > 1)
+
+
 pko_salmon_data <- pko_salmon_data %>%
-  left_join(pko_cu_data, by = c("CU" = "FULL_CU_IN", "River" = "SITE_NAME"))
+  left_join(pko_cu_data, by = c("CU" = "FULL_CU_IN", "GFE_ID" = "GFE_ID"))
 
 #calculate distance between each combination of CU and lighthouse location
 
 pke_salmon_data_location <- pke_salmon_data %>% 
-  select(CU,  Y_LAT, X_LONG, River) %>% 
+  select(CU,  Y_LAT, X_LONG, River, GFE_ID) %>% 
   distinct()
 
 pko_salmon_data_location <- pko_salmon_data %>%
-  select(CU,  Y_LAT, X_LONG, River) %>% 
+  select(CU,  Y_LAT, X_LONG, River, GFE_ID) %>% 
   distinct()
 
 
@@ -341,14 +355,14 @@ pko_salmon_data_distance_temp %>%
 
 ggplot() +
   geom_sf(data = bc_boundary, fill = "transparent", color = "slategray", alpha = 0.2) +
-  geom_point(data = lighthouse_locations, aes(x = long, y = lat), color = "darkred", size = 3, alpha=0.8) +
+  # geom_point(data = lighthouse_locations, aes(x = long, y = lat), color = "darkred", size = 3, alpha=0.8) +
   geom_point(data=salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "chum"), size = 2, alpha=0.2) +
   geom_point(data=pke_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-even"), size = 2, alpha=0.2) +
   geom_point(data=pko_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-odd"), size = 2, alpha=0.2) +
   # geom_text(data = lighthouse_locations, aes(x = long, y = lat, label = location), 
   #           nudge_x = -1.5, nudge_y = 0.2, size = 3) +
-  ggrepel::geom_label_repel(data = lighthouse_locations, aes(x = long, y = lat, label = location),
-                            nudge_x = -1.5, nudge_y = 0.2, size = 3, background = "white", alpha = 0.5) +
+  # ggrepel::geom_label_repel(data = lighthouse_locations, aes(x = long, y = lat, label = location),
+  #                           nudge_x = -1.5, nudge_y = 0.2, size = 3, background = "white", alpha = 0.5) +
   scale_color_manual(values = c("chum" = "#69C5C5",
                                 "pink-even" = "#C76F6F",
                                 "pink-odd" = "#9E70A1")) +
@@ -369,8 +383,34 @@ ggsave(here("figures","chum_pink_watersheds_lighthouse_location_map.png"), width
 ggsave(here("figures","chum_pink_watersheds_location_map.png"), width = 10, height = 10, dpi = 300)
 
 
+#Check all rows in pko_salmon_data_distance_temp and pke_salmon_data_distance_temp where spring_lighthouse_temperature is NA
+
+pko_na <- pko_salmon_data_distance_temp %>% 
+  filter(is.na(spring_lighthouse_temperature)) #makes sense
+
+
+location_data_long_df %>% 
+  group_by(location,year) %>%
+  filter(month %in% c("apr","may","jun","jul")) %>%
+  summarize(spring_temperature = mean(temperature)) %>%
+  ggplot(aes(x = year, y = spring_temperature, color ="darkred", alpha = 0.5)) +
+  scale_x_continuous(limit = c(1954,2014), breaks = seq(1960,2000,20)) +
+  geom_line(linewidth = 1.5) +
+  xlab("Year") +
+  ylab("Spring Sea Surface Temperature") +
+  facet_wrap(~location) +
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 10)) 
+
+ggsave(here("figures","lighthouse_location_sst_time_series.png"), width = 10, height = 10, dpi = 300)
 
 
 
-
-
+spring_temp <- location_data_long_df %>% 
+  group_by(location,year) %>%
+  filter(month %in% c("apr","may","jun","jul")) %>%
+  summarize(spring_lighthouse_temperature = mean(temperature)) %>% 
+  mutate(BroodYear = year-1) %>% #sst fron year n will affect salmon whose BroodYear is n-1
+  rename("lighthouse_temp_year" = "year")
