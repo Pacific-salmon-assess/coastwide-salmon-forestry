@@ -1,0 +1,171 @@
+---
+title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
+author: ''
+date: "Nov 2024"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    collapsed: no
+    fig_caption: yes
+    highlight: espresso
+    number_sections: yes
+    smooth_scroll: yes
+    theme: sandstone
+    toc: yes
+    toc_float: yes
+---
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=FALSE)
+options(max.print=23)
+library(cmdstanr)
+library(here);library(dplyr); library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(bayesplot)
+library(patchwork)
+library(hues)
+```
+
+
+# Chum and Pink salmon Watersheds
+
+
+```{r out.width = "100%", fig.align = "center"}
+
+# load png from figures folder and show
+
+# p1 <- png(here("figures","correlation_plot_sst_npgo_PDO.png"))
+
+knitr::include_graphics(here("figures","chum_pink_watersheds_location_map.png"))
+```
+
+# Chum salmon
+
+```{r}
+
+# Data wrangling
+
+ch20rsc <-read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_w_npgo.csv")
+ch20rsc_sst <-read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_w_coord_w_SSTCOBE2.csv")
+ch20rsc_lh_sst <- read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_w_lighthouse_temp.csv")
+
+#two rivers with duplicated names:
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20rsc$River)
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20rsc$River)
+
+
+ch20rsc=ch20rsc[order(factor(ch20rsc$River),ch20rsc$BroodYear),]
+
+ch20rsc$River_n <- as.numeric(factor(ch20rsc$River))
+
+ch20rsc_sst$River=ifelse(ch20rsc_sst$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20rsc_sst$River)
+ch20rsc_sst$River=ifelse(ch20rsc_sst$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20rsc_sst$River)
+
+ch20rsc_sst=ch20rsc_sst[order(factor(ch20rsc_sst$River),ch20rsc_sst$BroodYear),]
+
+ch20rsc_sst$River_n <- as.numeric(factor(ch20rsc_sst$River))
+
+
+ch20rsc_lh_sst$River=ifelse(ch20rsc_lh_sst$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20rsc_lh_sst$River)
+ch20rsc_lh_sst$River=ifelse(ch20rsc_lh_sst$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20rsc_lh_sst$River)
+
+ch20rsc_lh_sst=ch20rsc_lh_sst[order(factor(ch20rsc_lh_sst$River),ch20rsc_lh_sst$BroodYear),]
+
+ch20rsc_lh_sst$River_n <- as.numeric(factor(ch20rsc_lh_sst$River))
+
+# CU names
+#####
+cu_names <- data.frame(CU = c("CM-1","CM-2","CM-3","CM-4","CM-5","CM-6",
+                              "CM-7","CM-8","CM-9","CM-10","CM-11","CM-12",
+                              "CM-13","CM-14","CM-15","CM-16","CM-17","CM-18",
+                              "CM-19","CM-20","CM-21","CM-22","CM-23","CM-24",
+                              "CM-25","CM-26","CM-27","CM-28","CM-29","CM-30",
+                              "CM-31","CM-32","CM-33","CM-34","CM-35","CM-36",
+                              "CM-37","CM-38", "CM-39"),
+                        CU_name = c("Fraser Canyon",
+                                    "Lower Fraser",
+                                    "Howe Sound-Burrard Inlet",
+                                    "Georgia Strait",
+                                    "East Vancouver Island",
+                                    "Loughborough",
+                                    "Bute Inlet",
+                                    "Southern Coastal Streams",
+                                    "Upper Knight",
+                                    "Southwest Vancouver Island",
+                                    "Northwest Vancouver Island",
+                                    "Smith Inlet",
+                                    "Rivers Inlet",
+                                    "Wannock",
+                                    "Spiller-Fitz Hugh-Burke",
+                                    "Bella Coola - Dean Rivers",
+                                    "Bella Coola River - Late",
+                                    "Hecate Lowlands",
+                                    "Mussel-Kynoch",
+                                    "Douglas-Gardner",
+                                    "East Haida Gwaii",
+                                    "Skidegate",
+                                    "West Haida Gwaii",
+                                    "North Haida Gwaii",
+                                    "North Haida Gwaii-Stanley Creek",
+                                    "Skeena Estuary",
+                                    "Lower Skeena",
+                                    "Middle Skeena",
+                                    "Upper Skeena",
+                                    "Portland Inlet",
+                                    "Lower Nass",
+                                    "Portland Canal-Observatory",
+                                    "Unuk",
+                                    "Lower Stikine",
+                                    "Whiting",
+                                    "Taku",
+                                    "Lynn Canal",
+                                    "Teslin",
+                                    "Lower Liard"))
+#####
+
+ch20rsc <- ch20rsc %>% left_join(cu_names, by = 'CU')
+ch20rsc_sst <- ch20rsc_sst %>% left_join(cu_names, by = 'CU')
+ch20rsc_lh_sst <- ch20rsc_lh_sst %>% left_join(cu_names, by = 'CU')
+
+
+```
+
+## Beverton Holt Models
+
+
+
+
+
+
