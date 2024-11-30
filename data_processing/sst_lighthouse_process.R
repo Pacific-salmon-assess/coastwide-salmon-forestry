@@ -355,14 +355,14 @@ pko_salmon_data_distance_temp %>%
 
 ggplot() +
   geom_sf(data = bc_boundary, fill = "transparent", color = "slategray", alpha = 0.2) +
-  # geom_point(data = lighthouse_locations, aes(x = long, y = lat), color = "darkred", size = 3, alpha=0.8) +
+  geom_point(data = lighthouse_locations, aes(x = long, y = lat), color = "darkred", size = 3, alpha=0.8) +
   geom_point(data=salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "chum"), size = 2, alpha=0.2) +
   geom_point(data=pke_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-even"), size = 2, alpha=0.2) +
   geom_point(data=pko_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-odd"), size = 2, alpha=0.2) +
   # geom_text(data = lighthouse_locations, aes(x = long, y = lat, label = location), 
   #           nudge_x = -1.5, nudge_y = 0.2, size = 3) +
-  # ggrepel::geom_label_repel(data = lighthouse_locations, aes(x = long, y = lat, label = location),
-  #                           nudge_x = -1.5, nudge_y = 0.2, size = 3, background = "white", alpha = 0.5) +
+  ggrepel::geom_label_repel(data = lighthouse_locations, aes(x = long, y = lat, label = location),
+                            nudge_x = -1.5, nudge_y = 0.2, size = 3, background = "white", alpha = 0.5) +
   scale_color_manual(values = c("chum" = "#69C5C5",
                                 "pink-even" = "#C76F6F",
                                 "pink-odd" = "#9E70A1")) +
@@ -388,6 +388,11 @@ ggsave(here("figures","chum_pink_watersheds_location_map.png"), width = 10, heig
 pko_na <- pko_salmon_data_distance_temp %>% 
   filter(is.na(spring_lighthouse_temperature)) #makes sense
 
+pke_na <- pke_salmon_data_distance_temp %>% 
+  filter(is.na(spring_lighthouse_temperature)) #makes sense
+
+chm_na <- salmon_data_distance_temp %>% 
+  filter(is.na(spring_lighthouse_temperature)) #makes sense
 
 location_data_long_df %>% 
   group_by(location,year) %>%
@@ -414,3 +419,340 @@ spring_temp <- location_data_long_df %>%
   summarize(spring_lighthouse_temperature = mean(temperature)) %>% 
   mutate(BroodYear = year-1) %>% #sst fron year n will affect salmon whose BroodYear is n-1
   rename("lighthouse_temp_year" = "year")
+
+
+#some locations have missing values for spring temperature
+
+#build linear model to predict spring temperature for every month in spring in every year for each location
+
+#first look at correlation between all the stations
+
+library(GGally)
+
+spring_temp %>% 
+  filter(location != "Nootka_Point", location != "Egg_Island") %>%
+  pivot_wider(names_from = location, values_from = spring_lighthouse_temperature) %>%
+  ggpairs(columns = 3:ncol(.),
+          title = "Correlation between spring temperature at different locations")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.text.y = element_text(angle = 0, hjust = 1),
+        strip.text.x = element_text(size = 12),
+        strip.text.y = element_text(size = 8))+
+  theme_classic()
+
+
+
+# predict bonilla temperature from mcinnes temperature
+
+# read bonilla data
+
+spring_temp %>% 
+  filter(location == "Bonilla_Island" | location == "McInnes_Island") %>% 
+  pivot_wider(names_from = location, values_from = spring_lighthouse_temperature) %>%
+  ggplot(aes(x = McInnes_Island, y = Bonilla_Island)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  xlab("McInnes Island Spring Temperature") +
+  ylab("Bonilla Point Spring Temperature") +
+  theme_classic()
+
+
+# use temp from McInnes to predict temp at Bonilla
+
+bonilla_mcinnes_lm <- lm(Bonilla_Island ~ McInnes_Island, data = spring_temp %>% 
+                          filter(location == "Bonilla_Island" | location == "McInnes_Island") %>% 
+                           pivot_wider(names_from = location, values_from = spring_lighthouse_temperature))
+
+summary(bonilla_mcinnes_lm)
+
+#predict
+
+spring_temp_predicted <- spring_temp %>% 
+  filter(location == "Bonilla_Island" | location == "McInnes_Island") %>% 
+  pivot_wider(names_from = location, values_from = spring_lighthouse_temperature) %>%
+  mutate(Bonilla_Island_predicted = predict(bonilla_mcinnes_lm, newdata = .))
+
+# use temp fron Kains to predict Pine
+
+
+kains_pine_lm <- lm(Pine_Island ~ Kains_Island, data = spring_temp %>% 
+                          filter(location == "Pine_Island" | location == "Kains_Island") %>% 
+                           pivot_wider(names_from = location, values_from = spring_lighthouse_temperature))
+
+summary(kains_pine_lm)
+
+#predict
+
+pine_spring_temp_predicted <- spring_temp %>% 
+  filter(location == "Pine_Island" | location == "Kains_Island") %>% 
+  pivot_wider(names_from = location, values_from = spring_lighthouse_temperature) %>%
+  mutate(Pine_Island_estimated = predict(kains_pine_lm, newdata = .))
+
+
+#use temp from Entrance to predict temp at Chrome
+
+entrance_chrome_lm <- lm(Chrome_Island ~ Entrance_Island, data = spring_temp %>% 
+                          filter(location == "Chrome_Island" | location == "Entrance_Island") %>% 
+                           pivot_wider(names_from = location, values_from = spring_lighthouse_temperature))
+
+summary(entrance_chrome_lm)
+
+
+#predict
+
+chrome_spring_temp_predicted <- spring_temp %>% 
+  filter(location == "Chrome_Island" | location == "Entrance_Island") %>% 
+  pivot_wider(names_from = location, values_from = spring_lighthouse_temperature) %>%
+  mutate(Chrome_Island_estimated = predict(entrance_chrome_lm, newdata = .))
+
+
+spring_month_temp <- location_data_long_df %>% 
+  group_by(location,year) %>%
+  filter(month %in% c("apr","may","jun","jul")) %>% 
+  mutate(month = factor(month, levels = c("apr","may","jun","jul")))
+
+#use temp from Entrance to predict temp at Chrome
+
+library(lme4)
+entrance_chrome_data <- spring_month_temp %>% 
+  select(location, year, month, temperature) %>%
+  filter(location == "Chrome_Island" | location == "Entrance_Island") %>% 
+  pivot_wider(names_from = location, values_from = temperature)
+entrance_chrome_lm <- lmer(Chrome_Island ~ Entrance_Island + (1 | month), data = entrance_chrome_data)
+
+summary(entrance_chrome_lm)
+
+#predict
+
+entrance_chrome_data$Chrome_Island_estimate <- ifelse(is.na(entrance_chrome_data$Chrome_Island), 
+                                                    predict(entrance_chrome_lm, newdata = entrance_chrome_data), 
+                                                    entrance_chrome_data$Chrome_Island)
+
+# use temp fron Kains to predict Pine
+
+kains_pine_data <- spring_month_temp %>% 
+  select(location, year, month, temperature) %>%
+  filter(location == "Pine_Island" | location == "Kains_Island") %>% 
+  pivot_wider(names_from = location, values_from = temperature)
+
+kains_pine_lm <- lmer(Pine_Island ~ Kains_Island + (1 | month), data = kains_pine_data)
+
+summary(kains_pine_lm)
+
+#predict
+
+kains_pine_data$Pine_Island_estimate <- ifelse(is.na(kains_pine_data$Pine_Island), 
+                                                    predict(kains_pine_lm, newdata = kains_pine_data), 
+                                                    kains_pine_data$Pine_Island)
+
+#use bonilla island to predict mcinnes island
+
+bonilla_mcinnes_data <- spring_month_temp %>% 
+  select(location, year, month, temperature) %>%
+  filter(location == "Bonilla_Island" | location == "McInnes_Island") %>% 
+  pivot_wider(names_from = location, values_from = temperature)
+
+bonilla_mcinnes_lm <- lmer(McInnes_Island ~ Bonilla_Island + (1 | month), data = bonilla_mcinnes_data)
+
+summary(bonilla_mcinnes_lm)
+
+
+#predict
+
+bonilla_mcinnes_data$McInnes_Island_estimate <- ifelse(is.na(bonilla_mcinnes_data$McInnes_Island), 
+                                                    predict(bonilla_mcinnes_lm, newdata = bonilla_mcinnes_data), 
+                                                    bonilla_mcinnes_data$McInnes_Island)
+
+
+#use temp from mcinnes to predict temp at bonilla
+
+mcinnes_bonilla_data <- spring_month_temp %>% 
+  select(location, year, month, temperature) %>%
+  filter(location == "Bonilla_Island" | location == "McInnes_Island") %>% 
+  pivot_wider(names_from = location, values_from = temperature)
+
+mcinnes_bonilla_lm <- lmer(Bonilla_Island ~ McInnes_Island + (1 | month), data = bonilla_mcinnes_data)
+
+
+summary(mcinnes_bonilla_lm)
+
+#predict
+
+mcinnes_bonilla_data$Bonilla_Island_estimate <- ifelse(is.na(mcinnes_bonilla_data$Bonilla_Island), 
+                                                    predict(mcinnes_bonilla_lm, newdata = mcinnes_bonilla_data), 
+                                                    mcinnes_bonilla_data$Bonilla_Island)
+
+
+#use chrome island to predict temp at entrance island
+
+chrome_entrance_data <- spring_month_temp %>% 
+  select(location, year, month, temperature) %>%
+  filter(location == "Chrome_Island" | location == "Entrance_Island") %>% 
+  pivot_wider(names_from = location, values_from = temperature)
+
+chrome_entrance_lm <- lmer(Entrance_Island ~ Chrome_Island + (1 | month), data = chrome_entrance_data)
+
+summary(chrome_entrance_lm)
+
+#predict
+
+chrome_entrance_data$Entrance_Island_estimate <- ifelse(is.na(chrome_entrance_data$Entrance_Island), 
+                                                    predict(chrome_entrance_lm, newdata = chrome_entrance_data), 
+                                                    chrome_entrance_data$Entrance_Island)
+
+
+#use temp from Bonilla to predict Langara
+
+bonilla_langara_data <- spring_month_temp %>% 
+  select(location, year, month, temperature) %>%
+  filter(location == "Bonilla_Island" | location == "Langara_Island") %>% 
+  pivot_wider(names_from = location, values_from = temperature)
+
+
+bonilla_langara_lm <- lmer(Langara_Island ~ Bonilla_Island + (1 | month), data = bonilla_langara_data)
+
+summary(bonilla_langara_lm)
+
+
+#predict
+
+bonilla_langara_data$Langara_Island_estimate <- ifelse(is.na(bonilla_langara_data$Langara_Island), 
+                                                    predict(bonilla_langara_lm, newdata = bonilla_langara_data), 
+                                                    bonilla_langara_data$Langara_Island)
+
+# join all the estimated temperature data
+
+
+spring_month_estimate <- spring_month_temp %>% 
+  select(location, year, month, temperature) %>%
+  pivot_wider(names_from = location, values_from = temperature) %>%
+  left_join(entrance_chrome_data %>% 
+              select(year, month, Chrome_Island_estimate),
+            by = c("year" = "year", "month" = "month")) %>%
+  left_join(kains_pine_data %>% 
+              select(year, month, Pine_Island_estimate),
+            by = c("year" = "year", "month" = "month")) %>%
+  left_join(bonilla_mcinnes_data %>% 
+              select(year, month, McInnes_Island_estimate),
+            by = c("year" = "year", "month" = "month")) %>%
+  left_join(mcinnes_bonilla_data %>% 
+              select(year, month, Bonilla_Island_estimate),
+            by = c("year" = "year", "month" = "month")) %>%
+  left_join(chrome_entrance_data %>% 
+              select(year, month, Entrance_Island_estimate),
+            by = c("year" = "year", "month" = "month")) %>%
+  left_join(bonilla_langara_data %>% 
+              select(year, month, Langara_Island_estimate),
+            by = c("year" = "year", "month" = "month"))
+
+#make the data long and add a column to indicate if the temperature is estimated
+
+spring_month_estimate_long <- spring_month_estimate %>% 
+  pivot_longer(cols = -c(year, month), names_to = "location", values_to = "temperature") %>% 
+  mutate(estimated = ifelse(str_detect(location, "estimate"), TRUE, FALSE)) %>% 
+  mutate(location = str_remove(location, "_estimate")) %>%
+  group_by(location, year,estimated) %>%
+  summarize(spring_lighthouse_temperature = mean(temperature)) %>%
+  ungroup()
+
+#plot the data and estimated temperature, facet wrap by location, data should be in dashed line if estimated
+
+
+ggplot() +
+geom_line(data = spring_month_estimate_long %>% filter(estimated == FALSE),
+          aes(x = year, y = spring_lighthouse_temperature), linetype = "solid", color = "salmon", linewidth = 1.5, alpha = 0.5) +
+geom_line(data = spring_month_estimate_long %>% filter(estimated == TRUE),
+          aes(x = year, y = spring_lighthouse_temperature), linetype = "dashed", linewidth = 1, alpha = 0.4) +
+facet_wrap(~location) +
+scale_x_continuous(limit = c(1954,2014), breaks = seq(1960,2000,20)) +
+xlab("Year") +
+ylab("Spring Sea Surface Temperature") +
+facet_wrap(~location) +
+theme_classic()+
+theme(legend.position = "none",
+      axis.title = element_text(size = 14),
+      axis.text = element_text(size = 10)) 
+
+ggsave(here("figures","lighthouse_location_sst_time_series_estimated.png"), width = 10, height = 10, dpi = 300)
+
+
+#making new dataframes with the estimated temperature
+
+pke_min_distance_df <- pke_distance_df %>% 
+  group_by(CU, River) %>% 
+  filter(lighthouse_location != "Nootka_Point", lighthouse_location != "Egg_Island", lighthouse_location != "Departure_Bay_PBS") %>%
+  filter(distance == min(distance)) %>% 
+  ungroup()
+
+
+pko_min_distance_df <- pko_distance_df %>%
+  group_by(CU, River) %>% 
+  filter(lighthouse_location != "Nootka_Point", lighthouse_location != "Egg_Island", lighthouse_location != "Departure_Bay_PBS") %>%
+  filter(distance == min(distance)) %>% 
+  ungroup()
+
+
+pke_salmon_data_distance_temp <- pke_salmon_data %>%
+  left_join(pke_min_distance_df %>% 
+              select(CU, River, lighthouse_location, distance),
+            by = c("CU" = "CU", "River" = "River")) %>% 
+  left_join(spring_month_estimate_long %>%
+              group_by(location,year) %>%
+              summarize(spring_lighthouse_temperature = mean(spring_lighthouse_temperature, na.rm = TRUE)) %>% #mean between estimated and real and then remove values with estimate values to be NA
+              mutate(BroodYear = year-1) %>% #sst fron year n will affect salmon whose BroodYear is n-1
+              rename("lighthouse_temp_year" = "year"),
+            by = c("lighthouse_location" = "location", "BroodYear" = "BroodYear"))
+
+pko_salmon_data_distance_temp <- pko_salmon_data %>%
+  left_join(pko_min_distance_df %>% 
+              select(CU, River, lighthouse_location, distance),
+            by = c("CU" = "CU", "River" = "River")) %>% 
+  left_join(spring_month_estimate_long %>%
+              group_by(location,year) %>%
+              summarize(spring_lighthouse_temperature = mean(spring_lighthouse_temperature, na.rm = TRUE)) %>% #mean between estimated and real and then remove values with estimate values to be NA
+              mutate(BroodYear = year-1) %>% #sst fron year n will affect salmon whose BroodYear is n-1
+              rename("lighthouse_temp_year" = "year"),
+            by = c("lighthouse_location" = "location", "BroodYear" = "BroodYear"))
+
+pko_na <- pko_salmon_data_distance_temp %>% 
+  filter(is.na(spring_lighthouse_temperature)) #makes sense
+
+pke_na <- pke_salmon_data_distance_temp %>% 
+  filter(is.na(spring_lighthouse_temperature)) #makes sense
+
+pke_salmon_data_distance_temp %>%
+  write_csv(here("origional-ecofish-data-models","Data","Processed",
+                 "pke_SR_10_hat_yr_w_lh_sst_estimate.csv"))
+
+pko_salmon_data_distance_temp %>%
+  write_csv(here("origional-ecofish-data-models","Data","Processed",
+                 "pko_SR_10_hat_yr_w_lh_sst_estimate.csv"))
+
+min_distance_df <- distance_df %>% 
+  group_by(CU, River) %>% 
+  filter(lighthouse_location != "Nootka_Point", lighthouse_location != "Egg_Island", lighthouse_location != "Departure_Bay_PBS") %>%
+  filter(distance == min(distance)) %>% 
+  ungroup() 
+
+
+salmon_data_distance_temp <- salmon_data %>% 
+  left_join(min_distance_df %>% 
+              select(CU, River, lighthouse_location, distance),
+            by = c("CU" = "CU", "River" = "River")) %>% 
+  left_join(spring_month_estimate_long %>%
+              group_by(location,year) %>%
+              summarize(spring_lighthouse_temperature = mean(spring_lighthouse_temperature, na.rm = TRUE)) %>% #mean between estimated and real and then remove values with estimate values to be NA
+              mutate(BroodYear = year-1) %>% #sst fron year n will affect salmon whose BroodYear is n-1
+              rename("lighthouse_temp_year" = "year"),
+            by = c("lighthouse_location" = "location", "BroodYear" = "BroodYear"))
+
+
+chm_na <- salmon_data_distance_temp %>% 
+  filter(is.na(spring_lighthouse_temperature)) #makes sense
+#save the data
+
+salmon_data_distance_temp %>% 
+  write_csv(here("origional-ecofish-data-models","Data","Processed",
+                 "chum_SR_20_hat_yr_w_lh_sst_estimate.csv"))
+
+
