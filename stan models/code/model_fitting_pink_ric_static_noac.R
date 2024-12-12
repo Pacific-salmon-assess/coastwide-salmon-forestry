@@ -6,9 +6,9 @@ if(Sys.info()[7] == "mariakur") {
   set_cmdstan_path("C:/Users/mariakur/.cmdstan/cmdstan-2.35.0")
 } else {
   print("Running on server")
-  .libPaths(new = "/home/mkuruvil/R_Packages")
+  .libPaths(new = "../../../R_Packages")
   library(cmdstanr)
-  set_cmdstan_path("/home/mkuruvil/R_Packages/cmdstan-2.35.0")
+  set_cmdstan_path("../../../R_Packages/cmdstan-2.35.0")
 }
 
 #for reproducibility
@@ -146,6 +146,40 @@ dl_pk_cpd=list(N=nrow(pk10r),
                pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
                pRk_sig=smax_prior$m.r)
 
+print("cpd")
+#
+if(Sys.info()[7] == "mariakur") {
+  print("Running on local machine")
+  ric_pk_cpd_st <- mric_p_st$sample(data=dl_pk_cpd,
+                                    chains = 1,
+                                    iter_warmup = 20,
+                                    iter_sampling =50,
+                                    refresh = 10,
+                                    adapt_delta = 0.999,
+                                    max_treedepth = 20)
+  write.csv(ric_pk_cpd_st$summary(),here("stan models","outs","summary","ric_pk_cpd_st_noac_trial.csv"))
+  ric_pk_cpd_st$save_object(here("stan models","outs","fits","ric_pk_cpd_st_noac_trial.RDS"))
+  
+  post_ric_pk_cpd_st=ric_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Smax','sigma'),format='draws_matrix')
+  write.csv(post_ric_pk_cpd_st,here('stan models','outs','posterior','ric_pk_cpd_st_noac_trial.csv'))
+  
+} else {
+  ric_pk_cpd_st <- mric_p_st$sample(data=dl_pk_cpd,
+                                    chains = 6,
+                                    iter_warmup = 200,
+                                    iter_sampling =500,
+                                    refresh = 100,
+                                    adapt_delta = 0.999,
+                                    max_treedepth = 20)
+  
+  write.csv(ric_pk_cpd_st$summary(),here("stan models","outs","summary","ric_pk_cpd_st_noac.csv"))
+  ric_pk_cpd_st$save_object(here("stan models","outs","fits","ric_pk_cpd_st_noac.RDS"))
+  
+  post_ric_pk_cpd_st=ric_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Smax','sigma'),format='draws_matrix')
+  write.csv(post_ric_pk_cpd_st,here('stan models','outs','posterior','ric_pk_cpd_st_noac.csv'))
+  
+}
+
 print("eca")
 
 
@@ -168,9 +202,9 @@ if(Sys.info()[7] == "mariakur") {
   ric_pk_eca_st <- mric_p_st$sample(data=dl_pk_eca,
                                       chains = 6,
                                       iter_warmup = 200,
-                                      iter_sampling =500,
+                                      iter_sampling =600,
                                       refresh = 100,
-                                      adapt_delta = 0.999,
+                                      adapt_delta = 0.99,
                                       max_treedepth = 20)
   
   write.csv(ric_pk_eca_st$summary(),here("stan models","outs","summary","ric_pk_eca_st_noac.csv"))
@@ -181,37 +215,5 @@ if(Sys.info()[7] == "mariakur") {
   
 }
 
-print("cpd")
-#
-if(Sys.info()[7] == "mariakur") {
-  print("Running on local machine")
-  ric_pk_cpd_st <- mric_p_st$sample(data=dl_pk_cpd,
-                                      chains = 1,
-                                      iter_warmup = 20,
-                                      iter_sampling =50,
-                                      refresh = 10,
-                                      adapt_delta = 0.999,
-                                      max_treedepth = 20)
-  write.csv(ric_pk_cpd_st$summary(),here("stan models","outs","summary","ric_pk_cpd_st_noac_trial.csv"))
-  ric_pk_cpd_st$save_object(here("stan models","outs","fits","ric_pk_cpd_st_noac_trial.RDS"))
-  
-  post_ric_pk_cpd_st=ric_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_pk_cpd_st,here('stan models','outs','posterior','ric_pk_cpd_st_noac_trial.csv'))
-  
-} else {
-  ric_pk_cpd_st <- mric_p_st$sample(data=dl_pk_cpd,
-                                      chains = 6,
-                                      iter_warmup = 200,
-                                      iter_sampling =500,
-                                      refresh = 100,
-                                      adapt_delta = 0.999,
-                                      max_treedepth = 20)
-  
-  write.csv(ric_pk_cpd_st$summary(),here("stan models","outs","summary","ric_pk_cpd_st_noac.csv"))
-  ric_pk_cpd_st$save_object(here("stan models","outs","fits","ric_pk_cpd_st_noac.RDS"))
-  
-  post_ric_pk_cpd_st=ric_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_pk_cpd_st,here('stan models','outs','posterior','ric_pk_cpd_st_noac.csv'))
-  
-}
+
 
