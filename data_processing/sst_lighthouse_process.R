@@ -243,10 +243,32 @@ pke_cu_data %>%
   summarize(n = n(), CU_NAME = unique(CU_NAME), SITE_NAME = unique(SITE_NAME), GFE_ID = unique(GFE_ID)) %>%
   filter(n > 1)
 
+pke_cu_data %>% 
+  group_by(Y_LAT, X_LONG) %>% 
+  summarize(n = n(), SITE_NAME = unique(SITE_NAME), GFE_ID = unique(GFE_ID)) %>%
+  filter(n > 1)
+
+pke_cu_data %>% 
+  group_by(SITE_NAME) %>% 
+  summarize(n = n(), SITE_NAME = unique(SITE_NAME), GFE_ID = unique(GFE_ID), X_LONG = unique(X_LONG), Y_LAT = unique(Y_LAT)) %>%
+  filter(n > 1)
+
+pko_cu_data %>% 
+  group_by(SITE_NAME) %>% 
+  summarize(n = n(), SITE_NAME = unique(SITE_NAME), GFE_ID = unique(GFE_ID), X_LONG = unique(X_LONG), Y_LAT = unique(Y_LAT)) %>%
+  filter(n > 1)
+
 
 
 pke_salmon_data <- pke_salmon_data %>% 
   left_join(pke_cu_data, by = c("CU" = "FULL_CU_IN", "GFE_ID" = "GFE_ID"))
+
+
+#check how many rows have NA for Y_LAT and X_LONG
+
+pke_salmon_data %>% 
+  filter(is.na(Y_LAT) | is.na(X_LONG)) #no rows with NA
+
 
 pko_cu_data <- pko_cu_data %>%
   select(CU_NAME, FULL_CU_IN, SITE_NAME, Y_LAT, X_LONG, GFE_ID) %>% 

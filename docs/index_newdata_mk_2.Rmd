@@ -460,30 +460,47 @@ bh_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npg
 
 ### Effect of NPGO
 
-```{r fig.width=10, fig.height=10}
+```{r fig.width=10, fig.height=9}
 
 # make function to plot npgo effect
 
-plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", species = "chum", model = "BH model with NPGO") {
+plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", species = "chum", model = "BH model with NPGO", xlim = c(-0.5,0.5)) {
+  
+  posterior_rv <- posterior %>% 
+    select(starts_with('b_npgo_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_npgo_rv',
+                 values_to = 'npgo_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+  left_join(ch20rsc %>% select(River_n, CU, CU_name, X_LONG, Y_LAT), by = 'River_n')
   
   p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(npgo_effect, color = CU_name, group = River_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.1, linewidth = 1) +
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
     labs(title = model, 
          x = 'Standardized coefficients of NPGO', y = 'Posterior density\nof NPGO effect') +
-    xlim(-1, 1) +
+    xlim(xlim[1], xlim[2]) +
     geom_density(aes(posterior$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+
     # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
     #                      lmin = 10, lmax = 95) +
     geom_vline(xintercept = median(posterior$b_npgo), color = 'black', linetype = 'dashed') + 
     theme_classic()+
-    theme(legend.position = 'none',
-          axis.title.x = element_text(size = 14),
-          axis.title.y = element_text(size = 14),
-          axis.text.x = element_text(size = 12),
-          axis.text.y = element_text(size = 12),
-          plot.title = element_text(size = 16, hjust = 0.5))+
-    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))
-    )
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
   
   return(p1)
   
@@ -492,10 +509,10 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
 
 # plot
 
-(plot_npgo_effect(posterior = bh_chm_eca_npgo, effect = "eca", species = "chum", model = "BH model with NPGO") +
+((plot_npgo_effect(posterior = bh_chm_eca_npgo, effect = "eca", species = "chum", model = "BH model with NPGO") +
   plot_npgo_effect(posterior = bh_chm_cpd_npgo, effect = "cpd", species = "chum", model = "BH model with NPGO"))/(plot_npgo_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST") +
   plot_npgo_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST"))/(plot_npgo_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST") +
-  plot_npgo_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST"))
+  plot_npgo_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST")) + plot_layout(guides = "collect"))
 
 
 
@@ -511,7 +528,14 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
 
 # make function to plot npgo effect
 
-plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species = "chum", model = "BH model with NPGO") {
+plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species = "chum", model = "BH model with NPGO", 
+                            color_by = "CU_name", xlim = c(-1, 1)) {
+  
+  if(species == "chum"){
+    df <- ch20rsc
+  } else if(species == "pink"){
+    df <- pk10r
+  }
   
   posterior_rv <- posterior %>% 
     select(starts_with('b_sst_rv')) %>%
@@ -521,26 +545,50 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
                  values_to = 'sst_effect') %>%
     mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
     select(-River) %>%
-    left_join(ch20rsc %>% select(River_n, CU, CU_name), by = 'River_n')
+  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT), by = 'River_n')
+  
+  if(color_by == "CU_name"){
+    color_var = "CU_name"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+  } else if(color_by == "Y_LAT"){
+    color_var = "Y_LAT"
+    color_name = "Latitude"
+    scale_color = scale_color_viridis_c(name = 'Latitude', direction = -1)
+  } else if(color_by == "CU"){
+    
+    color_var = "CU"
+    color_name = "CU"
+    scale_color = scale_color_discrete(name = 'CU')
+  }
   
   p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(sst_effect, color = !!sym(color_by), group = River_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.1, linewidth = 1) +
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
     labs(title = model, 
          x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
-    xlim(-1, 1) +
+    xlim(xlim[1], xlim[2]) +
     geom_density(aes(posterior$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+
     # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
     #                      lmin = 10, lmax = 95) +
+    scale_color +
     geom_vline(xintercept = median(posterior$b_sst), color = 'black', linetype = 'dashed') + 
     theme_classic()+
-    theme(legend.position = 'none',
-          axis.title.x = element_text(size = 14),
-          axis.title.y = element_text(size = 14),
-          axis.text.x = element_text(size = 12),
-          axis.text.y = element_text(size = 12),
-          plot.title = element_text(size = 16, hjust = 0.5))+
-    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))
-    )
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
   
   return(p1)
   
@@ -549,66 +597,13 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
 
 # plot
 
-(plot_sst_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST") +
-  plot_sst_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST"))/(plot_sst_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST") +
-  plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST"))
+((plot_sst_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST", xlim = c(-0.5,0.5)) +
+  plot_sst_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)) +
+  plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
 
-bh_chm_cpd_lh_sst_rv <- bh_chm_cpd_lh_sst %>% 
-  select(starts_with('b_sst_rv')) %>%
-  pivot_longer(cols = everything(), 
-               names_to = 'River', 
-               names_prefix = 'b_sst_rv',
-               values_to = 'sst_effect') %>%
-  mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
-  select(-River) %>%
-  left_join(ch20rsc %>% select(River_n, CU, CU_name, X_LONG, Y_LAT), by = 'River_n')
-
-ggplot() +
-  stat_density(data= bh_chm_cpd_lh_sst_rv, aes(sst_effect, color = CU_name, group = River_n),
-               geom = 'line', position = 'identity',
-               alpha = 0.05, linewidth = 1) +
-  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
-  labs(title = 'BH model with NPGO, SST, CPD',
-       x = 'Standardized coefficients of SST', y = 'Posterior density of SST effect') +
-  xlim(-1, 1) +
-  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
-                       lmin = 10, lmax = 95) +
-  geom_density(aes(bh_chm_cpd_lh_sst$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+
-  theme_classic()+
-  theme(legend.position = c(0.8,0.5),
-        legend.key.width = unit(0.5, "cm"),
-        legend.text = element_text(size = 8),
-        legend.spacing.y = unit(0.005, "cm"),
-        axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14),
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        plot.title = element_text(size = 16, hjust = 0.5)
-        )+
-  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
-
-
-ggplot() +
-  stat_density(data= bh_chm_cpd_lh_sst_rv, aes(sst_effect, color = Y_LAT, group = River_n),
-               geom = 'line', position = 'identity',
-               alpha = 0.05, linewidth = 1) +
-  geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
-  labs(title = 'BH model with NPGO, SST, CPD',
-       x = 'Standardized coefficients of SST', y = 'Posterior density of SST effect') +
-  xlim(-1, 1) +
-  # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
-  #                      lmin = 10, lmax = 95) +
-  scale_color_viridis_c(name = 'Latitude', direction = -1)+
-  geom_density(aes(bh_chm_cpd_lh_sst$b_sst), color = 'black', linewidth = 1.5, alpha = 0.1)+
-  theme_classic()+
-  theme(legend.position = "right",
-        axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14),
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        plot.title = element_text(size = 16, hjust = 0.5)
-        )+
-  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+((plot_sst_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) +
+  plot_sst_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) +
+  plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
 
 
 
@@ -631,15 +626,18 @@ ric_chm_cpd_st=read.csv(here('stan models','outs','posterior','ric_chm_cpd_stati
 ric_chm_eca_npgo=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo.csv'),check.names=F)
 ric_chm_cpd_npgo=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo.csv'),check.names=F)
 
-ric_chm_eca_sst=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_lh_sst.csv'),check.names=F)
-ric_chm_cpd_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_lh_sst.csv'),check.names=F)
+ric_chm_eca_sst=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_sst.csv'),check.names=F)
+ric_chm_cpd_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_sst.csv'),check.names=F)
+
+ric_chm_eca_lh_sst=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_lh_sst.csv'),check.names=F)
+ric_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_lh_sst.csv'),check.names=F)
 
 (plot_forestry_effect(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = ric_chm_cpd, effect = "cpd", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_npgo, effect = "eca", species = "chum", model = "Ricker model with NPGO", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = ric_chm_cpd_npgo, effect = "cpd", species = "chum", model = "Ricker model with NPGO", xlim = c(-0.5,0.5)))/(
-      plot_forestry_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)))
+      plot_forestry_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)))
 
 
 ```
@@ -649,11 +647,11 @@ ric_chm_cpd_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo
 
 ```{r fig.width=10, fig.height=12}
 
-(plot_productivity_decline(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with coastwide productivity") +
+((plot_productivity_decline(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with coastwide productivity") +
   plot_productivity_decline(posterior = ric_chm_cpd, effect = "cpd", species = "chum", model = "Ricker model with coastwide productivity"))/(plot_productivity_decline(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model without coastwide productivity") +
   plot_productivity_decline(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model without coastwide productivity"))/(plot_productivity_decline(posterior = ric_chm_eca_npgo, effect = "eca", species = "chum", model = "Ricker model with NPGO") +
-  plot_productivity_decline(posterior = ric_chm_cpd_npgo, effect = "cpd", species = "chum", model = "Ricker model with NPGO"))/(plot_productivity_decline(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST") +
-  plot_productivity_decline(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST"))
+  plot_productivity_decline(posterior = ric_chm_cpd_npgo, effect = "cpd", species = "chum", model = "Ricker model with NPGO"))/(plot_productivity_decline(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST") +
+  plot_productivity_decline(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST"))/(plot_productivity_decline(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST") + plot_productivity_decline(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST")) + plot_layout(guides = "collect"))
 
 ```
 
@@ -661,25 +659,29 @@ ric_chm_cpd_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo
 ### Effect of NPGO
 
 
-```{r fig.width=10, fig.height=6}
+```{r fig.width=10, fig.height=9}
 
 # plot
 
-(plot_npgo_effect(posterior = ric_chm_eca_npgo, effect = "eca", species = "chum", model = "Ricker model with NPGO") +
-  plot_npgo_effect(posterior = ric_chm_cpd_npgo, effect = "cpd", species = "chum", model = "Ricker model with NPGO"))/(plot_npgo_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST") +
-  plot_npgo_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST"))
+((plot_npgo_effect(posterior = ric_chm_eca_npgo, effect = "eca", species = "chum", model = "Ricker model with NPGO") +
+  plot_npgo_effect(posterior = ric_chm_cpd_npgo, effect = "cpd", species = "chum", model = "Ricker model with NPGO"))/(plot_npgo_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST") +
+  plot_npgo_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", 
+                   model = "Ricker model with NPGO, SST"))/(plot_npgo_effect(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST") + plot_npgo_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST")) +  plot_layout(guides = "collect"))
 
 ```
 
 ### Effect of SST
 
 
-```{r fig.width=10, fig.height=3}
+```{r fig.width=10, fig.height=6}
 
 # plot
 
-(plot_sst_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST") +
-  plot_sst_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST"))
+((plot_sst_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST") +
+  plot_sst_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST"))/(
+  plot_sst_effect(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST") +
+  plot_sst_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST")) + plot_layout(guides = "collect")
+  )
 
 ```
 
@@ -770,6 +772,7 @@ cu2=distinct(pk10r,River,.keep_all = T)
 cu3=distinct(pk10r,River2,.keep_all = T)
 
 pk10r$River_n <- as.numeric(factor(pk10r$River))
+pk10r$CU_name <- pk10r$CU_NAME
 
 max_eca_pink_df <- pk10r %>% 
   select(River2, River, River_n, CU, ECA_age_proxy_forested_only) %>%
@@ -884,9 +887,9 @@ bh_pk_cpd_sst=read.csv(here('stan models',
 
 # plot
 
-(plot_npgo_effect(posterior = bh_pk_eca_npgo, effect = "npgo", species = "pink", model = "BH model with NPGO") +
+((plot_npgo_effect(posterior = bh_pk_eca_npgo, effect = "npgo", species = "pink", model = "BH model with NPGO") +
   plot_npgo_effect(posterior = bh_pk_cpd_npgo, effect = "npgo", species = "pink", model = "BH model with NPGO"))/(plot_npgo_effect(posterior = bh_pk_eca_sst, effect = "npgo", species = "pink", model = "BH model with NPGO, LH SST") +
-  plot_npgo_effect(posterior = bh_pk_cpd_sst, effect = "npgo", species = "pink", model = "BH model with NPGO, LH SST"))
+  plot_npgo_effect(posterior = bh_pk_cpd_sst, effect = "npgo", species = "pink", model = "BH model with NPGO, LH SST"))+ plot_layout(guides = "collect"))
 
 ```
 
@@ -898,8 +901,8 @@ bh_pk_cpd_sst=read.csv(here('stan models',
 
 # plot
 
-(plot_sst_effect(posterior = bh_pk_eca_sst, effect = "sst", species = "pink", model = "BH model with NPGO, LH SST") +
-  plot_sst_effect(posterior = bh_pk_cpd_sst, effect = "sst", species = "pink", model = "BH model with NPGO, LH SST"))
+((plot_sst_effect(posterior = bh_pk_eca_sst, effect = "sst", species = "pink", model = "BH model with NPGO, LH SST") +
+  plot_sst_effect(posterior = bh_pk_cpd_sst, effect = "sst", species = "pink", model = "BH model with NPGO, LH SST"))+ plot_layout(guides = "collect"))
 
 ```
 
@@ -997,9 +1000,9 @@ ric_pk_cpd_sst = read.csv(here('stan models',
 
 # plot
 
-(plot_npgo_effect(posterior = ric_pk_eca_npgo, effect = "npgo", species = "pink", model = "Ricker model with NPGO") +
+((plot_npgo_effect(posterior = ric_pk_eca_npgo, effect = "npgo", species = "pink", model = "Ricker model with NPGO") +
   plot_npgo_effect(posterior = ric_pk_cpd_npgo, effect = "npgo", species = "pink", model = "Ricker model with NPGO"))/(plot_npgo_effect(posterior = ric_pk_eca_sst, effect = "npgo", species = "pink", model = "Ricker model with NPGO, LH SST") +
-  plot_npgo_effect(posterior = ric_pk_cpd_sst, effect = "npgo", species = "pink", model = "Ricker model with NPGO, LH SST"))
+  plot_npgo_effect(posterior = ric_pk_cpd_sst, effect = "npgo", species = "pink", model = "Ricker model with NPGO, LH SST")) + plot_layout(guides = "collect"))
 
 ```
 
@@ -1013,311 +1016,10 @@ ric_pk_cpd_sst = read.csv(here('stan models',
 
 # plot
 
-(plot_sst_effect(posterior = ric_pk_eca_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, LH SST") +
-  plot_sst_effect(posterior = ric_pk_cpd_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, LH SST"))
+((plot_sst_effect(posterior = ric_pk_eca_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, LH SST", color_by = "CU") +
+  plot_sst_effect(posterior = ric_pk_cpd_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, LH SST", color_by = "CU")) + plot_layout(guides = "collect"))
 
 ```
-
-
-
-
-<!-- bh_pk_eca_npgo_rv <- bh_pk_eca_npgo %>% -->
-<!--   select(starts_with('b_npgo_rv')) %>% -->
-<!--   pivot_longer(cols = everything(),  -->
-<!--                names_to = 'River',  -->
-<!--                names_prefix = 'b_npgo_rv', -->
-<!--                values_to = 'npgo_effect') %>%  -->
-<!--   mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% -->
-<!--   select(-River) %>%  -->
-<!--   left_join(pk10r %>% select(River_n, CU, CU_NAME), by = 'River_n') -->
-
-
-<!-- #npgo effect from model with only npgo and eca -->
-<!-- bh_pk_npgo_p1 <- ggplot()+ -->
-<!--   # stat_density(data= bh_pk_eca_npgo_rv,  -->
-<!--   #              aes(npgo_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'BH model with NPGO, ECA',  -->
-<!--        x = 'Standardized coefficients of NPGO', y = 'Posterior density of NPGO effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   geom_density(aes(bh_pk_eca_npgo$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-
-<!-- #npgo effect from model with only npgo and cpd -->
-<!-- bh_pk_npgo_p2 <- ggplot()+ -->
-<!--   # stat_density(data= bh_pk_cpd_npgo_rv,  -->
-<!--   #              aes(npgo_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'BH model with NPGO, CPD',  -->
-<!--        x = 'Standardized coefficients of NPGO', y = 'Posterior density of NPGO effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   geom_density(aes(bh_pk_cpd_npgo$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-
-
-<!-- #npgo effect from model with only npgo, sst and eca -->
-
-<!-- bh_pk_eca_npgo_p3 <- ggplot()+ -->
-<!--   # stat_density(data= bh_pk_eca_sst_rv,  -->
-<!--   #              aes(npgo_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'BH model with NPGO, SST, ECA',  -->
-<!--        x = 'Standardized coefficients of NPGO', y = 'Posterior density of NPGO effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   geom_density(aes(bh_pk_eca_sst$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2)))  -->
-
-
-<!-- #npgo effect from model with only npgo, sst and cpd -->
-
-<!-- bh_pk_cpd_npgo_p4 <- ggplot()+ -->
-<!--   # stat_density(data= bh_pk_cpd_sst_rv,  -->
-<!--   #              aes(npgo_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'BH model with NPGO, SST, CPD',  -->
-<!--        x = 'Standardized coefficients of NPGO', y = 'Posterior density of NPGO effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   geom_density(aes(bh_pk_cpd_sst$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-
-<!-- (bh_pk_npgo_p1 + bh_pk_npgo_p2)/(bh_pk_eca_npgo_p3 + bh_pk_cpd_npgo_p4) -->
-
-
-
-<!-- ``` -->
-
-
-<!-- ```{r fig.width=10, fig.height=10} -->
-
-
-<!-- #npgo effect from ricker model with only npgo and eca -->
-<!-- ric_pk_eca_npgo_p1 <- ggplot() +  -->
-<!--   # stat_density(data= ric_pk_eca_npgo_rv,  -->
-<!--   #              aes(npgo_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'Ricker model with NPGO, ECA',  -->
-<!--        x = 'Standardized coefficients of NPGO', y = 'Posterior density of NPGO effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   geom_density(aes(ric_pk_eca_npgo$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-<!-- #npgo effect from ricker model with only npgo and cpd -->
-<!-- ric_pk_eca_npgo_p2 <- ggplot() +  -->
-<!--   # stat_density(data= ric_pk_cpd_npgo_rv,  -->
-<!--   #              aes(npgo_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'Ricker model with NPGO, CPD',  -->
-<!--        x = 'Standardized coefficients of NPGO', y = 'Posterior density of NPGO effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   geom_density(aes(ric_pk_cpd_npgo$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-
-
-<!-- #npgo effect from ricker model with only npgo, sst and eca -->
-
-<!-- ric_pk_eca_sst_p1 <- ggplot()+ -->
-<!--   # stat_density(data= ric_pk_eca_sst_rv,  -->
-<!--   #              aes(npgo_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'Ricker model with NPGO, SST, ECA',  -->
-<!--        x = 'Standardized coefficients of NPGO', y = 'Posterior density of NPGO effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   geom_density(aes(ric_pk_eca_sst$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-
-
-<!-- #npgo effect from ricker model with only npgo, sst and cpd -->
-
-<!-- ric_pk_cpd_sst_p2 <- ggplot()+ -->
-<!--   # stat_density(data= ric_pk_cpd_sst_rv,  -->
-<!--   #              aes(npgo_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'Ricker model with NPGO, SST, CPD',  -->
-<!--        x = 'Standardized coefficients of NPGO', y = 'Posterior density of NPGO effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   geom_density(aes(ric_pk_cpd_sst$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-
-<!-- (ric_pk_eca_npgo_p1 + ric_pk_eca_npgo_p2)/(ric_pk_eca_sst_p1 + ric_pk_cpd_sst_p2) -->
-
-
-
-<!-- ``` -->
-
-
-
-
-
-
-<!-- ### Effect of SST -->
-
-
-<!-- ```{r fig.width=10, fig.height=5} -->
-
-<!-- #sst effect from model with only npgo, sst, eca -->
-
-<!-- bh_pk_eca_sst_p1 <- ggplot() + -->
-<!--   # stat_density(data= bh_pk_eca_sst_rv, aes(sst_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'BH model with NPGO, SST, ECA',  -->
-<!--        x = 'Standardized coefficients of SST', y = 'Posterior density of SST effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   geom_density(aes(bh_pk_eca_sst$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-
-<!-- #sst effect from model with only npgo, sst, cpd -->
-
-<!-- bh_pk_cpd_sst_p2 <- ggplot() + -->
-<!--   # stat_density(data= bh_pk_cpd_sst_rv, aes(sst_effect, color = CU, group = River_n), -->
-<!--   #              geom = 'line', position = 'identity',  -->
-<!--   #              alpha = 0.05, linewidth = 1) + -->
-<!--   geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) + -->
-<!--   labs(title = 'BH model with NPGO, SST, CPD',  -->
-<!--        x = 'Standardized coefficients of SST', y = 'Posterior density of SST effect') + -->
-<!--   xlim(-1, 1) + -->
-<!--   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80, -->
-<!--                        lmin = 10, lmax = 95) + -->
-<!--   geom_density(aes(bh_pk_cpd_sst$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+ -->
-<!--   theme_classic()+ -->
-<!--   theme(legend.position = 'none', -->
-<!--         axis.title.x = element_text(size = 14), -->
-<!--         axis.title.y = element_text(size = 14), -->
-<!--         axis.text.x = element_text(size = 12), -->
-<!--         axis.text.y = element_text(size = 12), -->
-<!--         plot.title = element_text(size = 16, hjust = 0.5) -->
-<!--         )+ -->
-<!--   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2))) -->
-
-
-<!-- (bh_pk_eca_sst_p1 + bh_pk_cpd_sst_p2) -->
-
-
-
-
-
-
-
-
-
-
-
-<!-- ``` -->
-
 
 
 
