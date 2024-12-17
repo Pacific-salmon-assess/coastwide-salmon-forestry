@@ -27,10 +27,10 @@ file_bh=file.path(here('stan models', 'code', 'bh_pink_noac_npgo_lh_sst.stan'))
 mbh_p=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 #even year pinks
-pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_lh_sst_estimate.csv"))
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_sstcobe_new.csv"))
 
 #odd year pinks
-pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_lh_sst_estimate.csv"))
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_sstcobe_new.csv"))
 
 options(mc.cores=8)
 
@@ -59,7 +59,7 @@ pk10r_o$sqrt.CPD=sqrt(pk10r_o$disturbedarea_prct_cs)
 pk10r_o$sqrt.CPD.std=(pk10r_o$sqrt.CPD-mean(pk10r_o$sqrt.CPD))/sd(pk10r_o$sqrt.CPD)
 
 #standardize sst
-pk10r_o$sst.std=(pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
+pk10r_o$sst.std=(pk10r_o$spring_sst-mean(pk10r_o$spring_sst))/sd(pk10r_o$spring_sst)
 
 #normalize ECA 2 - square root transformation (ie. sqrt(x))
 pk10r_e$sqrt.ECA=sqrt(pk10r_e$ECA_age_proxy_forested_only)
@@ -70,7 +70,7 @@ pk10r_e$sqrt.CPD=sqrt(pk10r_e$disturbedarea_prct_cs)
 pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.CPD)
 
 #standardize sst
-pk10r_e$sst.std=(pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
+pk10r_e$sst.std=(pk10r_e$spring_sst-mean(pk10r_e$spring_sst))/sd(pk10r_e$spring_sst)
 
 
 pk10r_o$escapement.t_1=pk10r_e$Spawners[match(paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear-1),paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear))]
@@ -165,14 +165,14 @@ if(Sys.info()[7] == "mariakur") {
                             refresh = 10,
                             adapt_delta = 0.999,
                             max_treedepth = 20)
-  write.csv(bh_pk_eca$summary(),'./stan models/outs/summary/bh_pk_eca_noac_w_npgo_lh_sst_trial.csv')
-  bh_pk_eca$save_object('./stan models/outs/fits/bh_pk_eca_noac_w_npgo_lh_sst_trial.RDS')
+  write.csv(bh_pk_eca$summary(),'./stan models/outs/summary/bh_pk_eca_noac_w_npgo_cobe_sst_trial.csv')
+  bh_pk_eca$save_object('./stan models/outs/fits/bh_pk_eca_noac_w_npgo_cobe_sst_trial.RDS')
   
   post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                              'b_npgo','b_npgo_cu','b_npgo_rv',
                                              'b_sst','b_sst_cu','b_sst_rv',
                                              'alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
-  write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo_lh_sst_trial.csv'))
+  write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo_cobe_sst_trial.csv'))
   
 } else {
   bh_pk_eca <- mbh_p$sample(data=dl_pk_eca,
@@ -186,14 +186,14 @@ if(Sys.info()[7] == "mariakur") {
         #try to do this
         {
         #some expression
-          write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_noac_w_npgo_lh_sst.csv"))
-          bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_noac_w_npgo_lh_sst.RDS"))
+          write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_noac_w_npgo_cobe_sst.csv"))
+          bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_noac_w_npgo_cobe_sst.RDS"))
   
           post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                      'b_npgo','b_npgo_cu','b_npgo_rv',
                                                      'b_sst','b_sst_cu','b_sst_rv',
                                                      'alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
-          write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo_lh_sst.csv'))
+          write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo_cobe_sst.csv'))
         },
         #if an error occurs, tell me the error
         error=function(e) {
@@ -204,14 +204,14 @@ if(Sys.info()[7] == "mariakur") {
         warning=function(w) {
             message('A Warning Occurred')
             print(w)
-            write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_noac_w_npgo_lh_sst.csv"))
-            bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_noac_w_npgo_lh_sst.RDS"))
+            write.csv(bh_pk_eca$summary(),here("stan models","outs","summary","bh_pk_eca_noac_w_npgo_cobe_sst.csv"))
+            bh_pk_eca$save_object(here("stan models","outs","fits","bh_pk_eca_noac_w_npgo_cobe_sst.RDS"))
   
             post_bh_pk_eca=bh_pk_eca$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                      'b_npgo','b_npgo_cu','b_npgo_rv',
                                                      'b_sst','b_sst_cu','b_sst_rv',
                                                        'alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
-            write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo_lh_sst.csv'))
+            write.csv(post_bh_pk_eca,here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo_cobe_sst.csv'))
         }
     )
   
@@ -231,14 +231,14 @@ if(Sys.info()[7] == "mariakur") {
                             adapt_delta = 0.999,
                             max_treedepth = 20)
   
-  write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_cpd_noac_w_npgo_lh_sst_trial.csv')
-  bh_pk_cpd$save_object('./stan models/outs/fits/bh_pk_cpd_noac_w_npgo_lh_sst_trial.RDS')
+  write.csv(bh_pk_cpd$summary(),'./stan models/outs/summary/bh_pk_cpd_noac_w_npgo_cobe_sst_trial.csv')
+  bh_pk_cpd$save_object('./stan models/outs/fits/bh_pk_cpd_noac_w_npgo_cobe_sst_trial.RDS')
   
   post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                              'b_npgo','b_npgo_cu','b_npgo_rv',
                                              'b_sst','b_sst_cu','b_sst_rv',
                                              'alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
-  write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo_lh_sst_trial.csv'))
+  write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo_cobe_sst_trial.csv'))
   
 } else {
   bh_pk_cpd <- mbh_p$sample(data=dl_pk_cpd,
@@ -252,14 +252,14 @@ if(Sys.info()[7] == "mariakur") {
         #try to do this
         {
         #some expression
-          write.csv(bh_pk_cpd$summary(),here("stan models","outs","summary","bh_pk_cpd_noac_w_npgo_lh_sst.csv"))
-          bh_pk_cpd$save_object(here("stan models","outs","fits","bh_pk_cpd_noac_w_npgo_lh_sst.RDS"))
+          write.csv(bh_pk_cpd$summary(),here("stan models","outs","summary","bh_pk_cpd_noac_w_npgo_cobe_sst.csv"))
+          bh_pk_cpd$save_object(here("stan models","outs","fits","bh_pk_cpd_noac_w_npgo_cobe_sst.RDS"))
   
           post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                      'b_npgo','b_npgo_cu','b_npgo_rv',
                                                      'b_sst','b_sst_cu','b_sst_rv',
                                                      'alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
-          write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo_lh_sst.csv'))
+          write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo_cobe_sst.csv'))
         },
         #if an error occurs, tell me the error
         error=function(e) {
@@ -270,14 +270,14 @@ if(Sys.info()[7] == "mariakur") {
         warning=function(w) {
             message('A Warning Occurred')
             print(w)
-            write.csv(bh_pk_cpd$summary(),here("stan models","outs","summary","bh_pk_cpd_noac_w_npgo_lh_sst.csv"))
-            bh_pk_cpd$save_object(here("stan models","outs","fits","bh_pk_cpd_noac_w_npgo_lh_sst.RDS"))
+            write.csv(bh_pk_cpd$summary(),here("stan models","outs","summary","bh_pk_cpd_noac_w_npgo_cobe_sst.csv"))
+            bh_pk_cpd$save_object(here("stan models","outs","fits","bh_pk_cpd_noac_w_npgo_cobe_sst.RDS"))
   
             post_bh_pk_cpd=bh_pk_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                      'b_npgo','b_npgo_cu','b_npgo_rv',
                                                      'b_sst','b_sst_cu','b_sst_rv',
                                                        'alpha_j','Rk','sigma_for_cu','sigma_for_rv'),format='draws_matrix')
-            write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo_lh_sst.csv'))
+            write.csv(post_bh_pk_cpd,here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo_cobe_sst.csv'))
         }
     )
   
