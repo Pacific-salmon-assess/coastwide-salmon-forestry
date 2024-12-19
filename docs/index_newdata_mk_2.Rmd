@@ -3,8 +3,6 @@ title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
 author: ''
 date: "Nov 2024"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     collapsed: no
     fig_caption: yes
@@ -14,6 +12,8 @@ output:
     theme: sandstone
     toc: yes
     toc_float: yes
+  pdf_document:
+    toc: yes
 ---
 
 ```{=html}
@@ -56,6 +56,7 @@ library(tidyverse)
 library(bayesplot)
 library(patchwork)
 library(hues)
+library(GGally)
 ```
 
 
@@ -94,6 +95,69 @@ knitr::include_graphics(here("figures","chum_pink_watersheds_lighthouse_location
 
 knitr::include_graphics(here("figures","lighthouse_location_sst_time_series_estimated.png"))
 ```
+
+
+## COBE SST Locations
+
+```{r out.width = "100%", fig.align = "center"}
+
+# load png from figures folder and show
+
+# p1 <- png(here("figures","correlation_plot_sst_npgo_PDO.png"))
+
+knitr::include_graphics(here("figures","sstcobe2_1954_2012.png"))
+```
+
+
+### COBE SST Timeseries
+
+```{r fig.width=8, fig.height=6}
+
+ch20r_cobe <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_sstcobe_new.csv"))
+
+#group by year and take average of spring_sst and plot
+
+p1 <- ch20r_cobe %>% 
+  group_by(sst_cobe_year) %>% 
+  summarize(sst = mean(spring_sst, na.rm = TRUE)) %>% 
+  ggplot(aes(x = sst_cobe_year, y = sst)) +
+  geom_line(linewidth = 1.5, alpha = 0.5, color = "salmon") +
+  ylim(8,16)+
+  theme_classic() +
+  labs(title = "COBE SST timeseries, Chum", x = "Year", y = "Spring SST (°C)") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5))
+
+pke10r_cobe <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_sstcobe_new.csv"))
+
+
+#group by year and take average of spring_sst and plot
+
+p2 <- pke10r_cobe %>% 
+  group_by(sst_cobe_year) %>% 
+  summarize(sst = mean(spring_sst, na.rm = TRUE)) %>% 
+  ggplot(aes(x = sst_cobe_year, y = sst)) +
+  geom_line(linewidth = 1.5, alpha = 0.5, color = "salmon") +
+  ylim(8,16)+
+  theme_classic() +
+  labs(title = "COBE SST timeseries, Pink", x = "Year", y = "Spring SST (°C)") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5))
+
+p1/p2
+
+
+
+```
+
 
 
 
@@ -430,6 +494,9 @@ bh_chm_cpd_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_s
 bh_chm_eca_lh_sst=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_lh_sst.csv'),check.names=F)
 bh_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_lh_sst.csv'),check.names=F)
 
+bh_chm_eca_cobe_sst=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_cobe_sst.csv'),check.names=F)
+bh_chm_cpd_cobe_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_cobe_sst.csv'),check.names=F)
+
 (plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca_npgo, effect = "eca", species = "chum", model = "BH model with NPGO") +
@@ -437,7 +504,9 @@ bh_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npg
       plot_forestry_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST") +
     plot_forestry_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST"))/(
       plot_forestry_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST") +
-    plot_forestry_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST"))
+    plot_forestry_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST"))/(
+      plot_forestry_effect(posterior = bh_chm_eca_cobe_sst, effect = "eca", species = "chum", model = "BH model with NPGO, COBE SST") +
+    plot_forestry_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST"))
 
 
 ```
@@ -524,7 +593,7 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
 
 ### Effect of SST
 
-```{r fig.width=10, fig.height=6}
+```{r fig.width=10, fig.height=9}
 
 # make function to plot npgo effect
 
@@ -537,7 +606,14 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
     df <- pk10r
   }
   
-  posterior_rv <- posterior %>% 
+  
+  
+  if(color_by == "CU_name"){
+    color_var = "CU_name"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    posterior_rv <- posterior %>% 
     select(starts_with('b_sst_rv')) %>%
     pivot_longer(cols = everything(), 
                  names_to = 'River', 
@@ -545,25 +621,43 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
                  values_to = 'sst_effect') %>%
     mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
     select(-River) %>%
-  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT), by = 'River_n')
-  
-  if(color_by == "CU_name"){
-    color_var = "CU_name"
-    color_name = "CU"
-    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
-                                       lmin = 10, lmax = 95)
+  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% 
+              distinct(), by = 'River_n')
+    
   } else if(color_by == "Y_LAT"){
     color_var = "Y_LAT"
     color_name = "Latitude"
     scale_color = scale_color_viridis_c(name = 'Latitude', direction = -1)
+    posterior_rv <- posterior %>% 
+    select(starts_with('b_sst_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_sst_rv',
+                 values_to = 'sst_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+  left_join(df %>% select(River_n, X_LONG, Y_LAT) %>% 
+              distinct(), by = 'River_n')
+    
   } else if(color_by == "CU"){
     
     color_var = "CU"
     color_name = "CU"
     scale_color = scale_color_discrete(name = 'CU')
+    posterior_rv <- posterior %>% 
+    select(starts_with('b_sst_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_sst_rv',
+                 values_to = 'sst_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% 
+              distinct(), by = 'River_n')
   }
   
-  p1 <- ggplot()+
+  if(species == "chum"){
+    p1 <- ggplot()+
     stat_density(data= posterior_rv, aes(sst_effect, color = !!sym(color_by), group = River_n),
                  geom = 'line', position = 'identity', 
                  alpha = 0.1, linewidth = 1) +
@@ -589,6 +683,34 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
         plot.title = element_text(size = 16, hjust = 0.5)
         )+
   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  } else if(species == "pink"){
+    p1 <- ggplot()+
+    # stat_density(data= posterior_rv, aes(sst_effect, color = !!sym(color_by), group = River_n),
+    #              geom = 'line', position = 'identity', 
+    #              alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+    #                      lmin = 10, lmax = 95) +
+    scale_color +
+    geom_vline(xintercept = median(posterior$b_sst), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  }
   
   return(p1)
   
@@ -599,11 +721,13 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
 
 ((plot_sst_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST", xlim = c(-0.5,0.5)) +
   plot_sst_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)) +
-  plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
+  plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_cobe_sst, effect = "eca", species = "chum", model = "BH model with NPGO, COBE SST", xlim = c(-0.5,0.5)) +
+  plot_sst_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
 
 ((plot_sst_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) +
   plot_sst_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) +
-  plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
+  plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_cobe_sst, effect = "eca", species = "chum", model = "BH model with NPGO, COBE SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) +
+  plot_sst_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
 
 
 
@@ -677,10 +801,10 @@ ric_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_n
 
 # plot
 
-((plot_sst_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST") +
-  plot_sst_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST"))/(
-  plot_sst_effect(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST") +
-  plot_sst_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST")) + plot_layout(guides = "collect")
+((plot_sst_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)) +
+  plot_sst_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)))/(
+  plot_sst_effect(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)) +
+  plot_sst_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
   )
 
 ```
@@ -854,14 +978,32 @@ bh_pk_cpd_sst=read.csv(here('stan models',
                             'posterior',
                             'bh_pk_cpd_noac_w_npgo_lh_sst.csv'),check.names=F)
 
+bh_pk_eca_cobe_sst=read.csv(here('stan models',
+                            'outs',
+                            'posterior',
+                            'bh_pk_eca_noac_w_npgo_cobe_sst.csv'),check.names=F)
 
 
-(plot_forestry_effect(posterior = bh_pk_eca, effect = "eca", species = "pink", model = "BH model with coastwide productivity", xlim = c(-0.5,0.5)) +
+
+bh_pk_cpd_cobe_sst=read.csv(here('stan models',
+                            'outs',
+                            'posterior',
+                            'bh_pk_cpd_noac_w_npgo_cobe_sst.csv'),check.names=F)
+
+
+
+
+
+
+
+((plot_forestry_effect(posterior = bh_pk_eca, effect = "eca", species = "pink", model = "BH model with coastwide productivity", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = bh_pk_cpd, effect = "cpd", species = "pink", model = "BH model with coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_eca_st, effect = "eca", species = "pink", model = "BH model without coastwide productivity", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = bh_pk_cpd_st, effect = "cpd", species = "pink", model = "BH model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_eca_npgo, effect = "eca", species = "pink", model = "BH model with NPGO", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = bh_pk_cpd_npgo, effect = "cpd", species = "pink", model = "BH model with NPGO", xlim = c(-0.5,0.5)))/(
     plot_forestry_effect(posterior = bh_pk_eca_sst, effect = "eca", species = "pink", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = bh_pk_cpd_sst, effect = "cpd", species = "pink", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)))
+    plot_forestry_effect(posterior = bh_pk_cpd_sst, effect = "cpd", species = "pink", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)))/(
+    plot_forestry_effect(posterior = bh_pk_eca_cobe_sst, effect = "eca", species = "pink", model = "BH model with NPGO, COBE SST", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = bh_pk_cpd_cobe_sst, effect = "cpd", species = "pink", model = "BH model with NPGO, COBE SST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect"))
 
 
 ```
@@ -897,12 +1039,13 @@ bh_pk_cpd_sst=read.csv(here('stan models',
 ### Effect of SST
 
 
-```{r fig.width=10, fig.height=3}
+```{r fig.width=10, fig.height=6}
 
 # plot
 
-((plot_sst_effect(posterior = bh_pk_eca_sst, effect = "sst", species = "pink", model = "BH model with NPGO, LH SST") +
-  plot_sst_effect(posterior = bh_pk_cpd_sst, effect = "sst", species = "pink", model = "BH model with NPGO, LH SST"))+ plot_layout(guides = "collect"))
+((plot_sst_effect(posterior = bh_pk_eca_sst, effect = "sst", species = "pink", model = "BH model with NPGO, LH SST", color_by = "Y_LAT") +
+  plot_sst_effect(posterior = bh_pk_cpd_sst, effect = "sst", species = "pink", model = "BH model with NPGO, LH SST", color_by = "Y_LAT"))/(plot_sst_effect(posterior = bh_pk_eca_cobe_sst, effect = "sst", species = "pink", model = "BH model with NPGO, COBE SST", color_by = "Y_LAT") +
+  plot_sst_effect(posterior = bh_pk_cpd_cobe_sst, effect = "sst", species = "pink", model = "BH model with NPGO, COBE SST", color_by = "Y_LAT"))+ plot_layout(guides = "collect"))
 
 ```
 
@@ -966,6 +1109,19 @@ ric_pk_cpd_sst = read.csv(here('stan models',
                         'posterior',
                         'ric_pk_cpd_st_noac_npgo_lh_sst.csv'),check.names=F)
 
+ric_pk_eca_cobe_sst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_eca_st_noac_npgo_cobe_sst.csv'),check.names=F)
+
+
+
+
+ric_pk_cpd_cobe_sst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_cpd_st_noac_npgo_cobe_sst.csv'),check.names=F)
+
 # (plot_forestry_effect(posterior = ric_pk_eca_st, effect = "eca", species = "pink", model = "Ricker model with NPGO", xlim = c(-0.5,0.5)))
 
 (plot_forestry_effect(posterior = ric_pk_eca, effect = "eca", species = "pink", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
@@ -1011,18 +1167,58 @@ ric_pk_cpd_sst = read.csv(here('stan models',
 ### Effect of SST
 
 
-```{r fig.width=10, fig.height=3}
+```{r fig.width=10, fig.height=6}
 
 
 # plot
 
 ((plot_sst_effect(posterior = ric_pk_eca_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, LH SST", color_by = "CU") +
-  plot_sst_effect(posterior = ric_pk_cpd_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, LH SST", color_by = "CU")) + plot_layout(guides = "collect"))
+  plot_sst_effect(posterior = ric_pk_cpd_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, LH SST", color_by = "CU"))/(plot_sst_effect(posterior = ric_pk_eca_cobe_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, COBE SST", color_by = "CU") +
+  plot_sst_effect(posterior = ric_pk_cpd_cobe_sst, effect = "sst", species = "pink", model = "Ricker model with NPGO, COBE SST", color_by = "CU")) + plot_layout(guides = "collect"))
 
 ```
 
 
+# Correlation between COBE SST and LH SST
 
+```{r fig.width=8, fig.height=6}
+
+chum_lh_data <- read.csv(here('origional-ecofish-data-models','Data','Processed',
+                              'chum_SR_20_hat_yr_w_lh_sst_estimate.csv'))
+
+chum_cobe_data <- read.csv(here('origional-ecofish-data-models','Data','Processed',
+                              'chum_SR_20_hat_yr_w_sstcobe_new.csv'))
+
+# join both dataframes for every year and river_n
+
+chum_sst_data <- merge(chum_lh_data %>% select(BroodYear, River, spring_lighthouse_temperature, CU) %>% distinct(),
+                         chum_cobe_data %>% select(BroodYear, River, spring_sst, CU) %>% distinct(), by = c('BroodYear', 'River', 'CU')) %>% 
+  left_join(cu_names, by = 'CU')
+
+correlation = cor(chum_sst_data$spring_lighthouse_temperature, chum_sst_data$spring_sst)
+
+ggplot(chum_sst_data) +
+  geom_point(aes(x = spring_lighthouse_temperature, y = spring_sst, color = CU_name), size = 2, alpha = 0.1) +
+  labs(x = 'Lighthouse SST', y = 'COBE SST', title = 'Correlation between COBE SST and LH SST') +
+  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                         lmin = 10, lmax = 95) +
+  xlim(8, 14) +
+  ylim(8, 14) +
+  theme_classic()+
+  #plot 1 to 1 line
+  geom_abline(intercept = 0, slope = 1, linetype = 'dashed', color = 'black') +
+  annotate("text", x = 12, y = 9, label = paste('Correlation:', round(correlation, 2)), size = 5)+
+  theme(legend.key.height = unit(1, 'lines'),
+        legend.position = 'right',
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 8),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size = 14))+
+  guides(color = guide_legend(override.aes = list(alpha = 1, size = 2), ncol = 1))
+
+
+```
 
 
 
