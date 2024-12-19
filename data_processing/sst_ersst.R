@@ -228,5 +228,114 @@ salmon_data_distance_temp %>%
 ggsave(here("figures", "spring_sst_vs_ersst.png"), width = 6, height = 6, dpi = 300)
 
 
+#do same for pinks even
+
+salmon_data_pink_e <- data_pink_e %>% 
+  select(CU,  Y_LAT, X_LONG, River) %>% 
+  distinct()
+
+distance_df_pink_e <- tibble()
+
+for(i in 1:nrow(salmon_data_pink_e)){
+  for(j in 1:nrow(location_data_long_df_distinct)){
+    distance <- haversine(salmon_data_pink_e$Y_LAT[i], salmon_data_pink_e$X_LONG[i], 
+                          location_data_long_df_distinct$lat[j], location_data_long_df_distinct$lon[j])
+    distance_df_pink_e <- distance_df_pink_e %>% bind_rows(data.frame(CU = salmon_data_pink_e$CU[i], 
+                                                        River = salmon_data_pink_e$River[i],
+                                                        sst_ersst_lat = location_data_long_df_distinct$lat[j], 
+                                                        sst_ersst_lon = location_data_long_df_distinct$lon[j],
+                                                        distance = distance))
+    
+  }
+  
+}
+
+min_distance_df_pink_e <- distance_df_pink_e %>% 
+  group_by(CU, River) %>% 
+  filter(distance == min(distance)) %>% 
+  ungroup()
 
 
+salmon_data_distance_temp_pink_e <- data_pink_e %>%
+  left_join(min_distance_df_pink_e %>% 
+              select(CU, River, distance, sst_ersst_lat, sst_ersst_lon),
+            by = c("CU" = "CU", "River" = "River")) %>% 
+  left_join(sst_df_spring %>% 
+              group_by(lat, lon , year) %>%
+              mutate(BroodYear = year-1) %>% #sst fron year n will affect salmon whose BroodYear is n-1
+              rename("sst_ersst_year" = "year"),
+            by = c("BroodYear" = "BroodYear", "sst_ersst_lat" = "lat", "sst_ersst_lon" = "lon"))
+
+#check how many rows have NA for spring_ersst
+
+salmon_data_distance_temp_pink_e %>% 
+  filter(is.na(spring_ersst)) %>% 
+  nrow()
+
+
+#save df
+
+write.csv(salmon_data_distance_temp_pink_e, here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"), row.names = FALSE)
+
+#do same for pinks odd
+
+salmon_data_pink_o <- data_pink_o %>% 
+  select(CU,  Y_LAT, X_LONG, River) %>% 
+  distinct()
+
+distance_df_pink_o <- tibble()
+
+for(i in 1:nrow(salmon_data_pink_o)){
+  for(j in 1:nrow(location_data_long_df_distinct)){
+    distance <- haversine(salmon_data_pink_o$Y_LAT[i], salmon_data_pink_o$X_LONG[i], 
+                          location_data_long_df_distinct$lat[j], location_data_long_df_distinct$lon[j])
+    distance_df_pink_o <- distance_df_pink_o %>% bind_rows(data.frame(CU = salmon_data_pink_o$CU[i], 
+                                                        River = salmon_data_pink_o$River[i],
+                                                        sst_ersst_lat = location_data_long_df_distinct$lat[j], 
+                                                        sst_ersst_lon = location_data_long_df_distinct$lon[j],
+                                                        distance = distance))
+    
+  }
+  
+}
+
+min_distance_df_pink_o <- distance_df_pink_o %>% 
+  group_by(CU, River) %>% 
+  filter(distance == min(distance)) %>% 
+  ungroup()
+
+
+salmon_data_distance_temp_pink_o <- data_pink_o %>%
+  left_join(min_distance_df_pink_o %>% 
+              select(CU, River, distance, sst_ersst_lat, sst_ersst_lon),
+            by = c("CU" = "CU", "River" = "River")) %>% 
+  left_join(sst_df_spring %>% 
+              group_by(lat, lon , year) %>%
+              mutate(BroodYear = year-1) %>% #sst fron year n will affect salmon whose BroodYear is n-1
+              rename("sst_ersst_year" = "year"),
+            by = c("BroodYear" = "BroodYear", "sst_ersst_lat" = "lat", "sst_ersst_lon" = "lon"))
+
+#check how many rows have NA for spring_ersst
+
+salmon_data_distance_temp_pink_o %>% 
+  filter(is.na(spring_ersst)) %>% 
+  nrow()
+
+
+#save df
+
+write.csv(salmon_data_distance_temp_pink_o, here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"), row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
