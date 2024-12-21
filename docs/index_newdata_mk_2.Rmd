@@ -169,7 +169,7 @@ p1/p2
 
 # ch20rsc <-read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_w_npgo.csv")
 # ch20rsc_sst <-read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_w_coord_w_SSTCOBE2.csv")
-ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_lh_sst_estimate.csv"))
+ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_ersst.csv"))
 
 #two rivers with duplicated names:
 ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20rsc$River)
@@ -346,27 +346,46 @@ plot_forestry_effect <- function(posterior = bh_chm_eca, effect = "eca", species
 
 plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST"){
   
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
   if(effect == "eca"){
     forestry <- seq(0,1,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
     
-    
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
    
-  }
-  else if(effect == "cpd"){
+  }else if(effect == "cpd"){
     forestry <- seq(0,100,length.out=100)
-    
+    b <- posterior %>% select(ends_with("b_for"))
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
    
+  }else if(effect == "sst"){
+    forestry <- seq(10,15,length.out=100)
+    b <- posterior %>% select(ends_with("b_sst"))
+    
+    forestry_sqrt_std = (forestry-mean(forestry))/sd(forestry)
+    
   }
   
-  forestry_sqrt <- sqrt(forestry)
   
-  forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
   
   no_forestry <- min(forestry_sqrt_std)
   
   # bh_chm_eca_sst=read.csv(here('stan models','outs','posterior',bh_chm_eca_sst),check.names=F)
   
-  b <- posterior %>% select(ends_with("b_for"))
+  
   
   global_prediction <- apply(exp(as.matrix(b[,1])%*%
                                  (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
@@ -387,34 +406,48 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
   full_productivity <- NULL
   
   # no_forestry <- min(eca_std_sqrt)
-  for (i in 1:length(unique(ch20rsc$River_n))){
-    river <- unique(ch20rsc$River_n)[i]
+  for (i in 1:length(unique(df$River_n))){
+    river <- unique(df$River_n)[i]
     
-    river_data <- ch20rsc %>% filter(River_n == river)
-    
-    b <- posterior %>% select(starts_with("b_for_rv")) %>%
-      select(ends_with(paste0("[",river,"]")))
-    #cpd
-    # max_cpd <- max(river_data$sqrt.CPD.std)
-    
-    # productivity <- as.matrix(b[,1])%*%
-    # (eca_std_sqrt-no_forestry)
-    
-    
+    river_data <- df %>% filter(River_n == river)
     
     if(effect == "eca"){
+      b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
       forestry_sqrt_std_river <- seq(min(river_data$sqrt.ECA.std),max(river_data$sqrt.ECA.std),length.out=100)
       
       forestry_river <- seq(min(river_data$ECA_age_proxy_forested_only),max(river_data$ECA_age_proxy_forested_only),length.out=100)
-    }
-    
-    else if(effect == "cpd"){
+      
+      
+    } else if(effect == "cpd"){
+      b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
       forestry_sqrt_std_river <- seq(min(river_data$sqrt.CPD.std),max(river_data$sqrt.CPD.std),length.out=100)
       
       forestry_river <- seq(min(river_data$disturbedarea_prct_cs),max(river_data$disturbedarea_prct_cs),length.out=100)
+      
+      
+    } else if(effect == "sst"){
+      b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
+      # use only spring_ersst
+      
+      forestry_sqrt_std_river <- seq(min(river_data$sst.std),max(river_data$sst.std),length.out=100)
+      
+      forestry_river <- seq(min(river_data$spring_ersst),max(river_data$spring_ersst),length.out=100)
+      
     }
     
-    productivity <- (exp(as.matrix(b[,1])%*%
+    
+
+    
+    
+    
+    
+    productivity <- (exp(as.matrix(b_rv[,1])%*%
                            (forestry_sqrt_std_river-no_forestry)))*100 - 100
     
     productivity_median <- apply(productivity,2,median)
@@ -427,7 +460,7 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
     
   }
   
-  b <- posterior %>% select(ends_with("b_for"))
+  # b <- posterior %>% select(ends_with("b_for"))
   
   median_prediction <- apply(exp(as.matrix(b[,1])%*%
                                 (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
@@ -435,7 +468,8 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
   median_df <- data.frame(forestry = forestry,
                           productivity_median = median_prediction)
   
-  p1 <- ggplot(full_productivity) +
+  if(effect == "eca" || effect == "cpd"){
+    p1 <- ggplot(full_productivity) +
     geom_line(aes(x = forestry, y = productivity_median, group = River,
                   color = "watershed level\nforestry effect"),alpha=0.5) +
     geom_line(data = global_df, 
@@ -461,6 +495,34 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
           axis.text.y = element_text(size = 10),
           plot.title = element_text(size = 14, hjust = 0.5))+
     guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  } else if(effect == "sst"){
+    p1 <- ggplot(full_productivity) +
+    geom_line(aes(x = forestry, y = productivity_median, group = River,
+                  color = "watershed level\nSST effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = productivity_median, color = "global SST effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("watershed level\nSST effect" = "darkgray", 
+                                     "global SST effect" = "black")) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
+    labs(title = model,
+      x = "Spring SST (°C)",
+      y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  }
   
   return(p1)
   
@@ -497,6 +559,10 @@ bh_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npg
 bh_chm_eca_cobe_sst=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_cobe_sst.csv'),check.names=F)
 bh_chm_cpd_cobe_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_cobe_sst.csv'),check.names=F)
 
+bh_chm_eca_ersst=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst.csv'),check.names=F)
+bh_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst.csv'),check.names=F)
+
+
 (plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca_npgo, effect = "eca", species = "chum", model = "BH model with NPGO") +
@@ -506,7 +572,9 @@ bh_chm_cpd_cobe_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_n
       plot_forestry_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST") +
     plot_forestry_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST"))/(
       plot_forestry_effect(posterior = bh_chm_eca_cobe_sst, effect = "eca", species = "chum", model = "BH model with NPGO, COBE SST") +
-    plot_forestry_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST"))
+    plot_forestry_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST"))/(
+      plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
+    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST"))
 
 
 ```
@@ -535,6 +603,14 @@ bh_chm_cpd_cobe_sst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_n
 
 plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", species = "chum", model = "BH model with NPGO", xlim = c(-0.5,0.5)) {
   
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
   posterior_rv <- posterior %>% 
     select(starts_with('b_npgo_rv')) %>%
     pivot_longer(cols = everything(), 
@@ -543,11 +619,40 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
                  values_to = 'npgo_effect') %>%
     mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
     select(-River) %>%
-  left_join(ch20rsc %>% select(River_n, CU, CU_name, X_LONG, Y_LAT), by = 'River_n')
+  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% distinct(), by = 'River_n')
   
-  p1 <- ggplot()+
+  if(species == "chum"){
+    p1 <- ggplot()+
     stat_density(data= posterior_rv, aes(npgo_effect, color = CU_name, group = River_n),
                  geom = 'line', position = 'identity', 
+                 alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of NPGO', y = 'Posterior density\nof NPGO effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                         lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_npgo), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+    
+    
+  } else if(species == "pink"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(npgo_effect, group = River_n),
+                 geom = 'line', position = 'identity', color ="gray",
                  alpha = 0.1, linewidth = 1) +
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
     labs(title = model, 
@@ -570,6 +675,9 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
         plot.title = element_text(size = 16, hjust = 0.5)
         )+
   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  }
+  
+  
   
   return(p1)
   
@@ -593,7 +701,7 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
 
 ### Effect of SST
 
-```{r fig.width=10, fig.height=9}
+```{r fig.width=10, fig.height=12}
 
 # make function to plot npgo effect
 
@@ -602,17 +710,6 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
   
   if(species == "chum"){
     df <- ch20rsc
-  } else if(species == "pink"){
-    df <- pk10r
-  }
-  
-  
-  
-  if(color_by == "CU_name"){
-    color_var = "CU_name"
-    color_name = "CU"
-    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
-                                       lmin = 10, lmax = 95)
     posterior_rv <- posterior %>% 
     select(starts_with('b_sst_rv')) %>%
     pivot_longer(cols = everything(), 
@@ -624,10 +721,8 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
   left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% 
               distinct(), by = 'River_n')
     
-  } else if(color_by == "Y_LAT"){
-    color_var = "Y_LAT"
-    color_name = "Latitude"
-    scale_color = scale_color_viridis_c(name = 'Latitude', direction = -1)
+  } else if(species == "pink"){
+    df <- pk10r
     posterior_rv <- posterior %>% 
     select(starts_with('b_sst_rv')) %>%
     pivot_longer(cols = everything(), 
@@ -638,23 +733,31 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
     select(-River) %>%
   left_join(df %>% select(River_n, X_LONG, Y_LAT) %>% 
               distinct(), by = 'River_n')
+  }
+  
+  
+  
+  if(color_by == "CU_name"){
+    color_var = "CU_name"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    
+    
+  } else if(color_by == "Y_LAT"){
+    color_var = "Y_LAT"
+    color_name = "Latitude"
+    scale_color = scale_color_viridis_c(name = 'Latitude', direction = -1)
+    
     
   } else if(color_by == "CU"){
     
     color_var = "CU"
     color_name = "CU"
-    scale_color = scale_color_discrete(name = 'CU')
-    posterior_rv <- posterior %>% 
-    select(starts_with('b_sst_rv')) %>%
-    pivot_longer(cols = everything(), 
-                 names_to = 'River', 
-                 names_prefix = 'b_sst_rv',
-                 values_to = 'sst_effect') %>%
-    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
-    select(-River) %>%
-  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% 
-              distinct(), by = 'River_n')
-  }
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    
+  } 
   
   if(species == "chum"){
     p1 <- ggplot()+
@@ -685,9 +788,9 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
   guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
   } else if(species == "pink"){
     p1 <- ggplot()+
-    # stat_density(data= posterior_rv, aes(sst_effect, color = !!sym(color_by), group = River_n),
-    #              geom = 'line', position = 'identity', 
-    #              alpha = 0.1, linewidth = 1) +
+    stat_density(data= posterior_rv, aes(sst_effect, group = River_n),
+                 geom = 'line', position = 'identity', color = "gray",
+                 alpha = 0.1, linewidth = 1) +
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
     labs(title = model, 
          x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
@@ -695,7 +798,6 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
     geom_density(aes(posterior$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+
     # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
     #                      lmin = 10, lmax = 95) +
-    scale_color +
     geom_vline(xintercept = median(posterior$b_sst), color = 'black', linetype = 'dashed') + 
     theme_classic()+
     theme(legend.position = "right",
@@ -722,12 +824,16 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
 ((plot_sst_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST", xlim = c(-0.5,0.5)) +
   plot_sst_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)) +
   plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_cobe_sst, effect = "eca", species = "chum", model = "BH model with NPGO, COBE SST", xlim = c(-0.5,0.5)) +
-  plot_sst_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
+  plot_sst_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_sst_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
+
+
+
 
 ((plot_sst_effect(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) +
   plot_sst_effect(posterior = bh_chm_cpd_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_lh_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) +
   plot_sst_effect(posterior = bh_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, LH SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_cobe_sst, effect = "eca", species = "chum", model = "BH model with NPGO, COBE SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) +
-  plot_sst_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect"))
+  plot_sst_effect(posterior = bh_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "BH model with NPGO, COBE SST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST", color_by = "Y_LAT", xlim = c(-0.5,0.5)) + plot_sst_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST", color_by = "Y_LAT", xlim = c(-0.5,0.5)))
+    + plot_layout(guides = "collect"))
 
 
 
@@ -756,12 +862,19 @@ ric_chm_cpd_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo
 ric_chm_eca_lh_sst=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_lh_sst.csv'),check.names=F)
 ric_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_lh_sst.csv'),check.names=F)
 
+
+ric_chm_eca_cobe_sst=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_cobe_sst.csv'),check.names=F)
+ric_chm_cpd_cobe_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_cobe_sst.csv'),check.names=F)
+
+ric_chm_eca_ersst=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_ersst.csv'),check.names=F)
+
+
 (plot_forestry_effect(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = ric_chm_cpd, effect = "cpd", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_npgo, effect = "eca", species = "chum", model = "Ricker model with NPGO", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = ric_chm_cpd_npgo, effect = "cpd", species = "chum", model = "Ricker model with NPGO", xlim = c(-0.5,0.5)))/(
       plot_forestry_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)))
+    plot_forestry_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_cobe_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, COBE SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, COBE SST", xlim = c(-0.5,0.5)))
 
 
 ```
@@ -804,7 +917,8 @@ ric_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_n
 ((plot_sst_effect(posterior = ric_chm_eca_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)) +
   plot_sst_effect(posterior = ric_chm_cpd_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST", xlim = c(-0.5,0.5)))/(
   plot_sst_effect(posterior = ric_chm_eca_lh_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)) +
-  plot_sst_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
+  plot_sst_effect(posterior = ric_chm_cpd_lh_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, LH SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = ric_chm_eca_cobe_sst, effect = "eca", species = "chum", model = "Ricker model with NPGO, COBE SST", xlim = c(-0.5,0.5)) + plot_sst_effect(posterior = ric_chm_cpd_cobe_sst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, COBE SST", xlim = c(-0.5,0.5)))
+   + plot_layout(guides = "collect")
   )
 
 ```
@@ -815,10 +929,10 @@ ric_chm_cpd_lh_sst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_n
 
 ```{r}
 
-pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_lh_sst_estimate.csv"))
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"))
 
 #odd year pinks
-pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_lh_sst_estimate.csv"))
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"))
 
 options(mc.cores=8)
 
@@ -859,9 +973,11 @@ pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.C
 pk10r_o$npgo.std=(pk10r_o$npgo-mean(pk10r_o$npgo))/sd(pk10r_o$npgo)
 pk10r_e$npgo.std=(pk10r_e$npgo-mean(pk10r_e$npgo))/sd(pk10r_e$npgo)
 
-pk10r_o$sst.std = (pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
-pk10r_e$sst.std = (pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
+# pk10r_o$sst.std = (pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
+# pk10r_e$sst.std = (pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
 
+pk10r_o$sst.std = (pk10r_o$spring_ersst-mean(pk10r_o$spring_ersst))/sd(pk10r_o$spring_ersst)
+pk10r_e$sst.std = (pk10r_e$spring_ersst-mean(pk10r_e$spring_ersst))/sd(pk10r_e$spring_ersst)
 
 
 pk10r_o$escapement.t_1=pk10r_e$Spawners[match(paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear-1),paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear))]
@@ -896,6 +1012,7 @@ cu2=distinct(pk10r,River,.keep_all = T)
 cu3=distinct(pk10r,River2,.keep_all = T)
 
 pk10r$River_n <- as.numeric(factor(pk10r$River))
+pk10r$River_n2 <- as.numeric(factor(pk10r$River2))
 pk10r$CU_name <- pk10r$CU_NAME
 
 max_eca_pink_df <- pk10r %>% 
@@ -1179,9 +1296,9 @@ ric_pk_cpd_cobe_sst = read.csv(here('stan models',
 ```
 
 
-# Correlation between COBE SST and LH SST
+# Correlation between COBE SST, LH SST, ERSST
 
-```{r fig.width=8, fig.height=6}
+```{r fig.width=8, fig.height=8}
 
 chum_lh_data <- read.csv(here('origional-ecofish-data-models','Data','Processed',
                               'chum_SR_20_hat_yr_w_lh_sst_estimate.csv'))
@@ -1189,15 +1306,29 @@ chum_lh_data <- read.csv(here('origional-ecofish-data-models','Data','Processed'
 chum_cobe_data <- read.csv(here('origional-ecofish-data-models','Data','Processed',
                               'chum_SR_20_hat_yr_w_sstcobe_new.csv'))
 
+chum_ersst_data <- read.csv(here('origional-ecofish-data-models','Data','Processed',
+                              'chum_SR_20_hat_yr_w_ersst.csv'))
+
 # join both dataframes for every year and river_n
 
 chum_sst_data <- merge(chum_lh_data %>% select(BroodYear, River, spring_lighthouse_temperature, CU) %>% distinct(),
-                         chum_cobe_data %>% select(BroodYear, River, spring_sst, CU) %>% distinct(), by = c('BroodYear', 'River', 'CU')) %>% 
+                         chum_cobe_data %>% select(BroodYear, River, spring_sst, CU) %>% distinct(), 
+                       
+                       by = c('BroodYear', 'River', 'CU')) %>% 
   left_join(cu_names, by = 'CU')
+
+chum_sst_data <- merge(chum_sst_data,
+                       chum_ersst_data %>% select(BroodYear, River, spring_ersst, CU) %>% distinct(),
+                       by = c('BroodYear', 'River', 'CU'))
+
 
 correlation = cor(chum_sst_data$spring_lighthouse_temperature, chum_sst_data$spring_sst)
 
-ggplot(chum_sst_data) +
+correlation_lh_ersst = cor(chum_sst_data$spring_lighthouse_temperature, chum_sst_data$spring_ersst)
+
+correlation_cobe_ersst = cor(chum_sst_data$spring_sst, chum_sst_data$spring_ersst)
+
+cor_lh_cobe <- ggplot(chum_sst_data) +
   geom_point(aes(x = spring_lighthouse_temperature, y = spring_sst, color = CU_name), size = 2, alpha = 0.1) +
   labs(x = 'Lighthouse SST', y = 'COBE SST', title = 'Correlation between COBE SST and LH SST') +
   scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
@@ -1218,10 +1349,75 @@ ggplot(chum_sst_data) +
   guides(color = guide_legend(override.aes = list(alpha = 1, size = 2), ncol = 1))
 
 
+cor_lh_ersst <- ggplot(chum_sst_data) +
+  geom_point(aes(x = spring_lighthouse_temperature, y = spring_ersst, color = CU_name), size = 2, alpha = 0.1) +
+  labs(x = 'Lighthouse SST', y = 'ERSST', title = 'Correlation between ERSST and LH SST') +
+  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                         lmin = 10, lmax = 95) +
+  xlim(8, 14) +
+  ylim(8, 14) +
+  theme_classic()+
+  #plot 1 to 1 line
+  geom_abline(intercept = 0, slope = 1, linetype = 'dashed', color = 'black') +
+  annotate("text", x = 12, y = 9, label = paste('Correlation:', round(correlation_lh_ersst, 2)), size = 5)+
+  theme(legend.key.height = unit(1, 'lines'),
+        legend.position = 'right',
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 8),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size = 14))+
+  guides(color = guide_legend(override.aes = list(alpha = 1, size = 2), ncol = 1))
+  
+  
+cor_cobe_ersst <- ggplot(chum_sst_data) +
+  geom_point(aes(x = spring_sst, y = spring_ersst, color = CU_name), size = 2, alpha = 0.1) +
+  labs(x = 'COBE SST', y = 'ERSST', title = 'Correlation between ERSST and COBE SST') +
+  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                         lmin = 10, lmax = 95) +
+  xlim(8, 14) +
+  ylim(8, 14) +
+  theme_classic()+
+  #plot 1 to 1 line
+  geom_abline(intercept = 0, slope = 1, linetype = 'dashed', color = 'black') +
+  annotate("text", x = 12, y = 9, label = paste('Correlation:', round(correlation_cobe_ersst, 2)), size = 5)+
+  theme(legend.key.height = unit(1, 'lines'),
+        legend.position = 'right',
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 8),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size = 14))+
+  guides(color = guide_legend(override.aes = list(alpha = 1, size = 2), ncol = 1))
+
+  
+  
+(cor_lh_cobe / cor_lh_ersst / cor_cobe_ersst) + plot_layout(guides = "collect")
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+
 ```
 
 
+# Productivity decline due to SST
 
+```{r fig.width=5, fig.height=5}
+
+# only use model with ersst
+
+plot_productivity_decline(posterior = bh_chm_cpd_ersst, effect = "sst", species = "chum", model = "BH model with NPGO, ERSST")
+
+
+
+```
 
 
 
