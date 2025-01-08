@@ -61,7 +61,7 @@ write.csv(sst_df, here("data_processing", "sst_ersst", "sst_ersst_df.csv"), row.
 
 bc_boundary <- bc_bound() %>% st_transform(4326)
 
-sst_df %>% filter(!is.na(sst), year == 1955 | year == 2012) %>% 
+sst_df %>% filter(!is.na(sst), year == 1959 | year == 2014) %>% 
   ggplot() +
   geom_sf(data = bc_boundary, fill = "transparent", color = "slategray", alpha = 0.2) +
   facet_wrap(~year) +
@@ -80,11 +80,11 @@ sst_df %>% filter(!is.na(sst), year == 1955 | year == 2012) %>%
   scale_color_manual(values = c("chum" = "#69C5C5",
                                 "pink-even" = "#C76F6F",
                                 "pink-odd" = "#9E70A1")) +
-  scale_x_continuous(limits = c(-136, -122), breaks = seq(-136,-122,5)) +
-  scale_y_continuous(limits = c(47, 58)) +
+  scale_x_continuous(limits = c(-134, -122), breaks = seq(-134,-122,5)) +
+  scale_y_continuous(limits = c(48, 58)) +
   guides(color = guide_legend(title = "Species"), override.aes = list(size = 4, alpha = 1),
          fill = guide_legend(title = "Spring SST (C)")) +
-  labs(title = "Spring SST") + 
+  labs(title = "Spring ERSST") + 
   xlab("Longitude") +
   ylab("Latitude") +
   theme_classic()+
@@ -97,7 +97,7 @@ sst_df %>% filter(!is.na(sst), year == 1955 | year == 2012) %>%
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 10))
 
-ggsave(here("figures", "sstersst_1955_2012.png"), sst_1954_2012, width = 10, height = 5, dpi = 300)
+ggsave(here("figures", "sstersst_1959_2014.png"), sst_1954_2012, width = 10, height = 5, dpi = 300)
 
 
 

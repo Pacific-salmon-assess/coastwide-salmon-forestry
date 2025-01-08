@@ -448,13 +448,14 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
     
     
     productivity <- (exp(as.matrix(b_rv[,1])%*%
-                           (forestry_sqrt_std_river-no_forestry)))*100 - 100
+                           (forestry_sqrt_std-no_forestry)))*100 - 100
     
     productivity_median <- apply(productivity,2,median)
     
     productivity_median_df <- data.frame(River = unique(river_data$River),
                                          productivity_median = productivity_median,
-                                         forestry = forestry_river)
+                                         forestry = forestry_river) %>% 
+  filter(forestry >= min(forestry_river), forestry <= max(forestry_river))
     
     full_productivity <- rbind(full_productivity, productivity_median_df)
     
