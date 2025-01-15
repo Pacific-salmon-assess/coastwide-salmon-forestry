@@ -62,6 +62,24 @@ library(GGally)
 ```
 
 
+# Model
+
+Beverton-Holt (BH):
+
+$log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - log(1+(e^{\alpha_t+\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(e^{\alpha_t+\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(e^{\alpha_t+\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{for,r}*X{t,r} + \beta_{npgo,r}*Y{t} + \beta_{sst,r}*Z{t,r} + \epsilon_{t,r}$
+
+Ricker:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - S_{t,r}/Smax_r + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - S_{t,r}/Smax_r + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - S_{t,r}/Smax_r + \beta_{for,r}*X{t,r} + \beta_{npgo,r}*Y{t} + \beta_{sst,r}*Z{t,r} + \epsilon_{t,r}$
+
 # Chum and Pink salmon Watersheds
 
 
@@ -542,6 +560,485 @@ ric_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_np
 ```
 
 
+
+## Productivity decline
+
+```{r fig.width=10, fig.height=6}
+
+
+plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST", by_river = FALSE){
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  if(effect == "eca"){
+    forestry <- seq(0,1,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "cpd"){
+    forestry <- seq(0,100,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "sst"){
+    forestry <- seq(10,15,length.out=100)
+    b <- posterior %>% select(ends_with("b_sst"))
+    
+    forestry_sqrt_std = (forestry-mean(forestry))/sd(forestry)
+    
+  }
+  
+  
+  
+  no_forestry <- min(forestry_sqrt_std)
+  
+  # bh_chm_eca_sst=read.csv(here('stan models','outs','posterior',bh_chm_eca_sst),check.names=F)
+  
+  
+  
+  global_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                 (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+  
+  global_025 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.025), 
+                      row.names = c("q025"))
+  
+  global_975 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.975),
+                      row.names = c("q975"))
+  
+  global_df <- data.frame(forestry = forestry,
+                          productivity_median = global_prediction,
+                          q025 = global_025,
+                          q975 = global_975)
+  
+  full_productivity <- NULL
+  
+  if(by_river){
+    
+  # no_forestry <- min(eca_std_sqrt)
+    for (i in 1:length(unique(df$River_n))){
+      river <- unique(df$River_n)[i]
+      
+      river_data <- df %>% filter(River_n == river)
+      
+      if(effect == "eca"){
+        b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sqrt.ECA.std),max(river_data$sqrt.ECA.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$ECA_age_proxy_forested_only),max(river_data$ECA_age_proxy_forested_only),length.out=100)
+        
+        
+      } else if(effect == "cpd"){
+        b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sqrt.CPD.std),max(river_data$sqrt.CPD.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$disturbedarea_prct_cs),max(river_data$disturbedarea_prct_cs),length.out=100)
+        
+        
+      } else if(effect == "sst"){
+        b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        # use only spring_ersst
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sst.std),max(river_data$sst.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$spring_ersst),max(river_data$spring_ersst),length.out=100)
+        
+      }
+      
+      
+  
+      
+      
+      
+      
+      productivity <- (exp(as.matrix(b_rv[,1])%*%
+                             (forestry_sqrt_std-no_forestry)))*100 - 100
+      
+      productivity_median <- apply(productivity,2,median)
+      
+      productivity_median_df <- data.frame(River = unique(river_data$River),
+                                           productivity_median = productivity_median,
+                                           forestry = forestry_river) %>% 
+    filter(forestry >= min(forestry_river), forestry <= max(forestry_river))
+      
+      full_productivity <- rbind(full_productivity, productivity_median_df)
+      
+    }
+    
+    # b <- posterior %>% select(ends_with("b_for"))
+    
+    median_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                  (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+    
+    median_df <- data.frame(forestry = forestry,
+                            productivity_median = median_prediction)
+    
+    if(effect == "eca" || effect == "cpd"){
+      p1 <- ggplot(full_productivity) +
+      geom_line(aes(x = forestry, y = productivity_median, group = River,
+                    color = "watershed level\nforestry effect"),alpha=0.5) +
+      geom_line(data = global_df, 
+                aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
+      geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                  alpha = 0.5, fill = "gray") +
+      # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+      scale_color_manual("",values = c("watershed level\nforestry effect" = "darkgray", 
+                                       "global forestry effect" = "black")) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(title = model,
+        x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative percent disturbed (%)"),
+        y = "Median change\n in productivity (%)") +
+      theme_classic() +
+      theme(legend.position = c(0.8,0.8),
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(1, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_text(size = 10),
+            plot.title = element_text(size = 14, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    } else if(effect == "sst"){
+      p1 <- ggplot(full_productivity) +
+      geom_line(aes(x = forestry, y = productivity_median, group = River,
+                    color = "watershed level\nSST effect"),alpha=0.5) +
+      geom_line(data = global_df, 
+                aes(x = forestry, y = productivity_median, color = "global SST effect"), linewidth = 1) +
+      geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                  alpha = 0.5, fill = "gray") +
+      # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+      scale_color_manual("",values = c("watershed level\nSST effect" = "darkgray", 
+                                       "global SST effect" = "black")) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
+      labs(title = model,
+        x = "Spring SST (°C)",
+        y = "Median change\n in productivity (%)") +
+      theme_classic() +
+      theme(legend.position = c(0.8,0.8),
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(1, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_text(size = 10),
+            plot.title = element_text(size = 14, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    }
+} else {
+  
+  if(effect == "eca" || effect == "cpd"){
+    p1 <- ggplot(full_productivity) +
+    # geom_line(aes(x = forestry, y = productivity_median, group = River,
+    #               color = "watershed level\nforestry effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("global forestry effect" = "black")) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5) +
+    labs(title = model,
+      x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative percent disturbed (%)"),
+      y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  } else if(effect == "sst"){
+    p1 <- ggplot(full_productivity) +
+    # geom_line(aes(x = forestry, y = productivity_median, group = River,
+    #               color = "watershed level\nSST effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = productivity_median, color = "global SST effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("global SST effect" = "black")) +
+                                      
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
+    labs(title = model,
+      x = "Spring SST (°C)",
+      y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  }
+}
+  
+  return(p1)
+  
+}
+
+((plot_productivity_decline(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST", by_river = FALSE) +
+    plot_productivity_decline(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST", by_river = FALSE) )/(plot_productivity_decline(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", by_river = FALSE) +
+    plot_productivity_decline(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", by_river = FALSE))) + plot_layout(guides = "collect") 
+
+
+
+```
+
+
+
+```{r fig.width = 10, fig.height = 3}
+(plot_productivity_decline(posterior = bh_chm_cpd_ersst, effect = "sst", species = "chum", model = "BH model with NPGO, ERSST", by_river = FALSE) + plot_productivity_decline(posterior = ric_chm_cpd_ersst, effect = "sst", species = "chum", model = "Ric model with NPGO, ERSST", by_river = FALSE))+ plot_layout(guides = "collect")
+
+
+
+```
+
+## Effect of SST
+
+```{r fig.width = 12, fig.height = 6}
+plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species = "chum", model = "BH model with NPGO", 
+                            color_by = "CU_name", xlim = c(-1, 1)) {
+  
+  if(species == "chum"){
+    df <- ch20rsc
+    posterior_rv <- posterior %>% 
+    select(starts_with('b_sst_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_sst_rv',
+                 values_to = 'sst_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% 
+              distinct(), by = 'River_n')
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    posterior_rv <- posterior %>% 
+    select(starts_with('b_sst_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_sst_rv',
+                 values_to = 'sst_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+  left_join(df %>% select(River_n, X_LONG, Y_LAT) %>% 
+              distinct(), by = 'River_n')
+  }
+  
+  
+  
+  if(color_by == "CU_name"){
+    color_var = "CU_name"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    
+    
+  } else if(color_by == "Y_LAT"){
+    color_var = "Y_LAT"
+    color_name = "Latitude"
+    scale_color = scale_color_viridis_c(name = 'Latitude', direction = -1)
+    
+    
+  } else if(color_by == "CU"){
+    
+    color_var = "CU"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    
+  } 
+  
+  if(species == "chum"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(sst_effect, color = !!sym(color_by), group = River_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+    #                      lmin = 10, lmax = 95) +
+    scale_color +
+    geom_vline(xintercept = median(posterior$b_sst), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  } else if(species == "pink"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(sst_effect, group = River_n),
+                 geom = 'line', position = 'identity', color = "gray",
+                 alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+    #                      lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_sst), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  }
+  
+  return(p1)
+  
+}
+
+(plot_sst_effect(posterior = bh_chm_eca_ersst, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_sst_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ric model with CPD, NPGO, ERSST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_ersst, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, ERSST", xlim = c(-0.5,0.5),color_by = "Y_LAT") + plot_sst_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ric model with CPD, NPGO, ERSST", xlim = c(-0.5,0.5),color_by = "Y_LAT"))+ plot_layout(guides = "collect")
+
+```
+
+
+## Effect of NPGO
+
+```{r fig.width = 12, fig.height = 3}
+plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", species = "chum", model = "BH model with NPGO", xlim = c(-0.5,0.5)) {
+  
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
+  posterior_rv <- posterior %>% 
+    select(starts_with('b_npgo_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_npgo_rv',
+                 values_to = 'npgo_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% distinct(), by = 'River_n')
+  
+  if(species == "chum"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(npgo_effect, color = CU_name, group = River_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of NPGO', y = 'Posterior density\nof NPGO effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                         lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_npgo), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+    
+    
+  } else if(species == "pink"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(npgo_effect, group = River_n),
+                 geom = 'line', position = 'identity', color ="gray",
+                 alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of NPGO', y = 'Posterior density\nof NPGO effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+    #                      lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_npgo), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  }
+  
+  
+  
+  return(p1)
+  
+}
+
+(plot_npgo_effect(posterior = bh_chm_eca_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST") +
+  plot_npgo_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ric model with NPGO, ERSST")) + plot_layout(guides = "collect")
+
+```
+
+
 # Pink Salmon
 
 
@@ -810,3 +1307,49 @@ ric_pk_cpd_ersst = read.csv(here('stan models',
 
 
 ```
+
+
+## Productivity Decline
+
+
+```{r fig.width=10, fig.height=6}
+
+((plot_productivity_decline(posterior = bh_pk_eca_ersst, effect = "eca", species = "pink", model = "BH model with NPGO, ERSST", by_river = FALSE) +
+    plot_productivity_decline(posterior = bh_pk_cpd_ersst, effect = "cpd", species = "pink", model = "BH model with NPGO, ERSST", by_river = FALSE) )/(plot_productivity_decline(posterior = ric_pk_eca_ersst, effect = "eca", species = "pink", model = "Ricker model with NPGO, ERSST", by_river = FALSE) +
+    plot_productivity_decline(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with NPGO, ERSST", by_river = FALSE))) + plot_layout(guides = "collect")
+
+```
+
+```{r fig.width = 10, fig.height = 3}
+(plot_productivity_decline(posterior = bh_pk_eca_ersst, effect = "sst", species = "pink", model = "BH model with NPGO, ERSST", by_river = FALSE) +
+    plot_productivity_decline(posterior = ric_pk_cpd_ersst, effect = "sst", species = "pink", model = "Ricker model with NPGO, ERSST", by_river = FALSE)) + plot_layout(guides = "collect")
+
+
+```
+
+
+## Effect of SST
+
+```{r fig.width = 12, fig.height = 3}
+
+(plot_sst_effect(posterior = bh_pk_cpd_ersst, effect = "sst", species = "pink", model = "BH model with CPD, NPGO, ERSST") +
+  plot_sst_effect(posterior = ric_pk_cpd_ersst, effect = "sst", species = "pink", model = "Ric model with CPD, NPGO, LH SST", color_by = "CU"))
+
+
+
+```
+
+## Effect of NPGO
+
+```{r fig.width = 12, fig.height = 3}
+
+plot_npgo_effect(posterior = bh_pk_cpd_ersst, effect = "npgo", species = "pink", model = "BH model with CPD, NPGO, ERSST") +
+  plot_npgo_effect(posterior = ric_pk_cpd_ersst, effect = "npgo", species = "pink", model = "Ric model with CPD, NPGO, ERSST")
+
+```
+
+
+
+
+
+

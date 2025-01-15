@@ -3,17 +3,19 @@ title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
 author: ''
 date: "Nov 2024"
 output:
-  html_document:
-    collapsed: no
-    fig_caption: yes
-    highlight: espresso
-    number_sections: yes
-    smooth_scroll: yes
-    theme: sandstone
-    toc: yes
-    toc_float: yes
+  word_document:
+    toc: true
   pdf_document:
-    toc: yes
+    toc: true
+  html_document:
+    collapsed: false
+    fig_caption: true
+    highlight: espresso
+    number_sections: true
+    smooth_scroll: true
+    theme: sandstone
+    toc: true
+    toc_float: true
 ---
 
 ```{=html}
@@ -1413,8 +1415,8 @@ cor_cobe_ersst <- ggplot(chum_sst_data) +
 ```{r fig.width=5, fig.height=5}
 
 # only use model with ersst
-
-plot_productivity_decline(posterior = bh_chm_cpd_ersst, effect = "sst", species = "chum", model = "BH model with NPGO, ERSST")
+# 
+# plot_productivity_decline(posterior = bh_chm_cpd_ersst, effect = "sst", species = "chum", model = "BH model with NPGO, ERSST")
 
 
 
