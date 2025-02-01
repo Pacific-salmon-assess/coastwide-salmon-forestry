@@ -97,7 +97,7 @@ sst_df %>% filter(!is.na(sst), year == 1959 | year == 2014) %>%
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 10))
 
-ggsave(here("figures", "sstersst_1959_2014.png"), sst_1954_2012, width = 10, height = 5, dpi = 300)
+ggsave(here("figures", "sstersst_1959_2014.png"), width = 10, height = 5, dpi = 300)
 
 
 

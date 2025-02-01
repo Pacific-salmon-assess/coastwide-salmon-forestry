@@ -1,0 +1,535 @@
+---
+title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
+subtitle: "Change in productivity with covariate"
+author: ''
+date: "Jan 2025"
+output:
+  html_document:
+    collapsed: false
+    fig_caption: true
+    highlight: espresso
+    number_sections: true
+    smooth_scroll: true
+    theme: sandstone
+    toc: true
+    toc_float: true
+  pdf_document:
+    toc: true
+  word_document:
+    toc: true
+---
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=FALSE)
+options(max.print=23)
+library(cmdstanr)
+library(here);library(dplyr); library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(bayesplot)
+library(patchwork)
+library(hues)
+library(GGally)
+```
+
+
+
+# Chum salmon
+
+```{r}
+
+# Data wrangling
+
+# ch20rsc <-read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_w_npgo.csv")
+# ch20rsc_sst <-read.csv("../origional-ecofish-data-models/Data/Processed/chum_SR_20_hat_yr_w_coord_w_SSTCOBE2.csv")
+ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_ersst.csv"))
+
+#two rivers with duplicated names:
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20rsc$River)
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20rsc$River)
+
+
+ch20rsc=ch20rsc[order(factor(ch20rsc$River),ch20rsc$BroodYear),]
+
+ch20rsc$River_n <- as.numeric(factor(ch20rsc$River))
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+ch20rsc$sqrt.ECA=sqrt(ch20rsc$ECA_age_proxy_forested_only)
+ch20rsc$sqrt.ECA.std=(ch20rsc$sqrt.ECA-mean(ch20rsc$sqrt.ECA))/sd(ch20rsc$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+ch20rsc$sqrt.CPD=sqrt(ch20rsc$disturbedarea_prct_cs)
+ch20rsc$sqrt.CPD.std=(ch20rsc$sqrt.CPD-mean(ch20rsc$sqrt.CPD))/sd(ch20rsc$sqrt.CPD)
+
+
+
+
+# CU names
+#####
+cu_names <- data.frame(CU = c("CM-1","CM-2","CM-3","CM-4","CM-5","CM-6",
+                              "CM-7","CM-8","CM-9","CM-10","CM-11","CM-12",
+                              "CM-13","CM-14","CM-15","CM-16","CM-17","CM-18",
+                              "CM-19","CM-20","CM-21","CM-22","CM-23","CM-24",
+                              "CM-25","CM-26","CM-27","CM-28","CM-29","CM-30",
+                              "CM-31","CM-32","CM-33","CM-34","CM-35","CM-36",
+                              "CM-37","CM-38", "CM-39"),
+                        CU_name = c("Fraser Canyon",
+                                    "Lower Fraser",
+                                    "Howe Sound-Burrard Inlet",
+                                    "Georgia Strait",
+                                    "East Vancouver Island",
+                                    "Loughborough",
+                                    "Bute Inlet",
+                                    "Southern Coastal Streams",
+                                    "Upper Knight",
+                                    "Southwest Vancouver Island",
+                                    "Northwest Vancouver Island",
+                                    "Smith Inlet",
+                                    "Rivers Inlet",
+                                    "Wannock",
+                                    "Spiller-Fitz Hugh-Burke",
+                                    "Bella Coola - Dean Rivers",
+                                    "Bella Coola River - Late",
+                                    "Hecate Lowlands",
+                                    "Mussel-Kynoch",
+                                    "Douglas-Gardner",
+                                    "East Haida Gwaii",
+                                    "Skidegate",
+                                    "West Haida Gwaii",
+                                    "North Haida Gwaii",
+                                    "North Haida Gwaii-Stanley Creek",
+                                    "Skeena Estuary",
+                                    "Lower Skeena",
+                                    "Middle Skeena",
+                                    "Upper Skeena",
+                                    "Portland Inlet",
+                                    "Lower Nass",
+                                    "Portland Canal-Observatory",
+                                    "Unuk",
+                                    "Lower Stikine",
+                                    "Whiting",
+                                    "Taku",
+                                    "Lynn Canal",
+                                    "Teslin",
+                                    "Lower Liard"))
+#####
+
+ch20rsc <- ch20rsc %>% left_join(cu_names, by = 'CU') 
+
+max_eca_df <- ch20rsc %>% 
+  select(River, River_n,CU, ECA_age_proxy_forested_only) %>%
+  group_by(River) %>%
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            eca_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(eca_level = case_when(eca_max < 12 ~ 'low',
+                               eca_max >= 12 & eca_max < 24 ~ 'medium',
+                               eca_max >= 24 ~ 'high'))
+
+max_cpd_df <- ch20rsc %>% 
+  select(River, River_n,CU, disturbedarea_prct_cs) %>%
+  group_by(River) %>% 
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE))
+
+
+```
+
+
+
+```{r models}
+bh_chm_eca_ersst=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst.csv'),check.names=F)
+bh_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst.csv'),check.names=F)
+
+
+ric_chm_eca_ersst=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_ersst.csv'),check.names=F)
+
+ric_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst.csv'),check.names=F)
+
+
+
+
+```
+
+
+```{r productivity_decline_function}
+
+plot_productivity_decline_river <- function(river_data, river, posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST"){
+  
+  if(effect == "eca"){
+    forestry <- seq(0,1,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "cpd"){
+    forestry <- seq(0,100,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "sst"){
+    forestry <- seq(10,15,length.out=100)
+    b <- posterior %>% select(ends_with("b_sst"))
+    
+    forestry_sqrt_std = (forestry-mean(forestry))/sd(forestry)
+    
+  }
+  no_forestry <- min(forestry_sqrt_std)
+  
+  global_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                 (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+  
+  global_025 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.025), 
+                      row.names = c("q025"))
+  
+  global_975 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.975),
+                      row.names = c("q975"))
+  
+  global_df <- data.frame(forestry = forestry,
+                          productivity_median = global_prediction,
+                          q025 = global_025,
+                          q975 = global_975)
+  
+  
+  if(effect == "eca"){
+        b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sqrt.ECA.std),max(river_data$sqrt.ECA.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$ECA_age_proxy_forested_only),max(river_data$ECA_age_proxy_forested_only),length.out=100)
+        
+        
+      } else if(effect == "cpd"){
+        b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        # forestry_sqrt_std_river <- seq(min(river_data$sqrt.CPD.std),max(river_data$sqrt.CPD.std),length.out=100)
+        
+        #changing it to go from no disturbance to max disturbance in the river 
+        forestry_sqrt_std_river <- seq(no_forestry,max(river_data$sqrt.CPD.std),length.out=100)
+        
+        # forestry_river <- seq(min(river_data$disturbedarea_prct_cs),max(river_data$disturbedarea_prct_cs),length.out=100)
+        
+        forestry_river <- seq(0,max(river_data$disturbedarea_prct_cs),length.out=100)
+        
+        
+      } else if(effect == "sst"){
+        b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        # use only spring_ersst
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sst.std),max(river_data$sst.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$spring_ersst),max(river_data$spring_ersst),length.out=100)
+        
+      }
+      
+      productivity <- (exp(as.matrix(b_rv[,1])%*%
+                             (forestry_sqrt_std_river-no_forestry)))*100 - 100
+      
+      productivity_median <- apply(productivity,2,median)
+      
+      productivity_median_df <- data.frame(River = unique(river_data$River),
+                                           productivity_median = productivity_median,
+                                           forestry = forestry_river) 
+      
+      # full_productivity <- rbind(full_productivity, productivity_median_df)
+      
+      if(effect == "eca" || effect == "cpd"){
+      p1 <- ggplot(productivity_median_df) +
+      geom_line(aes(x = forestry, y = productivity_median, group = River,
+                    color = "watershed level\nforestry effect"),alpha=0.5) +
+      # geom_line(data = global_df,
+      # aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
+      # geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+      #             alpha = 0.5, fill = "gray") +
+      scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+      scale_color_manual("",values = c("watershed level\nforestry effect" = "darkgray", 
+                                       "global forestry effect" = "black")) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(title = model,
+        x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative percent disturbed (%)"),
+        y = "Median change\n in productivity (%)") +
+      theme_classic() +
+      theme(legend.position = c(0.8,0.8),
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(1, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_text(size = 10),
+            plot.title = element_text(size = 14, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    } else if(effect == "sst"){
+      p1 <- ggplot(full_productivity) +
+      geom_line(aes(x = forestry, y = productivity_median, group = River,
+                    color = "watershed level\nSST effect"),alpha=0.5) +
+      geom_line(data = global_df, 
+                aes(x = forestry, y = productivity_median, color = "global SST effect"), linewidth = 1) +
+      geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                  alpha = 0.5, fill = "gray") +
+      # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+      scale_color_manual("",values = c("watershed level\nSST effect" = "darkgray", 
+                                       "global SST effect" = "black")) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(title = model,
+        x = "Spring SST (°C)",
+        y = "Median change\n in productivity (%)") +
+      theme_classic() +
+      theme(legend.position = c(0.8,0.8),
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(1, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_text(size = 10),
+            plot.title = element_text(size = 14, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    }
+      
+      return(p1)
+    
+    
+    
+  
+  
+}
+
+
+
+
+```
+
+
+
+
+
+```{r}
+
+species = "chum"
+
+df <- ch20rsc
+df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+df$npgo.std <- (ch20rsc$npgo-mean(ch20rsc$npgo))/sd(ch20rsc$npgo)
+posterior <- ric_chm_cpd_ersst
+    
+posterior_bh <- bh_chm_cpd_ersst
+
+rivers <- unique(df$River_n)
+
+for(river in rivers){
+  
+  river_data <- df %>% filter(River_n == river)
+    
+  plot_productivity_decline_river(river_data, river, posterior = posterior, effect = "cpd", species = species, model = "Ricker model with CPD, NPGO, ERSST")
+  
+}
+
+river = 52
+
+river_data <- df %>% filter(River_n == river)
+
+plot_productivity_decline_river(river_data, river, posterior = posterior, effect = "cpd", species = species, model = "Ricker model with CPD, NPGO, ERSST")
+
+```
+
+```{r productivity_decline_all_rivers}
+
+plot_productivity_decline_river_df <- function(river_data, river, posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST"){
+  
+  
+  
+  if(effect == "eca"){
+        b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sqrt.ECA.std),max(river_data$sqrt.ECA.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$ECA_age_proxy_forested_only),max(river_data$ECA_age_proxy_forested_only),length.out=100)
+        
+        
+      } else if(effect == "cpd"){
+        b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        forestry_sqrt_std_river <- seq(no_forestry,max(river_data$sqrt.CPD.std),length.out=100)
+        
+        forestry_river <- seq(0,max(river_data$disturbedarea_prct_cs),length.out=100)
+        
+        
+      } else if(effect == "sst"){
+        b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        # use only spring_ersst
+        
+        forestry_sqrt_std_river <- seq(no_forestry,max(river_data$sst.std),length.out=100)
+        
+        forestry_river <- seq(10,max(river_data$spring_ersst),length.out=100)
+        
+      } else if(effect == "npgo"){
+        b_rv <- posterior %>% select(starts_with("b_npgo_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        forestry_sqrt_std_river <- seq(no_forestry,max(river_data$npgo.std),length.out=100)
+        
+        forestry_river <- seq(-2,max(river_data$npgo),length.out=100)
+        
+      }
+      
+      productivity <- (exp(as.matrix(b_rv[,1])%*%
+                             (forestry_sqrt_std_river-no_forestry)))*100 - 100
+      
+      productivity_median <- apply(productivity,2,median)
+      
+      productivity_median_df <- data.frame(River = unique(river_data$River),
+                                           productivity_median = productivity_median,
+                                           forestry = forestry_river) 
+      return(productivity_median_df)
+      
+}
+
+full_productivity <- data.frame()
+
+effect = "sst"
+
+if(effect == "eca"){
+    forestry <- seq(0,1,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "cpd"){
+    forestry <- seq(0,100,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "sst"){
+    forestry <- seq(10,15,length.out=100)
+    b <- posterior %>% select(ends_with("b_sst"))
+    
+    forestry_sqrt_std = (forestry-mean(forestry))/sd(forestry)
+    
+  } else if(effect == "npgo"){
+    
+    forestry <- seq(-2,2,length.out=100)
+    b <- posterior %>% select(ends_with("b_npgo"))
+    
+    forestry_sqrt_std = (forestry-mean(forestry))/sd(forestry)
+    
+  }
+  no_forestry <- min(forestry_sqrt_std)
+  
+  global_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                 (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+  
+  global_025 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.025), 
+                      row.names = c("q025"))
+  
+  global_975 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.975),
+                      row.names = c("q975"))
+  
+  global_df <- data.frame(forestry = forestry,
+                          productivity_median = global_prediction,
+                          q025 = global_025,
+                          q975 = global_975)
+  
+  
+
+for(river in rivers){
+  
+  river_data <- df %>% filter(River_n == river)
+  
+  productivity_median_df <- plot_productivity_decline_river_df(river_data, river, posterior = posterior, effect = "sst", species = species, model = "Ricker model with CPD, NPGO, ERSST")
+  
+  full_productivity <- rbind(full_productivity, productivity_median_df)
+    
+  
+  
+}
+
+ggplot(full_productivity) +
+      geom_line(aes(x = forestry, y = productivity_median, group = River,
+                    color = "watershed level\nforestry effect"),alpha=0.5) +
+      geom_line(data = global_df, 
+                aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
+      geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                  alpha = 0.5, fill = "gray") +
+      # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+      scale_color_manual("",values = c("watershed level\nforestry effect" = "darkgray", 
+                                       "global forestry effect" = "black")) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(title = "Ricker model with CPD, NPGO, ERSST",
+        x = ifelse(effect == "eca", "Equivalent clearcut area", 
+                   ifelse(effect == "cpd", "Cumulative percent disturbed (%)", 
+                          ifelse(effect == "sst", "Spring SST (°C)", "NPGO"))),
+        y = "Median change\n in productivity (%)") +
+      theme_classic() +
+      theme(legend.position = c(0.8,0.8),
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(1, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_text(size = 10),
+            plot.title = element_text(size = 14, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+
+
+```
+
