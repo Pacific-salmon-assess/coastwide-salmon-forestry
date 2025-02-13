@@ -29,7 +29,7 @@ mric=cmdstanr::cmdstan_model(file_ric) #compile stan code to C++
 # load datasets####
 
 # ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_npgo.csv"))
-ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_ersst.csv"))
+ch20r <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_ersst_pdo.csv"))
 
 options(mc.cores=8)
 
@@ -127,11 +127,17 @@ print("eca")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_chm_eca_npgo_sst <- mric$sample(data=dl_chm_eca_npgo_sst,
-                            chains = 5, 
+                            chains = 10, 
                             iter_warmup = 200,
                             iter_sampling = 100,
                             refresh = 200,
-                            # init = 0.5,
+                            # init = list(list(b_for = -0.5, 
+                            #                  b_npgo = 0.5, 
+                            #                  b_sst = -0.5, 
+                            #                  alpha0 = 1.5, 
+                            #                  mu_sigma = 2,
+                            #                  cu_sigma = rep(0,length(unique(ch20r$CU))))),
+                            # init = 0,
                             adapt_delta = 0.9,
                             max_treedepth = 20)
   write.csv(ric_chm_eca_npgo_sst$summary(),'./stan models/outs/summary/ric_chm_eca_npgo_ersst_cc_trial.csv')
