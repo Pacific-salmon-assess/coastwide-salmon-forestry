@@ -3,6 +3,10 @@ title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
 author: ''
 date: "Nov 2024"
 output:
+  word_document:
+    toc: true
+  pdf_document:
+    toc: true
   html_document:
     collapsed: false
     fig_caption: true
@@ -12,10 +16,6 @@ output:
     theme: sandstone
     toc: true
     toc_float: true
-  pdf_document:
-    toc: true
-  word_document:
-    toc: true
 ---
 
 ```{=html}
@@ -58,25 +58,27 @@ library(bayesplot)
 library(patchwork)
 library(hues)
 library(GGally)
+library(latex2exp)
 ```
 
 # Model
 
 Beverton-Holt (BH):
 
-$log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - log(1+(e^{\alpha_t+\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - log(1+\frac{(e^{\alpha_t+\alpha_r}}{R_{k,r}}*S_{t,r}) + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(e^{\alpha_t+\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_t+\alpha_r}}{R_{k,r}})*S_{t,r}) + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(e^{\alpha_t+\alpha_r})/R_{k,r})*S_{t,r}) + \beta_{for,r}*X{t,r} + \beta_{npgo,r}*Y{t} + \beta_{sst,r}*Z{t,r} + \epsilon_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{e^{\alpha_t+\alpha_r}}{R_{k,r}}*S_{t,r}) + \beta_{for,r}*X_{t,r} + \beta_{npgo,r}*Y{t} + \beta_{sst,r}*Z{t,r} + \epsilon_{t,r}$
 
 Ricker:
 
-$log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - S_{t,r}/Smax_r + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r - S_{t,r}/Smax_r + \beta_{for,r}*X{t,r} + \epsilon_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r - S_{t,r}/Smax_r + \beta_{for,r}*X{t,r} + \beta_{npgo,r}*Y{t} + \beta_{sst,r}*Z{t,r} + \epsilon_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \beta_{npgo,r}*Y{t} + \beta_{sst,r}*Z{t,r} + \epsilon_{t,r}$
+
 
 # Chum and Pink salmon Watersheds
 
@@ -127,7 +129,8 @@ ch20rsc$sqrt.ECA.std=(ch20rsc$sqrt.ECA-mean(ch20rsc$sqrt.ECA))/sd(ch20rsc$sqrt.E
 ch20rsc$sqrt.CPD=sqrt(ch20rsc$disturbedarea_prct_cs)
 ch20rsc$sqrt.CPD.std=(ch20rsc$sqrt.CPD-mean(ch20rsc$sqrt.CPD))/sd(ch20rsc$sqrt.CPD)
 
-
+ch20rsc$npgo.std=(ch20rsc$npgo-mean(ch20rsc$npgo))/sd(ch20rsc$npgo)
+ch20rsc$sst.std=(ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
 
 
 # CU names
@@ -498,11 +501,10 @@ bh_chm_eca_ersst=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo
 bh_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst.csv'),check.names=F)
 
 
-(plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
-    plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
-    plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(
-      plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
-    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST"))
+((plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
+    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST"))/(plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
+    plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
+    plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity"))) + plot_layout(guides = "collect")
 
 
 ```
@@ -537,9 +539,9 @@ ric_chm_eca_ersst=read.csv(here('stan models','outs','posterior','ric_chm_eca_np
 ric_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst.csv'),check.names=F)
 
 
-(plot_forestry_effect(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_chm_cpd, effect = "cpd", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
+((plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_chm_cpd, effect = "cpd", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5))))  + plot_layout(guides = "collect")
 
 
 ```
@@ -1019,6 +1021,211 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
 ```
 
 
+## Residual plots
+
+```{r, residual-plots, fig.width = 12, fig.height = 8, results="asis"}
+  
+df <- ch20rsc
+
+posterior <- ric_chm_cpd_ersst
+
+posterior_bh <- bh_chm_cpd_ersst
+
+posterior_a_t <- ric_chm_cpd
+
+posterior_a_t_bh <- bh_chm_cpd
+
+
+rivers <- unique(df$River_n)
+
+# plotting residuals of ricker model vs predicted values of ricker model for all rivers combined
+
+residual_df_full_chum <- data.frame()
+
+residual_bh_df_full_chum <- data.frame()
+
+for(river in rivers){
+  
+  river_data <- df %>% filter(River_n == river)
+  
+  posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_b_npgo <- posterior %>% 
+      select(starts_with('b_npgo_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_b_sst <- posterior %>% 
+      select(starts_with('b_sst_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_S_max <- posterior %>% 
+      select(starts_with('Smax')) %>%
+      select(ends_with(paste0("[",river,"]")))
+  
+  
+  residual_df <- data.frame(spawners = river_data$Spawners,
+                              recruits = river_data$Recruits,
+                              observed_log_RS = river_data$ln_RS,
+                              predicted_log_RS = apply((matrix(posterior_rv_alpha_j[,1], ncol = length(river_data$Spawners), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%river_data$Spawners + as.matrix(posterior_rv_b_for)%*%river_data$sqrt.CPD.std +
+                                                          as.matrix(posterior_rv_b_npgo)%*%river_data$npgo.std + 
+                                                          as.matrix(posterior_rv_b_sst)%*%river_data$sst.std ), 2, median),
+                                                        
+                              cpd = river_data$disturbedarea_prct_cs,
+                            sqrt.CPD.std = river_data$sqrt.CPD.std,
+                            forestry_effect = apply(as.matrix(posterior_rv_b_for)%*%river_data$sqrt.CPD.std , 2, median)
+    )
+    
+    residual_df$residuals <- residual_df$observed_log_RS - residual_df$predicted_log_RS
+    
+    residual_df$partial_residuals <- residual_df$residuals + residual_df$forestry_effect
+      
+    residual_df_full_chum <- rbind(residual_df_full_chum, residual_df)
+    
+    posterior_bh_rv_b_for <- posterior_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_b_npgo <- posterior_bh %>% 
+      select(starts_with('b_npgo_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_b_sst <- posterior_bh %>%
+      select(starts_with('b_sst_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_alpha_j <- posterior_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_Rk <- posterior_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    residual_bh_df <- data.frame(spawners = river_data$Spawners,
+                              recruits = river_data$Recruits,
+                              observed_log_RS = river_data$ln_RS,
+                              predicted_log_RS = apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(river_data$Spawners), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%river_data$Spawners) +
+                                                          as.matrix(posterior_bh_rv_b_for)%*%river_data$sqrt.CPD.std +
+                                                          as.matrix(posterior_bh_rv_b_npgo)%*%river_data$npgo.std + 
+                                                          as.matrix(posterior_bh_rv_b_sst)%*%river_data$sst.std), 2, median),
+                              cpd = river_data$disturbedarea_prct_cs,
+                              forestry_effect = apply(as.matrix(posterior_bh_rv_b_for)%*%river_data$sqrt.CPD.std, 2, median),
+                              sqrt.CPD.std = river_data$sqrt.CPD.std
+    )
+    
+    residual_bh_df$residuals <- residual_bh_df$observed_log_RS - residual_bh_df$predicted_log_RS
+    
+    residual_bh_df$partial_residuals <- residual_bh_df$residuals + residual_bh_df$forestry_effect
+    
+    residual_bh_df_full_chum <- rbind(residual_bh_df_full_chum, residual_bh_df)
+    
+}
+
+p_ric_residuals_chum <- ggplot(residual_df_full_chum)+
+  geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "Ricker model with CPD, NPGO, ERSST", x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+p_ric_partial_residuals_chum <- ggplot(residual_df_full_chum)+
+  geom_point(aes(x = sqrt.CPD.std, y = partial_residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  geom_smooth(aes(x = sqrt.CPD.std, y = partial_residuals), method = 'lm', se = TRUE, color = 'black') +
+  labs(title = "Ricker model with CPD, NPGO, ERSST", x = TeX(r"($standardized\ \sqrt{CPD}$)"), 
+       y = TeX(r"(Residuals + $\beta_{forestry, river} \times standardized\ \sqrt{CPD}$)")) +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+
+p_bh_residuals_chum <- ggplot(residual_bh_df_full_chum)+
+  geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "BH model with CPD, NPGO, ERSST", x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+p_bh_partial_residuals_chum <- ggplot(residual_bh_df_full_chum)+
+  geom_point(aes(x = sqrt.CPD.std, y = partial_residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  geom_smooth(aes(x = sqrt.CPD.std, y = partial_residuals), method = 'lm', se = TRUE, color = 'black') +
+  labs(title = "BH model with CPD, NPGO, ERSST", x = TeX(r"($standardized\ \sqrt{CPD}$)"), 
+       y = TeX(r"(Residuals + $\beta_{forestry, river} \times standardized\ \sqrt{CPD}$)")) +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+print((p_ric_residuals_chum + p_bh_residuals_chum)/(p_ric_partial_residuals_chum + p_bh_partial_residuals_chum) + plot_layout(guides = "collect"))
+    
+    
+
+
+```
+
+
 \newpage
 
 ## Spawner-Recruit fits
@@ -1030,11 +1237,13 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
 # and prediction with line and credible intervals with shading
 # use ricker model with cpd, npgo, ersst
 
-plot_recruit_spawner <- function(data, species = "chum", river, posterior, posterior_bh){
+plot_recruit_spawner <- function(data, species = "chum", river, river_data,  posterior, posterior_bh, posterior_a_t, posterior_a_t_bh){
   
-  river_data <- df %>% filter(River_n == river)
-    
-    #ricker
+  # river_data <- df %>% filter(River_n == river)
+  
+  
+  
+  if(species == "chum"){
     posterior_rv_b_for <- posterior %>% 
       select(starts_with('b_for_rv')) %>%
       select(ends_with(paste0("[",river,"]")))
@@ -1047,19 +1256,127 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
       select(starts_with('Smax')) %>%
       select(ends_with(paste0("[",river,"]")))
     
+    #bh
+    
+    posterior_bh_rv_b_for <- posterior_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_alpha_j <- posterior_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_Rk <- posterior_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+  } else if(species == "pink"){
+    
+    river_wo_broodline <- river_data$River_n
+    river_w_broodline <- river_data$River_n2
+    
+    posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_rv_S_max <- posterior %>% 
+      select(starts_with('Smax')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    #time varying productivity for ricker
+    
+    # if(river_data$Broodline[1] == "Even"){
+    #   
+    #   posterior_a_t_alpha_j <- posterior_a_t %>% 
+    #   select(starts_with('alpha_j')) %>%
+    #   select(ends_with(paste0("[",river_w_broodline,"]")))
+    #   
+    #   posterior_a_t_alpha_t <- posterior_a_t %>%
+    #   select(starts_with('alpha_t[1,'))
+    #   
+    #   posterior_a_t_alpha_t_j_full <- matrix(posterior_a_t_alpha_j[,1], ncol = length(posterior_a_t_alpha_t), nrow = length(posterior_a_t_alpha_j[,1])) + posterior_a_t_alpha_t
+    #   
+    #   posterior_a_t_alpha_t_j <- posterior_a_t_alpha_t_j_full %>%
+    #     pivot_longer(cols = everything(), names_to = "year", values_to = "alpha_t_odd") %>%
+    #     mutate(year = as.numeric(substring(year, 11, ifelse(nchar(year) == 12, 11, 12))) + 1953)
+    #   
+    # } else if(river_data$Broodline[1] == "Odd"){
+    #   
+    #   
+    #   posterior_a_t_alpha_j <- posterior_a_t %>% 
+    #   select(starts_with('alpha_j')) %>%
+    #   select(ends_with(paste0("[",river_w_broodline,"]")))
+    #   
+    #   posterior_a_t_alpha_t <- posterior_a_t %>%
+    #   select(starts_with('alpha_t[2,'))
+    #   
+    #   posterior_a_t_alpha_t_j_full <- matrix(posterior_a_t_alpha_j[,1], ncol = length(posterior_a_t_alpha_t), nrow = length(posterior_a_t_alpha_j[,1])) + posterior_a_t_alpha_t
+    #   
+    #   posterior_a_t_alpha_t_j <- posterior_a_t_alpha_t_j_full %>%
+    #     pivot_longer(cols = everything(), names_to = "year", values_to = "alpha_t_odd") %>%
+    #     mutate(year = as.numeric(substring(year, 11, ifelse(nchar(year) == 12, 11, 12))) + 1953)
+    #   
+    #   
+    #   
+    #   
+    #   
+    #   
+    # }
+    
+    
+    
+    
+    #bh
+    
+    posterior_bh_rv_b_for <- posterior_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_bh_rv_alpha_j <- posterior_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_bh_rv_Rk <- posterior_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    
+    
+  }
+ 
+    
     spawners_predicted <- seq(0, max(river_data$Spawners), length.out = 100)
     
     # calculate recruit prediction
     
+    low_cpd <- min(river_data$sqrt.CPD.std)
+    high_cpd <- max(river_data$sqrt.CPD.std)
+    # avg_cpd <- mean(river_data$sqrt.CPD.std)
+    mid_cpd <- min(river_data$sqrt.CPD.std) + (max(river_data$sqrt.CPD.std) - min(river_data$sqrt.CPD.std))/2
+    
+    mid_cpd_real <- min(river_data$disturbedarea_prct_cs) + (max(river_data$disturbedarea_prct_cs) - min(river_data$disturbedarea_prct_cs))/2
+    
     recruits_predicted <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - 
-                                       as.matrix(1/posterior_rv_S_max)%*%spawners_predicted), 2, median))*spawners_predicted
+                                       as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
     
     recruits_predicted_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted), 2, quantile, c(0.025)))*spawners_predicted
     
     recruits_predicted_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted), 2, quantile, c(0.975)))*spawners_predicted
                           
-    low_cpd <- min(river_data$sqrt.CPD.std)
-    high_cpd <- max(river_data$sqrt.CPD.std)
+    
+    
+    # if(low_cpd == high_cpd){
+    #   scale_color <- scale_color_manual(name = 'CPD in River (%)', values = c("black"))
+    #   
+    # } else{
+    #    scale_color <- scale_color_gradient2(name = 'CPD in River (%)',
+    #                                     low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    # }
+    
     
     recruits_predicted_low_cpd <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
     
@@ -1076,26 +1393,14 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
                                 log_RS = log(recruits_predicted/spawners_predicted))
     
     
-    #bh
     
-    posterior_bh_rv_b_for <- posterior_bh %>% 
-      select(starts_with('b_for_rv')) %>%
-      select(ends_with(paste0("[",river,"]")))
     
-    posterior_bh_rv_alpha_j <- posterior_bh %>%
-      select(starts_with('alpha_j')) %>%
-      select(ends_with(paste0("[",river,"]")))
-    
-    posterior_bh_rv_Rk <- posterior_bh %>%
-      select(starts_with('Rk')) %>%
-      select(ends_with(paste0("[",river,"]")))
-    
-    recruits_bh_predicted <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%spawners_predicted)), 2, median))*spawners_predicted
+    recruits_bh_predicted <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
       
-    recruits_bh_predicted_lower <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%spawners_predicted)), 2, quantile, c(0.025)))*spawners_predicted
+    recruits_bh_predicted_lower <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
                                        
                                     
-    recruits_bh_predicted_upper <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%spawners_predicted)), 2, quantile, c(0.975)))*spawners_predicted
+    recruits_bh_predicted_upper <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
     
     
     recruits_bh_predicted_low_cpd <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
@@ -1114,29 +1419,36 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
                                 recruits_high_cpd = recruits_bh_predicted_high_cpd,
                                 log_RS = log(recruits_bh_predicted/spawners_predicted))
       
+  
+  
+    #plot the time varying productivity vs year, with log(R/S) data
+    
+    
+    
+    
     
     #plot recruit vs spawner as points
     
     p1 <- ggplot() +
       geom_point(data = river_data,aes(x = Spawners, y = Recruits, color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
-      geom_line(data = prediction_df, aes(x = spawners, y = recruits), color = "black", size = 1) +
+      geom_line(data = prediction_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_df, aes(x = spawners, y = recruits), color = "black", size = 1, alpha = 0.5) +
       geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_lower, ymax = recruits_upper), fill = "gray", alpha = 0.5) +
-      geom_line(data = prediction_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1) +
-      geom_line(data = prediction_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1) +
       #make y log scale
       # scale_y_log10() +
       labs(title = "Ricker model with CPD, NPGO, ERSST", x = "Spawners", y = "Recruits") +
       # scale_color_manual(name = "CPD", values = c("Low" = '#35978f', "High" = '#bf812d')) +
-      scale_color_gradient2(name = 'Max CPD\nin River (%)',
-                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
       theme_classic() +
       theme(legend.position = "right",
             legend.key.width = unit(0.5, "cm"),
             legend.key.height = unit(1, "lines"),
             legend.text = element_text(size = 7),
             legend.spacing.y = unit(0.001, "cm"),
-            axis.title.x = element_text(size = 14),
-            axis.title.y = element_text(size = 14),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
             axis.text.x = element_text(size = 12),
             axis.text.y = element_text(size = 12),
             plot.title = element_text(size = 16, hjust = 0.5)
@@ -1144,16 +1456,16 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
     
     p2 <- ggplot(river_data) +
       geom_point(aes(x = Spawners, y = Recruits, color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
-      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits), color = "black", size = 1) +
-      geom_ribbon(data = prediction_bh_df, aes(x = spawners, ymin = recruits_lower, ymax = recruits_upper), fill = "gray", alpha = 0.5) +
       #make y log scale
       # scale_y_log10() +
       
-      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1) +
-      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits), color = "black", size = 1, alpha = 0.5) +
+      geom_ribbon(data = prediction_bh_df, aes(x = spawners, ymin = recruits_lower, ymax = recruits_upper), fill = "gray", alpha = 0.5) +
       
-      scale_color_gradient2(name = 'Max CPD\nin River (%)',
-                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
       labs(title = "BH model with CPD, NPGO, ERSST", x = "Spawners", y = "Recruits") +
       theme_classic() +
       theme(legend.position = "right",
@@ -1161,8 +1473,8 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
             legend.key.height = unit(1, "lines"),
             legend.text = element_text(size = 7),
             legend.spacing.y = unit(0.001, "cm"),
-            axis.title.x = element_text(size = 14),
-            axis.title.y = element_text(size = 14),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
             axis.text.x = element_text(size = 12),
             axis.text.y = element_text(size = 12),
             plot.title = element_text(size = 16, hjust = 0.5)
@@ -1171,46 +1483,47 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
     # p3 log R/s vs spawners
     
     p3 <- ggplot(river_data) + 
-      geom_point(aes(x = Spawners, y = log(Recruits/Spawners), color = disturbedarea_prct_cs), alpha = 0.2, size = 2) +
-      geom_line(data = prediction_df, aes(x = spawners, y = log_RS), color = "black", size = 1) +
+      geom_point(aes(x = Spawners, y = log(Recruits/Spawners), color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+      geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_low_cpd/spawners_predicted)), color = '#35978f', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_high_cpd/spawners_predicted)), color = '#bf812d', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_df, aes(x = spawners, y = log_RS), color = "black", size = 1, alpha = 0.5) +
       geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_lower/spawners_predicted), ymax = log(recruits_predicted_upper/spawners_predicted)), fill = "gray", alpha = 0.5) +
-      geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_low_cpd/spawners_predicted)), color = '#35978f', size = 1) +
-      geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_high_cpd/spawners_predicted)), color = '#bf812d', size = 1) +
       labs(#title = "Ricker model with CPD, NPGO, ERSST", 
-           x = "Spawners", y = "log(Recruits/Spawners)") +
-      scale_color_gradient2(name = 'Max CPD\nin River (%)',
-                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+           x = "Spawners", y = TeX(r"($\log \left(\frac{Recruits}{Spawners}\right)$)")) +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
       theme_classic() +
       theme(legend.position = "right",
             legend.key.width = unit(0.5, "cm"),
             legend.key.height = unit(1, "lines"),
             legend.text = element_text(size = 7),
             legend.spacing.y = unit(0.001, "cm"),
-            axis.title.x = element_text(size = 14),
-            axis.title.y = element_text(size = 14),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
             axis.text.x = element_text(size = 12),
             axis.text.y = element_text(size = 12),
             plot.title = element_text(size = 16, hjust = 0.5)
             )
     
     p4 <- ggplot(river_data) + 
-      geom_point(aes(x = Spawners, y = log(Recruits/Spawners), color = disturbedarea_prct_cs), alpha = 0.2, size = 2) +
-      geom_line(data = prediction_bh_df, aes(x = spawners, y = log_RS), color = "black", size = 1) +
+      geom_point(aes(x = Spawners, y = log(Recruits/Spawners), color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = log(recruits_bh_predicted_low_cpd/spawners_predicted)), color = '#35978f', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = log(recruits_bh_predicted_high_cpd/spawners_predicted)), color = '#bf812d', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = log_RS), color = "black", size = 1, alpha = 0.5) +
       geom_ribbon(data = prediction_bh_df, aes(x = spawners, ymin = log(recruits_bh_predicted_lower/spawners_predicted), ymax = log(recruits_bh_predicted_upper/spawners_predicted)), fill = "gray", alpha = 0.5) +
-      geom_line(data = prediction_bh_df, aes(x = spawners, y = log(recruits_bh_predicted_low_cpd/spawners_predicted)), color = '#35978f', size = 1) +
-      geom_line(data = prediction_bh_df, aes(x = spawners, y = log(recruits_bh_predicted_high_cpd/spawners_predicted)), color = '#bf812d', size = 1) +
       labs(#title = "BH model with CPD, NPGO, ERSST", 
-           x = "Spawners", y = "log(Recruits/Spawners)") +
-      scale_color_gradient2(name = 'Max CPD\nin River (%)',
-                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+           x = "Spawners", y = TeX(r"($\log \left(\frac{Recruits}{Spawners}\right)$)")) +
+             # "log(Recruits/Spawners)") +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
       theme_classic() +
       theme(legend.position = "right",
             legend.key.width = unit(0.5, "cm"),
             legend.key.height = unit(1, "lines"),
             legend.text = element_text(size = 7),
             legend.spacing.y = unit(0.001, "cm"),
-            axis.title.x = element_text(size = 14),
-            axis.title.y = element_text(size = 14),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
             axis.text.x = element_text(size = 12),
             axis.text.y = element_text(size = 12),
             plot.title = element_text(size = 16, hjust = 0.5)
@@ -1232,17 +1545,18 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
       geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.5, size = 2) +
       geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
       labs(#title = "Ricker model with CPD, NPGO, ERSST", 
-        x = "Predicted log(Recruits/Spawners)", y = "Residuals") +
-      scale_color_gradient2(name = 'Max CPD\nin River (%)',
-                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+        x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), 
+        y = "Residuals") +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
       theme_classic() +
       theme(legend.position = "right",
             legend.key.width = unit(0.5, "cm"),
             legend.key.height = unit(1, "lines"),
             legend.text = element_text(size = 7),
             legend.spacing.y = unit(0.001, "cm"),
-            axis.title.x = element_text(size = 14),
-            axis.title.y = element_text(size = 14),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
             axis.text.x = element_text(size = 12),
             axis.text.y = element_text(size = 12),
             plot.title = element_text(size = 16, hjust = 0.5)
@@ -1261,17 +1575,17 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
       geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.5, size = 2) +
       geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
       labs(#title = "BH model with CPD, NPGO, ERSST", 
-           x = "Predicted log(Recruits/Spawners)", y = "Residuals") +
-      scale_color_gradient2(name = 'Max CPD\nin River (%)',
-                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+           x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
       theme_classic() +
       theme(legend.position = "right",
             legend.key.width = unit(0.5, "cm"),
             legend.key.height = unit(1, "lines"),
             legend.text = element_text(size = 7),
             legend.spacing.y = unit(0.001, "cm"),
-            axis.title.x = element_text(size = 14),
-            axis.title.y = element_text(size = 14),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
             axis.text.x = element_text(size = 12),
             axis.text.y = element_text(size = 12),
             plot.title = element_text(size = 16, hjust = 0.5)
@@ -1289,31 +1603,54 @@ plot_recruit_spawner <- function(data, species = "chum", river, posterior, poste
   return()
 }
   
-
+species = "chum"
 if(species == "chum"){
     df <- ch20rsc
     posterior <- ric_chm_cpd_ersst
   
     posterior_bh <- bh_chm_cpd_ersst
+    
+    posterior_a_t <- ric_chm_cpd
+    
+    posterior_a_t_bh <- bh_chm_cpd
+    
+    
+    rivers <- unique(df$River_n)
+    
   } else if(species == "pink"){
     df <- pk10r
     
     posterior <- ric_pk_cpd_ersst
     
     posterior_bh <- bh_pk_cpd_ersst
+    
+    posterior_a_t <- ric_pk_cpd
+    
+    posterior_a_t_bh <- bh_pk_cpd
+    
+    rivers <- unique(df$River_n2)
   }
   
-rivers <- unique(df$River_n)
-
 for(river in rivers){
-  
-  cat('\n')  
-  cat("### ", river_data$River[1], "\n")
-    
-  plot_recruit_spawner(data = df, species = species, river = river, posterior = posterior, posterior_bh = posterior_bh)
+
+  if(species == "chum"){
+    river_data <- df %>% filter(River_n == river)
+    cat('\n')
+    cat("### ", river_data$River[1], "\n")
+  } else if(species == "pink"){
+    river_data <- df %>% filter(River_n2 == river)
+    cat('\n')
+    cat("### ", river_data$River2[1], "\n")
+  }
+  # river_data_even <- river_data %>% filter(Broodline=='Even')
+  # river_data_odd <- river_data %>% filter(Broodline=='Odd')
+
+
+  plot_recruit_spawner(data = df, species = species, river = river, river_data, posterior = posterior, posterior_bh = posterior_bh, 
+                       posterior_a_t = posterior_a_t, posterior_a_t_bh = posterior_a_t_bh)
 }
 
-plot_recruit_spawner(river = 310, posterior = posterior, posterior_bh = posterior_bh)
+# plot_recruit_spawner(river = 310, posterior = posterior, posterior_bh = posterior_bh)
   
 ```
 
@@ -1512,10 +1849,10 @@ bh_pk_cpd_ersst <- read.csv(here('stan models', 'outs', 'posterior',
 
 
 
-((plot_forestry_effect(posterior = bh_pk_eca, effect = "eca", species = "pink", model = "BH model with coastwide productivity", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = bh_pk_cpd, effect = "cpd", species = "pink", model = "BH model with coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_eca_st, effect = "eca", species = "pink", model = "BH model without coastwide productivity", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = bh_pk_cpd_st, effect = "cpd", species = "pink", model = "BH model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_eca_ersst, effect = "eca", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = bh_pk_cpd_ersst, effect = "cpd", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)))  + plot_layout(guides = "collect"))
+((plot_forestry_effect(posterior = bh_pk_eca_ersst, effect = "eca", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = bh_pk_cpd_ersst, effect = "cpd", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_eca_st, effect = "eca", species = "pink", model = "BH model without coastwide productivity", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = bh_pk_cpd_st, effect = "cpd", species = "pink", model = "BH model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_eca, effect = "eca", species = "pink", model = "BH model with coastwide productivity", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = bh_pk_cpd, effect = "cpd", species = "pink", model = "BH model with coastwide productivity", xlim = c(-0.5,0.5))))  + plot_layout(guides = "collect")
 
 
 ```
@@ -1575,10 +1912,9 @@ ric_pk_cpd_ersst = read.csv(here('stan models',
                         'ric_pk_cpd_st_noac_npgo_ersst.csv'),check.names=F)
 
 
-(plot_forestry_effect(posterior = ric_pk_eca, effect = "eca", species = "pink", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_pk_cpd, effect = "cpd", species = "pink", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)))/(
-    plot_forestry_effect(posterior = ric_pk_eca_ersst, effect = "eca", species = "pink", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)))  + plot_layout(guides = "collect")
+(plot_forestry_effect(posterior = ric_pk_eca_ersst, effect = "eca", species = "pink", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_pk_eca, effect = "eca", species = "pink", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_pk_cpd, effect = "cpd", species = "pink", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)))  + plot_layout(guides = "collect")
 
 
 ```
@@ -1621,6 +1957,253 @@ plot_npgo_effect(posterior = bh_pk_cpd_ersst, effect = "npgo", species = "pink",
 ```
 
 
+## Residual plots
+
+```{r, residual-plots-pinks, fig.width = 12, fig.height = 8, results="asis"}
+
+# plotting residuals of ricker model vs predicted values of ricker model for all rivers combined
+
+species = "pink"
+
+df <- pk10r
+    
+posterior <- ric_pk_cpd_ersst
+    
+posterior_bh <- bh_pk_cpd_ersst
+
+posterior_a_t <- ric_pk_cpd
+
+posterior_a_t_bh <- bh_pk_cpd
+
+rivers <- unique(df$River_n2)
+
+residual_df_full <- data.frame()
+
+residual_bh_df_full <- data.frame()
+
+for(river in rivers){
+  
+  river_data <- df %>% filter(River_n2 == river)
+  
+  river_wo_broodline <- river_data$River_n
+    river_w_broodline <- river_data$River_n2
+    
+    posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_rv_b_npgo <- posterior %>% 
+      select(starts_with('b_npgo_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_rv_b_sst <- posterior %>% 
+      select(starts_with('b_sst_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_rv_S_max <- posterior %>% 
+      select(starts_with('Smax')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+  posterior_bh_rv_b_for <- posterior_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+  posterior_bh_rv_b_npgo <- posterior_bh %>%
+      select(starts_with('b_npgo_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+  
+  posterior_bh_rv_b_sst <- posterior_bh %>%
+      select(starts_with('b_sst_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+  
+  
+    posterior_bh_rv_alpha_j <- posterior_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_bh_rv_Rk <- posterior_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+  
+  residual_df <- data.frame(spawners = river_data$Spawners,
+                              recruits = river_data$Recruits,
+                              observed_log_RS = river_data$ln_RS,
+                              predicted_log_RS = apply((matrix(posterior_rv_alpha_j[,1], ncol = length(river_data$Spawners), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%river_data$Spawners + as.matrix(posterior_rv_b_for)%*%river_data$sqrt.CPD.std + as.matrix(posterior_rv_b_npgo)%*%river_data$npgo.std + as.matrix(posterior_rv_b_sst)%*%river_data$sst.std), 2, median),
+                              cpd = river_data$disturbedarea_prct_cs,
+                            sqrt.CPD.std = river_data$sqrt.CPD.std,
+                            forestry_effect = apply(as.matrix(posterior_rv_b_for)%*%river_data$sqrt.CPD.std, 2, median)
+    )
+    
+    residual_df$residuals <- residual_df$observed_log_RS - residual_df$predicted_log_RS
+    
+    residual_df$partial_residuals <- residual_df$residuals + residual_df$forestry_effect
+  
+    residual_df_full <- rbind(residual_df_full, residual_df)
+    
+    
+    
+    residual_bh_df <- data.frame(spawners = river_data$Spawners,
+                              recruits = river_data$Recruits,
+                              observed_log_RS = river_data$ln_RS,
+                              predicted_log_RS = apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(river_data$Spawners), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%river_data$Spawners) + 
+                                                          as.matrix(posterior_bh_rv_b_for)%*%river_data$sqrt.CPD.std + 
+                                                          as.matrix(posterior_bh_rv_b_npgo)%*%river_data$npgo.std + 
+                                                          as.matrix(posterior_bh_rv_b_sst)%*%river_data$sst.std), 2, median),
+                              cpd = river_data$disturbedarea_prct_cs,
+                              sqrt.CPD.std = river_data$sqrt.CPD.std,
+                              forestry_effect = apply(as.matrix(posterior_bh_rv_b_for)%*%river_data$sqrt.CPD.std, 2, median))
+    
+    residual_bh_df$residuals <- residual_bh_df$observed_log_RS - residual_bh_df$predicted_log_RS
+    
+    residual_bh_df$partial_residuals <- residual_bh_df$residuals + residual_bh_df$forestry_effect
+    
+    residual_bh_df_full <- rbind(residual_bh_df_full, residual_bh_df)
+    
+}
+
+
+p_pk_ric_residuals <- ggplot(residual_df_full)+
+  geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "Ricker model with CPD, NPGO, ERSST", x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+p_pk_ric_partial_residuals <- ggplot(residual_df_full)+
+  geom_point(aes(x = sqrt.CPD.std, y = partial_residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  geom_smooth(aes(x = sqrt.CPD.std, y = partial_residuals), method = 'lm', se = TRUE, color = 'black') +
+  labs(title = "Ricker model with CPD, NPGO, ERSST", x = TeX(r"($standardized\ \sqrt{CPD}$)"), 
+       y = TeX(r"(Residuals + $\beta_{forestry, river} \times standardized\ \sqrt{CPD}$)")) +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+
+p_pk_bh_residuals <- ggplot(residual_bh_df_full)+
+  geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "BH model with CPD, NPGO, ERSST", x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+
+p_bh_pk_ric_partial_residuals <- ggplot(residual_bh_df_full)+
+  geom_point(aes(x = sqrt.CPD.std, y = partial_residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  geom_smooth(aes(x = sqrt.CPD.std, y = partial_residuals), method = 'lm', se = TRUE, color = 'black') +
+  labs(title = "BH model with CPD, NPGO, ERSST", x = TeX(r"($standardized\ \sqrt{CPD}$)"), 
+       y = TeX(r"(Residuals + $\beta_{forestry, river} \times standardized\ \sqrt{CPD}$)")) +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+print(((p_pk_ric_residuals + p_pk_bh_residuals)/
+       (p_pk_ric_partial_residuals + p_bh_pk_ric_partial_residuals)
+         ) + plot_layout(guides = "collect"))
+
+
+```
+
+\newpage
+
+## Spawner-Recruit fits
+
+
+```{r, spawner-recruit-pink, fig.width = 10, fig.height = 8, results="asis"}
+
+species = "pink"
+
+df <- pk10r
+    
+posterior <- ric_pk_cpd_ersst
+    
+posterior_bh <- bh_pk_cpd_ersst
+
+posterior_a_t <- ric_pk_cpd
+
+posterior_a_t_bh <- bh_pk_cpd
+
+rivers <- unique(df$River_n2)
+
+
+
+for(river in rivers){
+  
+  river_data <- df %>% filter(River_n2 == river)
+  cat('\n')  
+  cat("### ", river_data$River2[1], "\n")
+    
+  plot_recruit_spawner(data = df, species = species, river = river, river_data,  posterior = posterior, posterior_bh = posterior_bh)
+  
+}
+# river = 639
+# river_data <- df %>% filter(River_n2 == river)
+# plot_recruit_spawner(data = df, species = species, river = 639, river_data, posterior = posterior, posterior_bh = posterior_bh, 
+#                      posterior_a_t, posterior_a_t_bh)
+
+```
 
 
 
