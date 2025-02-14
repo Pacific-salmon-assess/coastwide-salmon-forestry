@@ -478,7 +478,7 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
 
 ## Beverton Holt Models
 
-```{r fig.width=10, fig.height=9}
+```{r fig.width=10, fig.height=12}
 bh_chm_eca=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac_oct24.csv'),check.names=F)
 bh_chm_cpd=read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_oct24.csv'),check.names=F)
 
@@ -500,8 +500,13 @@ bh_chm_cpd_st=read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_
 bh_chm_eca_ersst=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst.csv'),check.names=F)
 bh_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst.csv'),check.names=F)
 
+bh_chm_eca_ersst_pdo=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_pdo.csv'),check.names=F)
+bh_chm_cpd_ersst_pdo=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_pdo.csv'),check.names=F)
 
-((plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
+
+
+((plot_forestry_effect(posterior = bh_chm_eca_ersst_pdo, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST, PDO") +
+    plot_forestry_effect(posterior = bh_chm_cpd_ersst_pdo, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST, PDO"))/(plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
     plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST"))/(plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity"))) + plot_layout(guides = "collect")
@@ -926,6 +931,8 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
   
 }
 
+plot_sst_effect(posterior = bh_chm_eca_ersst_pdo, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST, PDO")
+
 (plot_sst_effect(posterior = bh_chm_eca_ersst, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_sst_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ric model with CPD, NPGO, ERSST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_chm_eca_ersst, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, ERSST", xlim = c(-0.5,0.5),color_by = "Y_LAT") + plot_sst_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ric model with CPD, NPGO, ERSST", xlim = c(-0.5,0.5),color_by = "Y_LAT"))+ plot_layout(guides = "collect")
 
 ```
@@ -1017,6 +1024,101 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
 
 (plot_npgo_effect(posterior = bh_chm_eca_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST") +
   plot_npgo_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ric model with NPGO, ERSST")) + plot_layout(guides = "collect")
+
+```
+
+
+## Effect of PDO
+
+```{r fig.width = 12, fig.height = 5}
+
+plot_pdo_effect <- function(posterior = bh_chm_eca_ersst_pdo, 
+                            effect = "pdo", 
+                            species = "chum", 
+                            model = "BH model with NPGO, ERSST, PDO", xlim = c(-0.5,0.5)) {
+  
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
+  posterior_rv <- posterior %>% 
+    select(starts_with('b_pdo_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_pdo_rv',
+                 values_to = 'pdo_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% distinct(), by = 'River_n')
+  
+  if(species == "chum"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(pdo_effect, color = CU_name, group = River_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of PDO', y = 'Posterior density\nof PDO effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_pdo), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                         lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_pdo), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+    
+    
+  } else if(species == "pink"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(pdo_effect, group = River_n),
+                 geom = 'line', position = 'identity', color = "gray",
+                 alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of PDO', y = 'Posterior density\nof PDO effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_pdo), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                         lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_pdo), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.4, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+      
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  }
+  
+  return(p1)
+}
+
+(plot_pdo_effect(posterior = bh_chm_eca_ersst_pdo, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST, PDO",
+                 xlim = c(-0.75,0.75))  + plot_layout(guides = "collect"))
+
+
 
 ```
 

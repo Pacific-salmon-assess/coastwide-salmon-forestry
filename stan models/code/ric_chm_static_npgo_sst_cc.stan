@@ -97,7 +97,8 @@ vector<lower = 0>[J] sigmaAR; ///stock-level sigma
    vector[N] mu1; //initial expectation at each time for each stock
   vector[N] mu2; //autocorr. adjusted expectation at each time for each stock
   vector<lower=0>[N] k_rv; //time varying carrying capcity
- 
+  vector[N] log_k_rv; //log of time varying carrying capcity for each river and year
+  vector[J] log_k; //log of time varying carrying capcity for each river
 
 alpha_cu = alpha0+sigma_a_cu*z_a_cu; //non-centered estimate for CU time-invariant productivity
 alpha_j = alpha_cu[C_i] + sigma_a_rv[C_i].*z_a_rv; //non-centered estimate for River time-invariant productivity
@@ -117,13 +118,19 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
 //residual productivity deviations
    for(j in 1:J){ //for every stock
    // b[j]=1/Smax[j];
-    k_rv[start_y[j]] = k[j] + b_for_rv[j]*forest_loss[start_y[j]];
-    mu1[start_y[j]]=alpha_j[j]*(1-(1/k_rv[j])*S[start_y[j]])  + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+   log_k[j] = log(k[j]);
+    log_k_rv[start_y[j]] = log_k[j] + b_for_rv[j]*forest_loss[start_y[j]];
+    k_rv[start_y[j]] = exp(log_k_rv[start_y[j]]);
+    // mu1[start_y[j]]=alpha_j[j]*(1-(1/k_rv[start_y[j]])*S[start_y[j]])  + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+    mu1[start_y[j]]=alpha_j[j]-alpha_j[j]*(1/k_rv[start_y[j]])*S[start_y[j]]  + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
     e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 
     for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
-      k_rv[t] = k[j] + b_for_rv[j]*forest_loss[t];
-      mu2[t]  = alpha_j[j]*(1-(1/k_rv[t])*S[t]) + b_npgo_rv[j]*npgo[t]+b_sst_rv[j]*sst[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+      
+      log_k_rv[t] = log_k[j] + b_for_rv[j]*forest_loss[t];
+      k_rv[t] = exp(log_k_rv[t]);
+      // mu2[t]  = alpha_j[j]*(1-(1/k_rv[t])*S[t]) + b_npgo_rv[j]*npgo[t]+b_sst_rv[j]*sst[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+      mu2[t]  = alpha_j[j] - alpha_j[j]*(1/k_rv[t])*S[t] + b_npgo_rv[j]*npgo[t]+b_sst_rv[j]*sst[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
 	}
   }
