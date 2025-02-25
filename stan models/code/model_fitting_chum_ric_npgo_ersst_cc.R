@@ -127,9 +127,9 @@ print("eca")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_chm_eca_npgo_sst <- mric$sample(data=dl_chm_eca_npgo_sst,
-                            chains = 1, 
+                            chains = 3, 
                             iter_warmup = 50,
-                            iter_sampling = 50,
+                            iter_sampling = 100,
                             refresh = 10,
                             # init = list(list(b_for = -0.5, 
                             #                  b_npgo = 0.5, 
@@ -146,7 +146,7 @@ if(Sys.info()[7] == "mariakur") {
   post_ric_chm_eca_npgo_sst=ric_chm_eca_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
-                                                           'alpha_j','k','k_rv','sigma'),format='draws_matrix')
+                                                           'alpha_j','k','sigma'),format='draws_matrix')
   write.csv(post_ric_chm_eca_npgo_sst,here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc_trial.csv'))
   
 } else {
@@ -164,7 +164,7 @@ if(Sys.info()[7] == "mariakur") {
   post_ric_chm_eca_npgo_sst=ric_chm_eca_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
-                                                           'alpha_j','k','k_rv','sigma'),format='draws_matrix')
+                                                           'alpha_j','k','sigma'),format='draws_matrix')
   write.csv(post_ric_chm_eca_npgo_sst,here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc.csv'))
   
 }
@@ -176,9 +176,9 @@ print("cpd")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_chm_cpd_npgo_sst <- mric$sample(data=dl_chm_cpd_npgo_sst,
-                                  chains = 1, 
+                                  chains = 6, 
                                   iter_warmup = 50,
-                                  iter_sampling =50,
+                                  iter_sampling =200,
                                   refresh = 10,
                                   adapt_delta = 0.999,
                                   max_treedepth = 20)
@@ -188,7 +188,7 @@ if(Sys.info()[7] == "mariakur") {
   post_ric_chm_cpd_npgo_sst=ric_chm_cpd_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
-                                                           'alpha_j','k','k_rv','sigma'),format='draws_matrix')
+                                                           'alpha_j','k','sigma'),format='draws_matrix')
   write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc_trial.csv'))
   
 } else {
@@ -206,8 +206,12 @@ if(Sys.info()[7] == "mariakur") {
   post_ric_chm_cpd_npgo_sst=ric_chm_cpd_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
-                                                           'alpha_j','k','k_rv','sigma'),format='draws_matrix')
+                                                           'alpha_j','k','sigma'),format='draws_matrix')
   write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc.csv'))
   
 }
+
+mcmc_trace(post_ric_chm_eca_npgo_sst,  pars = c("alpha_j[1]"), 
+           facet_args = list(nrow = 1, labeller = label_parsed))
+
 

@@ -1,0 +1,513 @@
+---
+title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
+author: "Maria Kuruvilla"
+date: "Feb 2025"
+output:
+  powerpoint_presentation: default
+  word_document:
+    toc: true
+  pdf_document:
+    toc: true
+  html_document:
+    collapsed: false
+    fig_caption: true
+    highlight: espresso
+    number_sections: true
+    smooth_scroll: true
+    theme: sandstone
+    toc: true
+    toc_float: true
+---
+
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=FALSE)
+options(max.print=23)
+library(cmdstanr)
+library(here);library(dplyr); library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(bayesplot)
+library(patchwork)
+library(hues)
+library(GGally)
+library(latex2exp)
+```
+
+
+## Model
+
+### Beverton-Holt (BH):
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - log(1+\frac{(e^{\alpha_t+\alpha_r}}{R_{k,r}}*S_{t,r}) + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+## Model
+
+### Beverton-Holt (BH):
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - log(1+\frac{(e^{\alpha_t+\alpha_r}}{R_{k,r}}*S_{t,r}) + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_t+\alpha_r}}{R_{k,r}})*S_{t,r}) + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+
+## Model
+
+### Beverton-Holt (BH):
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - log(1+\frac{(e^{\alpha_t+\alpha_r}}{R_{k,r}}*S_{t,r}) + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_t+\alpha_r}}{R_{k,r}})*S_{t,r}) + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{e^{\alpha_t+\alpha_r}}{R_{k,r}}*S_{t,r}) + \beta_{for,r}*X_{t,r} + \beta_{npgo,r}*Y{t} + \beta_{sst,r}*Z{t,r} + \epsilon_{t,r}$
+
+## Model
+
+### Ricker:
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+## Model
+
+### Ricker:
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+## Model
+
+### Ricker:
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \epsilon_{t,r}$
+
+- $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{for,r}*X_{t,r} + \beta_{npgo,r}*Y{t} + \beta_{sst,r}*Z{t,r} + \epsilon_{t,r}$
+
+
+```{r read_data}
+
+# read in chum data
+
+ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed","chum_SR_20_hat_yr_w_ersst.csv"))
+
+# plot the number of recruits vs number of spawners
+
+ch20rsc %>%
+  ggplot(aes(x=Spawners, y=Recruits, color = "chum")) +
+  geom_point(alpha = 0.1) +
+  # scale_x_continuous(breaks = c(10,  1000, 100000)) +
+  # log scale both axes
+  scale_color_manual(values = c("chum" = "#69C5C5",
+                              "pink-even" = "#C76F6F",
+                              "pink-odd" = "#9E70A1")) +
+  scale_x_log10(breaks = c(10,  1000, 100000), labels = scales::comma) +
+  scale_y_log10(labels = scales::comma) +
+  # scale_x_continuous(breaks = c(10,  1000, 100000)) +
+  # geom_smooth(method = "lm") +
+  labs(title = "Chum Salmon",
+       x = "Number of Spawners",
+       y = "Number of Recruits")+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16),
+        plot.title = element_text(size = 18, hjust = 0.5))
+
+#save
+
+ggsave(here("figures","chum_recruits_vs_spawners.png"), width = 8, height = 6, dpi = 300)
+
+```
+
+
+
+
+```{r read_pink_data}
+
+# read in pink data
+
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"))
+
+#odd year pinks
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"))
+
+
+# Pink salmon - even/odd broodlines #####
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_o$River)
+pk10r_o=pk10r_o[order(factor(pk10r_o$River),pk10r_o$BroodYear),]
+rownames(pk10r_o)=seq(1:nrow(pk10r_o))
+
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_e$River)
+pk10r_e=pk10r_e[order(factor(pk10r_e$River),pk10r_e$BroodYear),]
+rownames(pk10r_e)=seq(1:nrow(pk10r_e))
+
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.ECA=sqrt(pk10r_o$ECA_age_proxy_forested_only)
+pk10r_o$sqrt.ECA.std=(pk10r_o$sqrt.ECA-mean(pk10r_o$sqrt.ECA))/sd(pk10r_o$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.CPD=sqrt(pk10r_o$disturbedarea_prct_cs)
+pk10r_o$sqrt.CPD.std=(pk10r_o$sqrt.CPD-mean(pk10r_o$sqrt.CPD))/sd(pk10r_o$sqrt.CPD)
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.ECA=sqrt(pk10r_e$ECA_age_proxy_forested_only)
+pk10r_e$sqrt.ECA.std=(pk10r_e$sqrt.ECA-mean(pk10r_e$sqrt.ECA))/sd(pk10r_e$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.CPD=sqrt(pk10r_e$disturbedarea_prct_cs)
+pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.CPD)
+
+
+#standardize npgo
+pk10r_o$npgo.std=(pk10r_o$npgo-mean(pk10r_o$npgo))/sd(pk10r_o$npgo)
+pk10r_e$npgo.std=(pk10r_e$npgo-mean(pk10r_e$npgo))/sd(pk10r_e$npgo)
+
+# pk10r_o$sst.std = (pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
+# pk10r_e$sst.std = (pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
+
+pk10r_o$sst.std = (pk10r_o$spring_ersst-mean(pk10r_o$spring_ersst))/sd(pk10r_o$spring_ersst)
+pk10r_e$sst.std = (pk10r_e$spring_ersst-mean(pk10r_e$spring_ersst))/sd(pk10r_e$spring_ersst)
+
+
+pk10r_o$escapement.t_1=pk10r_e$Spawners[match(paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear-1),paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear))]
+pk10r_e$escapement.t_1=pk10r_o$Spawners[match(paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear-1),paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear))]
+
+pk10r_o$Broodline='Odd'
+pk10r_e$Broodline='Even'
+
+L_o=pk10r_o%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_o$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_o$BroodYear))/2)
+L_e=pk10r_e%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_e$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_e$BroodYear))/2)
+L_o$River2=paste(L_o$River,'Odd',sep='_')
+L_e$River2=paste(L_e$River,'Even',sep='_')
+L_all=rbind(L_e,L_o)
+L_all=L_all[order(factor(L_all$River2)),]
+
+pk10r_o$ii=as.numeric(factor(pk10r_o$BroodYear))
+pk10r_e$ii=as.numeric(factor(pk10r_e$BroodYear))
+
+pk10r=rbind(pk10r_e,pk10r_o)
+pk10r$River2=paste(pk10r$River,pk10r$Broodline,sep='_')
+pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
+
+
+# plot the number of recruits vs number of spawners
+
+
+ggplot() +
+geom_point(data = pk10r %>% filter(Broodline == "Even"),
+           aes(x=Spawners, y=Recruits, color = "pink-even"),alpha = 0.1) +
+geom_point(data = pk10r %>% filter(Broodline == "Odd"),
+           aes(x=Spawners, y=Recruits, color = "pink-odd"),alpha = 0.1) +
+# scale_x_continuous(breaks = c(10,  1000, 100000)) +
+# log scale both axes
+scale_color_manual(values = c("chum" = "#69C5C5",
+                              "pink-even" = "#C76F6F",
+                              "pink-odd" = "#9E70A1")) +
+scale_x_log10(breaks = c(10,  1000, 100000), labels = scales::comma) +
+scale_y_log10(labels = scales::comma) +
+# scale_x_continuous(breaks = c(10,  1000, 100000)) +
+# geom_smooth(method = "lm") +
+labs(title = "Pink Salmon",
+     x = "Number of Spawners",
+     y = "Number of Recruits")+
+theme_classic()+
+theme(legend.position = "none",
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title.x = element_text(size = 16),
+      axis.title.y = element_text(size = 16),
+      plot.title = element_text(size = 18, hjust = 0.5))
+
+#save
+ggsave(here("figures","pink_recruits_vs_spawners.png"), width = 8, height = 6, dpi = 300)
+
+
+```
+
+
+
+
+```{r map}
+
+ggplot() +
+  geom_sf(data = bc_boundary, fill = "transparent", color = "slategray", alpha = 0.2) +
+  # geom_point(data = lighthouse_locations, aes(x = long, y = lat), color = "darkred", size = 3, alpha=0.8) +
+  geom_point(data=salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "chum"), size = 2, alpha=0.2) +
+  geom_point(data=pke_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-even"), size = 2, alpha=0.2) +
+  geom_point(data=pko_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-odd"), size = 2, alpha=0.2) +
+  # geom_text(data = lighthouse_locations, aes(x = long, y = lat, label = location), 
+  #           nudge_x = -1.5, nudge_y = 0.2, size = 3) +
+  # ggrepel::geom_label_repel(data = lighthouse_locations, aes(x = long, y = lat, label = location),
+  #                           nudge_x = -1.5, nudge_y = 0.2, size = 3, background = "white", alpha = 0.5) +
+  scale_color_manual(values = c("chum" = "#69C5C5",
+                                "pink-even" = "#C76F6F",
+                                "pink-odd" = "#9E70A1")) +
+  scale_x_continuous(limits = c(-133, -122)) +
+  scale_y_continuous(limits = c(48, 56)) +
+  guides(color = guide_legend(title = "Species"), override.aes = list(size = 4, alpha = 1))+
+  xlab("Longitude") +
+  ylab("Latitude") +
+  theme_classic()+
+  theme(legend.position = "right",
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 12))
+
+
+ggsave(here("figures","chum_pink_watersheds_location_map.png"), width = 8, height = 6, dpi = 300)
+
+
+
+
+```
+
+
+```{r models}
+
+#plot theoretical Ricker curve
+
+# Spawners
+
+S <- seq(1, 50000, length.out = 1000)
+a = 1.5
+Smax <- 10000
+
+R <- a*S*exp(-S/Smax)
+
+# plot
+
+ggplot() +
+  geom_line(aes(x = S, y = R), color = "black") +
+  labs(title = "Ricker",
+       x = "Spawners",
+       y = "Recruits")+
+  scale_x_continuous(n.breaks = 3)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        plot.title = element_text(size = 24, hjust = 0.5))
+
+#save
+
+ggsave(here("figures","ricker_curve.png"), width = 8, height = 6, dpi = 300)
+
+ggplot() +
+  geom_line(aes(x = S, y = R/S), color = "black") +
+  labs(title = "Ricker",
+       x = "Spawners",
+       y = latex2exp::TeX("$\\frac{Recrutits}{Spawners}$"))+
+  scale_x_continuous(n.breaks = 3)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        plot.title = element_text(size = 24, hjust = 0.5))
+
+
+#save
+
+ggsave(here("figures","ricker_curve_ratio.png"), width = 8, height = 6, dpi = 300)
+
+
+
+#log R/S
+
+ggplot() +
+  geom_line(aes(x = S, y = log(R/S)), color = "black") +
+  labs(title = "Ricker",
+       x = "Spawners",
+       y = latex2exp::TeX("$\\log\\ (\\frac{Recrutits}{Spawners})$"))+
+  scale_x_continuous(n.breaks = 3)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        plot.title = element_text(size = 24, hjust = 0.5))
+
+#save
+
+ggsave(here("figures","ricker_curve_log_ratio.png"), width = 8, height = 6, dpi = 300)
+
+
+
+# theoretical BH curve
+
+# Spawners
+
+S <- seq(1, 50000, length.out = 1000)
+
+a = 1.5
+
+Rk <- 10000
+
+R <- exp(a)*S/(1 + (exp(a)/Rk)*S)
+
+
+# plot
+
+ggplot() +
+  geom_line(aes(x = S, y = R), color = "black") +
+  labs(title = "Beverton-Holt",
+       x = "Spawners",
+       y = "Recruits")+
+  scale_x_continuous(n.breaks = 3)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        plot.title = element_text(size = 24, hjust = 0.5))
+
+#save
+
+ggsave(here("figures","bh_curve.png"), width = 8, height = 6, dpi = 300)
+
+ggplot() +
+  geom_line(aes(x = S, y = R/S), color = "black") +
+  labs(title = "Beverton-Holt",
+       x = "Spawners",
+       y = latex2exp::TeX("$\\frac{Recrutits}{Spawners}$"))+
+  scale_x_continuous(n.breaks = 3)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        plot.title = element_text(size = 24, hjust = 0.5))
+
+# save
+
+ggsave(here("figures","bh_curve_ratio.png"), width = 8, height = 6, dpi = 300)
+
+# log R/S
+
+ggplot() +
+  geom_line(aes(x = S, y = log(R/S)), color = "black") +
+  labs(title = "Beverton-Holt",
+       x = "Spawners",
+       y = latex2exp::TeX("$\\log\\ (\\frac{Recrutits}{Spawners})$"))+
+  scale_x_continuous(n.breaks = 3)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        plot.title = element_text(size = 24, hjust = 0.5))
+
+# save
+
+ggsave(here("figures","bh_curve_log_ratio.png"), width = 8, height = 6, dpi = 300)
+
+
+```
+
+
+
+```{r model_fitting}
+
+(plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
+    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST"))/(plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
+    plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
+    plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity")) + plot_layout(guides = "collect")
+
+# save
+
+ggsave(here("figures","chum_forestry_effect_all_models.png"), width = 10, height = 8, dpi = 300)
+
+
+
+(plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
+    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST")) + plot_layout(guides = "collect")
+
+# save
+
+ggsave(here("figures","chum_forestry_effect_npgo_ersst.png"), width = 10, height = 4, dpi = 300)
+
+
+
+
+# ricker models
+
+((plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_chm_cpd, effect = "cpd", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5))))  + plot_layout(guides = "collect")
+
+
+#ggsave
+
+ggsave(here("figures","chum_forestry_effect_all_models_ricker.png"), width = 10, height = 8, dpi = 300)
+
+
+plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_layout(guides = "collect")
+
+ggsave(here("figures","chum_forestry_effect_npgo_ersst_ricker.png"), width = 10, height = 4, dpi = 300)
+
+```
+
+
+```{r producivity decline}
+
+((plot_productivity_decline(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST", by_river = FALSE) +
+    plot_productivity_decline(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST", by_river = FALSE) )/(plot_productivity_decline(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", by_river = FALSE) +
+    plot_productivity_decline(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", by_river = FALSE))) + plot_layout(guides = "collect") 
+
+
+# save
+
+ggsave(here("figures","chum_productivity_decline_all_models.png"), width = 10, height = 8, dpi = 300)
+
+```
+
+

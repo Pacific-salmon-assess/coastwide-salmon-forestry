@@ -122,7 +122,7 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
     log_k_rv[start_y[j]] = log_k[j] + b_for_rv[j]*forest_loss[start_y[j]];
     k_rv[start_y[j]] = exp(log_k_rv[start_y[j]]);
     // mu1[start_y[j]]=alpha_j[j]*(1-(1/k_rv[start_y[j]])*S[start_y[j]])  + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
-    mu1[start_y[j]]=alpha_j[j]-alpha_j[j]*(1/k_rv[start_y[j]])*S[start_y[j]]  + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+    mu1[start_y[j]]=alpha_j[j]*(1-(1/k_rv[start_y[j]])*S[start_y[j]])  + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
     e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 
     for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
@@ -130,7 +130,7 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
       log_k_rv[t] = log_k[j] + b_for_rv[j]*forest_loss[t];
       k_rv[t] = exp(log_k_rv[t]);
       // mu2[t]  = alpha_j[j]*(1-(1/k_rv[t])*S[t]) + b_npgo_rv[j]*npgo[t]+b_sst_rv[j]*sst[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
-      mu2[t]  = alpha_j[j] - alpha_j[j]*(1/k_rv[t])*S[t] + b_npgo_rv[j]*npgo[t]+b_sst_rv[j]*sst[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+      mu2[t]  = alpha_j[j]*(1 - (1/k_rv[t])*S[t]) + b_npgo_rv[j]*npgo[t]+b_sst_rv[j]*sst[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
 	}
   }
