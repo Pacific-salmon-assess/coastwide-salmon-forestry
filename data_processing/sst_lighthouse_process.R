@@ -377,14 +377,14 @@ pko_salmon_data_distance_temp %>%
 
 ggplot() +
   geom_sf(data = bc_boundary, fill = "transparent", color = "slategray", alpha = 0.2) +
-  geom_point(data = lighthouse_locations, aes(x = long, y = lat), color = "darkred", size = 3, alpha=0.8) +
+  # geom_point(data = lighthouse_locations, aes(x = long, y = lat), color = "darkred", size = 3, alpha=0.8) +
   geom_point(data=salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "chum"), size = 2, alpha=0.2) +
   geom_point(data=pke_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-even"), size = 2, alpha=0.2) +
   geom_point(data=pko_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-odd"), size = 2, alpha=0.2) +
   # geom_text(data = lighthouse_locations, aes(x = long, y = lat, label = location), 
   #           nudge_x = -1.5, nudge_y = 0.2, size = 3) +
-  ggrepel::geom_label_repel(data = lighthouse_locations, aes(x = long, y = lat, label = location),
-                            nudge_x = -1.5, nudge_y = 0.2, size = 3, background = "white", alpha = 0.5) +
+  # ggrepel::geom_label_repel(data = lighthouse_locations, aes(x = long, y = lat, label = location),
+  #                           nudge_x = -1.5, nudge_y = 0.2, size = 3, background = "white", alpha = 0.5) +
   scale_color_manual(values = c("chum" = "#69C5C5",
                                 "pink-even" = "#C76F6F",
                                 "pink-odd" = "#9E70A1")) +

@@ -458,9 +458,9 @@ plot_productivity_change_river <- function(posterior = bh_chm_eca_ersst, effect 
     #           aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
     geom_ribbon(aes(x = forestry, ymin = productivity_025, ymax = productivity_975, fill = "95% credible interval"),
                 alpha = 0.5) +
-    geom_hline(yintercept = ifelse(productivity_median_df$productivity_median[1] < productivity_median_df$productivity_median[100], 
-                                   max(productivity_median_df$productivity_median), min(productivity_median_df$productivity_median)),
-               linetype = "dashed", color = "black", size = 0.5) +
+    # geom_hline(yintercept = ifelse(productivity_median_df$productivity_median[1] < productivity_median_df$productivity_median[100], 
+    #                                max(productivity_median_df$productivity_median), min(productivity_median_df$productivity_median)),
+    #            linetype = "dashed", color = "black", size = 0.5) +
     # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
     scale_color_manual("",values = c("watershed level\nforestry effect" = "black", 
                                      "global forestry effect" = "black")) +
@@ -490,14 +490,14 @@ plot_productivity_change_river <- function(posterior = bh_chm_eca_ersst, effect 
     geom_ribbon(aes(x = forestry, ymin = productivity_025, ymax = productivity_975, fill = "95% credible interval"),
                 alpha = 0.5) +
     # geom_hline(yintercept = max(productivity_median_df$productivity_median), linetype = "dashed", color = "black", size = 0.5) +
-    geom_hline(yintercept = ifelse(productivity_median_df$productivity_median[1] < productivity_median_df$productivity_median[100], 
-                                   max(productivity_median_df$productivity_median), min(productivity_median_df$productivity_median)),
-               linetype = "dashed", color = "black", size = 0.5) +
+    # geom_hline(yintercept = ifelse(productivity_median_df$productivity_median[1] < productivity_median_df$productivity_median[100], 
+    #                                max(productivity_median_df$productivity_median), min(productivity_median_df$productivity_median)),
+    #            linetype = "dashed", color = "black", size = 0.5) +
     # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
     scale_color_manual("",values = c("watershed level\nSST effect" = "black", 
                                      "global SST effect" = "black")) +
       scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
-    # ylim(-100,100) +
+    ylim(-100,100) +
     # scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
     labs(title = model,
       x = "Spring SST (°C)",
@@ -526,14 +526,14 @@ plot_productivity_change_river <- function(posterior = bh_chm_eca_ersst, effect 
     # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
     # dashed line at max productivity if productivity is increasing, otherwise at min productivity
     
-    geom_hline(yintercept = ifelse(productivity_median_df$productivity_median[1] < productivity_median_df$productivity_median[100], 
-                                   max(productivity_median_df$productivity_median), min(productivity_median_df$productivity_median)),
-               linetype = "dashed", color = "black", size = 0.5) +
+    # geom_hline(yintercept = ifelse(productivity_median_df$productivity_median[1] < productivity_median_df$productivity_median[100], 
+    #                                max(productivity_median_df$productivity_median), min(productivity_median_df$productivity_median)),
+    #            linetype = "dashed", color = "black", size = 0.5) +
     
     scale_color_manual("",values = c("watershed level\nNPGO effect" = "black", 
                                      "global NPGO effect" = "darkgray")) +
     scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
-    # ylim(-100,100) +
+    ylim(-100,100) +
     # scale_x_continuous(n.breaks = 5, limits = c(-2,2)) +
     labs(title = model,
       x = "NPGO",
@@ -1087,7 +1087,7 @@ plot_recruit_spawner_river(data = df, river_name = "VINER SOUND CREEK", species 
                                 species = "chum", model = "Ricker model with CPD, NPGO, ERSST") + plot_productivity_change_river(posterior = ric_chm_cpd_ersst, effect = "npgo", river_name = "VINER SOUND CREEK",
                                 species = "chum", model = "Ricker model with CPD, NPGO, ERSST")) + plot_annotation(tag_levels = "a")
 
-
+ggsave(here("figures","viner_sound_creek_productivity_change.png"), width = 10, height = 6)
 
 
 ```
@@ -1117,6 +1117,7 @@ plot_recruit_spawner_river(data = df, river_name = "CARNATION CREEK", species = 
                                 species = "chum", model = "Ricker model with CPD, NPGO, ERSST") + plot_productivity_change_river(posterior = ric_chm_cpd_ersst, effect = "npgo", river_name = "CARNATION CREEK",
                                 species = "chum", model = "Ricker model with CPD, NPGO, ERSST")) + plot_annotation(tag_levels = "a")
 
+ggsave(here("figures","carnation_creek_productivity_change.png"), width = 10, height = 6)
 
 
 ```

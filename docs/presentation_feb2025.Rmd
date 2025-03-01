@@ -455,34 +455,33 @@ ggsave(here("figures","bh_curve_log_ratio.png"), width = 8, height = 6, dpi = 30
 
 
 
-```{r model_fitting}
+```{r model_fitting, fig.width=10, fig.height=8}
 
-(plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
-    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST"))/(plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
-    plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
-    plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity")) + plot_layout(guides = "collect")
+(plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "CPD", species = "chum", model = "BH model with CPD", xlim = c(-1.2,1.2)) +
+    plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-1.2,1.2)))/(plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with CPD,\ncoastwide productivity", xlim = c(-1.2,1.2))+plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-1.2,1.2)))/(plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-1.2,1.2))+plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-1.2,1.2)))+plot_layout(guides = "collect")
+# save
+
+ggsave(here("figures","chum_forestry_effect_all_models_bh.png"), width = 10, height = 8, dpi = 300)
+
+
+
+(plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-1.2,1.2)) + plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-1.2,1.2))) + plot_layout(guides = "collect")
 
 # save
 
-ggsave(here("figures","chum_forestry_effect_all_models.png"), width = 10, height = 8, dpi = 300)
+ggsave(here("figures","chum_forestry_effect_bh_npgo_ersst.png"), width = 10, height = 4, dpi = 300)
 
 
+# pink
 
-(plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST") +
-    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST")) + plot_layout(guides = "collect")
+(plot_forestry_effect(posterior = bh_pk_cpd_ersst, effect = "cpd", species = "pink", model = "BH model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_eca_ersst, effect = "eca", species = "pink", model = "BH model with ECA, NPGO, SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = bh_pk_cpd_ersst, effect = "cpd", species = "pink", model = "BH model with CPD, NPGO, SST", xlim = c(-0.5,0.5),color_by = "CU_name")  +plot_npgo_effect(posterior = bh_pk_cpd_ersst, effect = "cpd", species = "pink", model = "BH model with CPD, NPGO, SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect")
 
-# save
-
-ggsave(here("figures","chum_forestry_effect_npgo_ersst.png"), width = 10, height = 4, dpi = 300)
-
-
+ggsave(here("figures","pink_forestry_npgo_sst_effect_bh_npgo_ersst.png"), width = 10, height = 8, dpi = 300)
 
 
 # ricker models
 
-((plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model without coastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_chm_cpd, effect = "cpd", species = "chum", model = "Ricker model with coastwide productivity", xlim = c(-0.5,0.5))))  + plot_layout(guides = "collect")
+(plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_cpd, effect = "cpd", species = "chum", model = "Ricker model with CPD,\ncoastwide productivity", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_eca, effect = "eca", species = "chum", model = "Ricker model with ECA,\ncoastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5)))  + plot_layout(guides = "collect")
 
 
 #ggsave
@@ -490,18 +489,38 @@ ggsave(here("figures","chum_forestry_effect_npgo_ersst.png"), width = 10, height
 ggsave(here("figures","chum_forestry_effect_all_models_ricker.png"), width = 10, height = 8, dpi = 300)
 
 
-plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_layout(guides = "collect")
+plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5)) + plot_layout(guides = "collect")
 
 ggsave(here("figures","chum_forestry_effect_npgo_ersst_ricker.png"), width = 10, height = 4, dpi = 300)
+
+
+# pink
+
+(plot_forestry_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = ric_pk_eca_ersst, effect = "eca", species = "pink", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5),color_by = "CU_name")  +plot_npgo_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect")
+
+ggsave(here("figures","pink_forestry_npgo_sst_effect_ricker_npgo_ersst.png"), width = 10, height = 8, dpi = 300)
 
 ```
 
 
+```{r fig.width = 10, fig.height = 4}
+(plot_sst_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.25,0.25),color_by = "CU_name")  +plot_npgo_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.25,0.25)))+ plot_layout(guides = "collect")
+
+ggsave(here("figures","chum_sst_npgo_effect_ricker.png"), width = 10, height = 4, dpi = 300)
+
+# bh
+
+(plot_sst_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-0.25,0.25),color_by = "CU_name")  +plot_npgo_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-0.25,0.25)))+ plot_layout(guides = "collect")
+
+ggsave(here("figures","chum_sst_npgo_effect_bh.png"), width = 10, height = 4, dpi = 300)
+
+```
+
+
+
 ```{r producivity decline}
 
-((plot_productivity_decline(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST", by_river = FALSE) +
-    plot_productivity_decline(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST", by_river = FALSE) )/(plot_productivity_decline(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", by_river = FALSE) +
-    plot_productivity_decline(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", by_river = FALSE))) + plot_layout(guides = "collect") 
+((plot_productivity_decline(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, SST", by_river = FALSE) + plot_productivity_decline(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, SST", by_river = FALSE)  )/(plot_productivity_decline(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, SST", by_river = FALSE) + plot_productivity_decline(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, SST", by_river = FALSE)    )) + plot_layout(guides = "collect") 
 
 
 # save

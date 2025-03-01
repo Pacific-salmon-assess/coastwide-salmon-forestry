@@ -824,27 +824,27 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
   if(species == "chum"){
     df <- ch20rsc
     posterior_rv <- posterior %>% 
-    select(starts_with('b_sst_rv')) %>%
+    dplyr::select(starts_with('b_sst_rv')) %>%
     pivot_longer(cols = everything(), 
                  names_to = 'River', 
                  names_prefix = 'b_sst_rv',
                  values_to = 'sst_effect') %>%
     mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
-    select(-River) %>%
-  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% 
+    dplyr::select(-River) %>%
+  left_join(df %>% dplyr::select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% 
               distinct(), by = 'River_n')
     
   } else if(species == "pink"){
     df <- pk10r
     posterior_rv <- posterior %>% 
-    select(starts_with('b_sst_rv')) %>%
+    dplyr::select(starts_with('b_sst_rv')) %>%
     pivot_longer(cols = everything(), 
                  names_to = 'River', 
                  names_prefix = 'b_sst_rv',
                  values_to = 'sst_effect') %>%
     mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
-    select(-River) %>%
-  left_join(df %>% select(River_n, X_LONG, Y_LAT) %>% 
+    dplyr::select(-River) %>%
+  left_join(df %>% dplyr::select(River_n, X_LONG, Y_LAT) %>% 
               distinct(), by = 'River_n')
   }
   
@@ -876,7 +876,7 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
     p1 <- ggplot()+
     stat_density(data= posterior_rv, aes(sst_effect, color = !!sym(color_by), group = River_n),
                  geom = 'line', position = 'identity', 
-                 alpha = 0.1, linewidth = 1) +
+                 alpha = 0.03, linewidth = 1) +
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
     labs(title = model, 
          x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
@@ -903,7 +903,7 @@ plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species 
     p1 <- ggplot()+
     stat_density(data= posterior_rv, aes(sst_effect, group = River_n),
                  geom = 'line', position = 'identity', color = "gray",
-                 alpha = 0.1, linewidth = 1) +
+                 alpha = 0.03, linewidth = 1) +
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
     labs(title = model, 
          x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
@@ -964,7 +964,7 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
     p1 <- ggplot()+
     stat_density(data= posterior_rv, aes(npgo_effect, color = CU_name, group = River_n),
                  geom = 'line', position = 'identity', 
-                 alpha = 0.1, linewidth = 1) +
+                 alpha = 0.03, linewidth = 1) +
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
     labs(title = model, 
          x = 'Standardized coefficients of NPGO', y = 'Posterior density\nof NPGO effect') +
@@ -992,7 +992,7 @@ plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", speci
     p1 <- ggplot()+
     stat_density(data= posterior_rv, aes(npgo_effect, group = River_n),
                  geom = 'line', position = 'identity', color ="gray",
-                 alpha = 0.1, linewidth = 1) +
+                 alpha = 0.03, linewidth = 1) +
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
     labs(title = model, 
          x = 'Standardized coefficients of NPGO', y = 'Posterior density\nof NPGO effect') +
@@ -1981,23 +1981,23 @@ ric_pk_eca_st = read.csv(here('stan models',
                         'ric_pk_eca_st_noac.csv'),check.names=F)
 
 
-# ric_pk_cpd_st = read.csv(here('stan models',
+ric_pk_cpd_st = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_cpd_st_noac.csv'),check.names=F)
+
+# ric_pk_eca_npgo = read.csv(here('stan models',
 #                         'outs',
 #                         'posterior',
-#                         'ric_pk_cpd_st_noac.csv'),check.names=F)
-
-ric_pk_eca_npgo = read.csv(here('stan models',
-                        'outs',
-                        'posterior',
-                        'ric_pk_eca_st_noac_npgo.csv'),check.names=F)
-
-
-ric_pk_cpd_npgo = read.csv(here('stan models',
-                        'outs',
-                        'posterior',
-                        'ric_pk_cpd_st_noac_npgo.csv'),check.names=F)
-
-
+#                         'ric_pk_eca_st_noac_npgo.csv'),check.names=F)
+# 
+# 
+# ric_pk_cpd_npgo = read.csv(here('stan models',
+#                         'outs',
+#                         'posterior',
+#                         'ric_pk_cpd_st_noac_npgo.csv'),check.names=F)
+# 
+# 
 
 
 ric_pk_eca_ersst = read.csv(here('stan models',

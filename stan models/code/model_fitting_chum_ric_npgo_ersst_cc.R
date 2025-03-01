@@ -127,9 +127,9 @@ print("eca")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_chm_eca_npgo_sst <- mric$sample(data=dl_chm_eca_npgo_sst,
-                            chains = 3, 
-                            iter_warmup = 50,
-                            iter_sampling = 100,
+                            chains = 2, 
+                            iter_warmup = 100,
+                            iter_sampling = 200,
                             refresh = 10,
                             # init = list(list(b_for = -0.5, 
                             #                  b_npgo = 0.5, 
@@ -177,7 +177,7 @@ if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_chm_cpd_npgo_sst <- mric$sample(data=dl_chm_cpd_npgo_sst,
                                   chains = 6, 
-                                  iter_warmup = 50,
+                                  iter_warmup = 200,
                                   iter_sampling =200,
                                   refresh = 10,
                                   adapt_delta = 0.999,

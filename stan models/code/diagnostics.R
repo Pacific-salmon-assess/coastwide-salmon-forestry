@@ -42,3 +42,6 @@ cpd_summary %>%
   select(variable, rhat) %>% 
   filter(rhat > 1.1)
 
+# postrior - post_bh_chm_eca
+
+mcmc_trace(post_bh_chm_eca, pars = c('b_for_rv[12]'))
