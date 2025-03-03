@@ -478,12 +478,17 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
 
 ## Beverton Holt Models
 
-```{r fig.width=10, fig.height=12}
+```{r fig.width=10, fig.height=3}
 bh_chm_eca=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac_oct24.csv'),check.names=F)
 bh_chm_cpd=read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_oct24.csv'),check.names=F)
 
 bh_chm_eca_st=read.csv(here('stan models','outs','posterior','bh_chm_eca_static_nov24.csv'),check.names=F)
 bh_chm_cpd_st=read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_nov24.csv'),check.names=F)
+
+bh_chm_eca_st_correct=read.csv(here('stan models','outs','posterior','bh_chm_eca_static_corrected.csv'),check.names=F)
+bh_chm_cpd_st_correct=read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_corrected.csv'),check.names=F)
+
+
 # 
 # bh_chm_eca_npgo=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo.csv'),check.names=F)
 # bh_chm_cpd_npgo=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo.csv'),check.names=F)
@@ -511,7 +516,8 @@ bh_chm_cpd_ersst_pdo=read.csv(here('stan models','outs','posterior','bh_chm_cpd_
     plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity"))) + plot_layout(guides = "collect")
 
-
+(plot_forestry_effect(posterior = bh_chm_eca_st_correct, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
+    plot_forestry_effect(posterior = bh_chm_cpd_st_correct, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))
 ```
 
 ## Ricker Models
@@ -550,6 +556,25 @@ ric_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_np
 
 
 ```
+
+
+## Correlation plots
+
+```{r fig.width=10, fig.height=3}
+
+# correlation between max CPD in river and the median effect of CPD in that river for Ricker model
+
+# take median cpd values from ric_chm_cpd_ersst
+
+
+
+
+
+```
+
+
+
+
 
 ## Productivity decline
 
@@ -1752,7 +1777,10 @@ for(river in rivers){
                        posterior_a_t = posterior_a_t, posterior_a_t_bh = posterior_a_t_bh)
 }
 
-# plot_recruit_spawner(river = 310, posterior = posterior, posterior_bh = posterior_bh)
+posterior <- ric_chm_cpd_ersst
+posterior_bh <- bh_chm_cpd_st_correct
+
+plot_recruit_spawner(river = 310, posterior = posterior, posterior_bh = posterior_bh)
   
 ```
 

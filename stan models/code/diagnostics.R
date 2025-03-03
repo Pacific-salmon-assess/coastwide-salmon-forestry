@@ -44,4 +44,12 @@ cpd_summary %>%
 
 # postrior - post_bh_chm_eca
 
-mcmc_trace(post_bh_chm_eca, pars = c('b_for_rv[12]'))
+mcmc_trace(post_bh_chm_eca, pars = c('b_for'))
+
+posterior <- read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_corrected.csv'))
+
+
+
+mcmc_trace(posterior, pars = c('b_for'))
+
+
