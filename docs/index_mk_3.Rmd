@@ -59,6 +59,7 @@ library(patchwork)
 library(hues)
 library(GGally)
 library(latex2exp)
+library(ggforce)
 ```
 
 # Model
@@ -485,8 +486,6 @@ bh_chm_cpd=read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_oct24.c
 bh_chm_eca_st=read.csv(here('stan models','outs','posterior','bh_chm_eca_static_nov24.csv'),check.names=F)
 bh_chm_cpd_st=read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_nov24.csv'),check.names=F)
 
-bh_chm_eca_st_correct=read.csv(here('stan models','outs','posterior','bh_chm_eca_static_corrected.csv'),check.names=F)
-bh_chm_cpd_st_correct=read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_corrected.csv'),check.names=F)
 
 
 # 
@@ -516,9 +515,22 @@ bh_chm_cpd_ersst_pdo=read.csv(here('stan models','outs','posterior','bh_chm_cpd_
     plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))/(plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with coastwide productivity"))) + plot_layout(guides = "collect")
 
+
+```
+
+## Corrected Beverton-Holt Models
+
+```{r fig.width= 10, fig.height=3}
+
+
+bh_chm_eca_ersst_correct=read.csv(here('stan models','outs','posterior','bh_chm_eca_static_corrected.csv'),check.names=F)
+bh_chm_cpd_ersst_correct=read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_corrected.csv'),check.names=F)
+
 (plot_forestry_effect(posterior = bh_chm_eca_st_correct, effect = "eca", species = "chum", model = "BH model without coastwide productivity") +
     plot_forestry_effect(posterior = bh_chm_cpd_st_correct, effect = "cpd", species = "chum", model = "BH model without coastwide productivity"))
+
 ```
+
 
 ## Ricker Models
 
@@ -560,19 +572,261 @@ ric_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_np
 
 ## Correlation plots
 
-```{r fig.width=10, fig.height=3}
+```{r fig.width=12, fig.height=10}
 
 # correlation between max CPD in river and the median effect of CPD in that river for Ricker model
 
 # take median cpd values from ric_chm_cpd_ersst
 
+#make function to take in posterior and effect and return correlation plot
 
+  cor_plot <- function(posterior = ric_chm_cpd_ersst, effect = "cpd", model = "Ricker model with CPD, NPGO, SST"){
+  
+  if(effect == "cpd"){
+    max_df <- ch20rsc %>% 
+  select(River, River_n,CU, disturbedarea_prct_cs,area_km2) %>%
+  group_by(River) %>% 
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            forestry_max = max(disturbedarea_prct_cs, na.rm = TRUE),
+            forestry_level =max(disturbedarea_prct_cs, na.rm = TRUE),
+            area_km2 = mean(area_km2, na.rm = TRUE)
+            )
+    scale_color <- scale_color_gradient2(name = "Max CPD level\nin River (%)",
+                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    
+  } else{
+    max_df <- ch20rsc %>% 
+  select(River, River_n,CU, ECA_age_proxy_forested_only,area_km2) %>%
+  group_by(River) %>%
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            area_km2 = mean(area_km2, na.rm = TRUE),
+            forestry_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(forestry_level = case_when(forestry_max < 12 ~ 'low',
+                               forestry_max >= 12 & forestry_max < 24 ~ 'medium',
+                               forestry_max >= 24 ~ 'high'))
+    
+    scale_color <- scale_color_manual(name = "Max ECA level\nin River (%)",
+                                     values = c('low' = '#35978f', 'medium' = 'gray', 'high' = '#bf812d'))
+  }
+  
+
+  
+  posterior_df <- posterior %>%
+    select(starts_with('b_for_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = effect) %>%
+    group_by(River) %>%
+    summarize(effect_median = median(!!sym(effect), na.rm = TRUE)) %>%
+    ungroup() %>% 
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+    left_join(max_df, by = 'River_n')
+  
+  cor <- cor(posterior_df$forestry_max, posterior_df$effect_median, use = "complete.obs")
+  
+  
+  
+  cor_plot_model <-   ggplot(posterior_df) +
+    geom_point(aes(x = forestry_max,
+                   y = effect_median, color = forestry_level,
+                   size = area_km2),alpha = 0.5) +
+    annotate("text",x = 80, y = min(posterior_df$effect_median), label = paste("Correlation = ", round(cor,2)), show.legend = FALSE, size = 4) +
+    xlim(0,100) +
+    # ylim(-0.3,0.15) +
+    labs(title = model,
+         x = paste("Max", effect, "in river (%)"),
+         y = paste("Median effect of", effect, "in river")) +
+    scale_color +
+    theme_classic() +
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 14),
+          axis.title.y = element_text(size = 14),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          plot.title = element_text(size = 16, hjust = 0.5))
+
+  return(cor_plot_model)
+  
+}
+
+cor_plot_1 <- cor_plot(posterior = ric_chm_cpd_ersst, effect = "cpd", model = "Ricker model with CPD, NPGO, SST")
+
+cor_plot_2 <- cor_plot(posterior = ric_chm_eca_ersst, effect = "eca", model = "Ricker model with ECA, NPGO, SST")
+
+# cor_plot_1 + cor_plot_2 + plot_layout(guides = "collect")
+
+cor_plot_3 <- cor_plot(posterior = bh_chm_cpd_ersst, effect = "cpd", model = "BH model with CPD, NPGO, SST")
+
+cor_plot_4 <- cor_plot(posterior = bh_chm_eca_ersst, effect = "eca", model = "BH model with ECA, NPGO, SST")
+
+(cor_plot_1 + cor_plot_2 )/( cor_plot_3 + cor_plot_4) + plot_layout(guides = "collect")
 
 
 
 ```
 
 
+```{r fig.width=8, fig.height=10}
+
+# make correlation plot between median effects from Ricker model and median effects from BH model
+
+cor_plot_bw_models <- function(posterior1 = ric_chm_cpd_ersst, posterior2 = bh_chm_cpd_ersst, effect = "cpd"){
+  
+  if(effect == "cpd"){
+    max_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_name, disturbedarea_prct_cs,area_km2) %>%
+  group_by(River) %>% 
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_name = first(CU_name),
+            forestry_max = max(disturbedarea_prct_cs, na.rm = TRUE),
+            forestry_level =max(disturbedarea_prct_cs, na.rm = TRUE),
+            area_km2 = mean(area_km2, na.rm = TRUE)
+            )
+    scale_color <- scale_color_gradient2(name = "Max CPD level\nin River (%)",
+                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    scale_fill <- scale_fill_gradient2(name = "Max CPD level\nin River (%)",
+                                       low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    
+    max_cu_df <- max_df %>% 
+      group_by(CU, CU_name) %>% 
+      summarize(forestry_mean = mean(forestry_max, na.rm = TRUE),
+                area_km2_mean = mean(area_km2, na.rm = TRUE)) 
+    
+  } else{
+    max_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_name, ECA_age_proxy_forested_only,area_km2) %>%
+  group_by(River) %>%
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_name = first(CU_name),
+            area_km2 = mean(area_km2, na.rm = TRUE),
+            forestry_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(forestry_level = case_when(forestry_max < 12 ~ 'low',
+                               forestry_max >= 12 & forestry_max < 24 ~ 'medium',
+                               forestry_max >= 24 ~ 'high'))
+    
+    scale_color <- scale_color_manual(name = "Max ECA level\nin River (%)",
+                                     values = c('low' = '#35978f', 'medium' = 'gray', 'high' = '#bf812d'))
+    scale_fill <- scale_fill_manual(name = "Max ECA level\nin River (%)",
+                                     values = c('low' = '#35978f', 'medium' = 'gray', 'high' = '#bf812d'))
+    
+    max_cu_df <- max_df %>%
+      group_by(CU, CU_name) %>% 
+      summarize(forestry_mean = mean(forestry_max, na.rm = TRUE),
+                area_km2_mean = mean(area_km2, na.rm = TRUE))
+  }
+  
+  posterior_df1 <- posterior1 %>%
+    select(starts_with('b_for_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = effect) %>%
+    group_by(River) %>%
+    summarize(ric_effect_median = median(!!sym(effect), na.rm = TRUE)) %>%
+    ungroup() %>% 
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) 
+
+  posterior_df2 <- posterior2 %>%
+    select(starts_with('b_for_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = effect) %>%
+    group_by(River) %>%
+    summarize(bh_effect_median = median(!!sym(effect), na.rm = TRUE)) %>%
+    ungroup() %>% 
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River)
+  
+  posterior_df <- left_join(posterior_df1, posterior_df2, by = 'River_n') %>% 
+    left_join(max_df, by = 'River_n') %>% 
+    left_join(max_cu_df, by = c('CU' = 'CU', 'CU_name' = 'CU_name'))
+  
+  cor <- cor(posterior_df$ric_effect_median, posterior_df$bh_effect_median, use = "complete.obs")
+  
+  if(effect == "cpd"){
+    cpd_plot <- ggplot(posterior_df,aes(x = ric_effect_median,
+                   y = bh_effect_median, color = forestry_level)) +
+    geom_point(aes(size = area_km2), alpha = 0.5) +
+    annotate("text",x = 0.9*min(posterior_df$ric_effect_median), 
+             y = 0.9*max(posterior_df$bh_effect_median), label = paste("Correlation = ", round(cor,2)), 
+             size = 4) +
+    scale_color +
+    scale_fill +
+    # xlim(0,100) +
+    # ylim(-0.3,0.15) +
+    # ellipse around CU
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-4"), aes(label = CU_name),
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) + 
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-21"), aes(label = CU_name),
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-16"), aes(label = CU_name),
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-23"), aes(label = CU_name),
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-18"), aes(label = CU_name),
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    # scale_color_manual(values = c('CM-4' = 'red', 'CM-21' = 'blue')) +
+    labs(title = toupper(effect),
+         x = paste("Median effect of", effect, "in Ricker model"),
+         y = paste("Median effect of", effect, "in BH model")) +
+    theme_classic() +
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 14),
+          axis.title.y = element_text(size = 14),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12, angle = 90),
+          plot.title = element_text(size = 16, hjust = 0.5))
+  } else{
+    eca_plot <- ggplot(posterior_df,aes(x = ric_effect_median,
+                   y = bh_effect_median, color = forestry_level)) +
+    geom_point(aes(size = area_km2), alpha = 0.5) +
+    annotate("text",x = 0.9*min(posterior_df$ric_effect_median), 
+             y = 0.9*max(posterior_df$bh_effect_median), label = paste("Correlation = ", round(cor,2)), 
+             size = 4) +
+    scale_color +
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-4"), aes(label = CU_name), color = "gray",
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-18"), aes(label = CU_name), color = "gray",
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    labs(title = toupper(effect),
+         x = paste("Median effect of", effect, "in Ricker model"),
+         y = paste("Median effect of", effect, "in BH model")) +
+    theme_classic() +
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 14),
+          axis.title.y = element_text(size = 14),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12, angle = 90),
+          plot.title = element_text(size = 16, hjust = 0.5))
+  }
+  
+}
+
+cpd_plot1 <- cor_plot_bw_models(posterior1 = ric_chm_cpd_ersst, posterior2 = bh_chm_cpd_ersst, effect = "cpd")
+
+
+
+eca_plot1 <- cor_plot_bw_models(posterior1 = ric_chm_eca_ersst, posterior2 = bh_chm_eca_ersst, effect = "eca")
+
+cpd_plot1 / eca_plot1
+
+
+
+
+
+```
 
 
 

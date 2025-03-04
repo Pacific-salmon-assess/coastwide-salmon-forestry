@@ -46,10 +46,30 @@ cpd_summary %>%
 
 mcmc_trace(post_bh_chm_eca, pars = c('b_for'))
 
-posterior <- read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_corrected.csv'))
+posterior <- read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_corrected_trial.csv'))
 
 
 
 mcmc_trace(posterior, pars = c('b_for'))
 
+
+#read summary file
+
+summary <- read.csv(here('stan models','outs','summary','bh_chm_eca_npgo_ersst_corrected.csv'))
+
+glimpse(summary)
+
+#check mean of variable "b_for"
+
+summary %>% 
+  select(variable, mean) %>% 
+  filter(variable == "b_for")
+
+#check if any rhat is greater than 1.1
+
+summary %>% 
+  select(variable, rhat) %>% 
+  filter(rhat > 1.05)
+
+#sigma_a_rv is more than 1.05
 
