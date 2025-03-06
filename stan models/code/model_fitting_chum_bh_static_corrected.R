@@ -333,7 +333,7 @@ if(Sys.info()[7] == "mariakur") {
   bh_chm_eca$save_object('./stan models/outs/fits/bh_chm_eca_static_trial_corrected.RDS')
   
   post_bh_chm_eca=bh_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')
-  write.csv(post_bh_chm_eca,here('stan models','outs','posterior','bh_chm_eca_static_trial.csv'))
+  write.csv(post_bh_chm_eca,here('stan models','outs','posterior','bh_chm_eca_static_trial_corrected.csv'))
   
 } else {
   bh_chm_eca <- mbh$sample(data=dl_chm_eca,
@@ -344,7 +344,7 @@ if(Sys.info()[7] == "mariakur") {
                               adapt_delta = 0.999,
                               max_treedepth = 20)
   
-  write.csv(bh_chm_eca$summary(),here("stan models","outs","summary","bh_chm_eca_static_nov24.csv"))
+  write.csv(bh_chm_eca$summary(),here("stan models","outs","summary","bh_chm_eca_static_nov24_corrected.csv"))
   bh_chm_eca$save_object(here("stan models","outs","fits","bh_chm_eca_static_corrected.RDS"))
   
   post_bh_chm_eca=bh_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')

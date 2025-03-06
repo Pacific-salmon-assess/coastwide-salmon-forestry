@@ -81,12 +81,12 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
 //residual productivity deviations
    for(j in 1:J){ //for every stock
     alpha_j_for[start_y[j]] = alpha_j[j]+b_for_rv[j]*forest_loss[start_y[j]]; //forestry effects on just productivity
-    mu1[start_y[j]]=alpha_j_for[j]-log(1+(exp(alpha_j_for[start_y[j]])/Rk[j])*S[start_y[j]]); //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+    mu1[start_y[j]]=alpha_j_for[start_y[j]]-log(1+(exp(alpha_j_for[start_y[j]])/Rk[j])*S[start_y[j]]); //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
     e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 
     for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
       alpha_j_for[t] = alpha_j[j]+b_for_rv[j]*forest_loss[t]; //forestry effects on just productivity
-      mu2[t]  = alpha_j_for[j]-log(1+(exp(alpha_j_for[t])/Rk[j])*S[t])+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+      mu2[t]  = alpha_j_for[t]-log(1+(exp(alpha_j_for[t])/Rk[j])*S[t])+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
 	}
   }
