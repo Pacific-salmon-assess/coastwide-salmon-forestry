@@ -481,7 +481,7 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
 
 ## Beverton Holt Models
 
-```{r fig.width=10, fig.height=3}
+```{r fig.width=10, fig.height=12}
 bh_chm_eca=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac_oct24.csv'),check.names=F)
 bh_chm_cpd=read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_oct24.csv'),check.names=F)
 
@@ -522,14 +522,26 @@ bh_chm_cpd_ersst_pdo=read.csv(here('stan models','outs','posterior','bh_chm_cpd_
 
 ## Corrected Beverton-Holt Models
 
-```{r fig.width= 10, fig.height=3}
+```{r fig.width= 10, fig.height=12}
+
+bh_chm_eca_correct=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac_mar25_corrected.csv'),check.names=F)
+bh_chm_cpd_correct=read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_mar25_corrected.csv'),check.names=F)
+
+bh_chm_eca_st_correct=read.csv(here('stan models','outs','posterior','bh_chm_eca_static_corrected.csv'),check.names=F)
+bh_chm_cpd_st_correct=read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_corrected.csv'),check.names=F)
+
 
 
 bh_chm_eca_ersst_correct=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_corrected.csv'),check.names=F)
 bh_chm_cpd_ersst_correct=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_corrected.csv'),check.names=F)
 
-(plot_forestry_effect(posterior = bh_chm_eca_ersst_correct, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST") +
-    plot_forestry_effect(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST"))
+((plot_forestry_effect(posterior = bh_chm_cpd_st_correct, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = bh_chm_eca_st_correct, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_correct, effect = "cpd", species = "chum", model = "BH model with CPD,\ncoastwide productivity", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = bh_chm_eca_correct, effect = "eca", species = "chum", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = bh_chm_eca_ersst_correct, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
+
+
+
 
 ```
 
@@ -674,22 +686,6 @@ cor_plot_4 <- cor_plot(posterior = bh_chm_eca_ersst, effect = "eca", model = "BH
 ```
 
 
-
-
-
-```{r fig.width=10, fig.height=10}
-
-
-
-cor_plot_3_corrected <- cor_plot(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", model = "BH model with CPD, NPGO, SST")
-
-cor_plot_4_corrected <- cor_plot(posterior = bh_chm_eca_ersst_correct, effect = "eca", model = "BH model with ECA, NPGO, SST")
-
-(cor_plot_1 + cor_plot_2 )/( cor_plot_3_corrected + cor_plot_4_corrected) + plot_layout(guides = "collect")
-
-
-
-```
 
 
 
@@ -848,6 +844,25 @@ cpd_plot1 / eca_plot1
 
 
 ```
+
+
+### With corrected BH Model
+
+
+```{r fig.width=10, fig.height=10}
+
+
+
+cor_plot_3_corrected <- cor_plot(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", model = "BH model with CPD, NPGO, SST")
+
+cor_plot_4_corrected <- cor_plot(posterior = bh_chm_eca_ersst_correct, effect = "eca", model = "BH model with ECA, NPGO, SST")
+
+(cor_plot_1 + cor_plot_2 )/( cor_plot_3_corrected + cor_plot_4_corrected) + plot_layout(guides = "collect")
+
+
+
+```
+
 
 
 ```{r fig.width=8, fig.height=10}

@@ -73,3 +73,22 @@ summary %>%
 
 #sigma_a_rv is more than 1.05
 
+install.packages("DHARMa")
+
+library(DHARMa)
+
+#read rds
+
+fit <- readRDS(here('stan models','outs','fits','bh_chm_cpd_static_trial_corrected.RDS'))
+
+#simulate data
+
+sim <- simulate
+
+
+DHARMaRes = createDHARMa(simulatedResponse = sim, observedResponse = testData$observedResponse, 
+                         fittedPredictedResponse = predict(fittedModel), integerResponse = T)
+plot(DHARMaRes, quantreg = F)
+
+
+

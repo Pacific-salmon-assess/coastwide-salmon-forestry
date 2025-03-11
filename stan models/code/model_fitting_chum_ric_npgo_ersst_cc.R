@@ -75,6 +75,20 @@ cu.nrv=summary(factor(cu$CU))
 #time points for each series
 L_i=ch20r%>%group_by(River)%>%summarize(l=n(),min=min(BroodYear),max=max(BroodYear),tmin=min(BroodYear)-1954+1,tmax=max(BroodYear)-1954+1)
 
+
+spawner_scale=10^floor(log10(max(ch20r$Spawners)))
+
+ch20r$Spawners_Scaled <- ch20r$Spawners/spawner_scale
+
+k_prior = ch20r%>%group_by(River) %>%summarize(m.k=mean(Spawners_Scaled))
+
+# scale(ch20r$Spawners, center = FALSE, scale = TRUE)
+# 
+# #plot first 10 values
+# 
+# plot((ch20r$Spawners/spawner_scale)[1:40],type='l')
+# plot((scale(ch20r$Spawners, center = FALSE, scale = TRUE))[1:40],type='l')
+
 #data list for fits
 dl_chm_eca_npgo_sst=list(N=nrow(ch20r),
                 L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
@@ -83,7 +97,8 @@ dl_chm_eca_npgo_sst=list(N=nrow(ch20r),
                 C_i=as.numeric(factor(cu$CU)), #CU index by stock
                 ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
                 R_S=ch20r$ln_RS,
-                S=ch20r$Spawners, 
+                # S=ch20r$Spawners, 
+                S=ch20r$Spawners_Scaled, 
                 forest_loss=ch20r$sqrt.ECA.std, #design matrix for standardized ECA
                 npgo=ch20r$npgo.std, #design matrix for standardized npgo
                 sst=ch20r$sst.std,
@@ -105,7 +120,8 @@ dl_chm_cpd_npgo_sst=list(N=nrow(ch20r),
                      C_i=as.numeric(factor(cu$CU)), #CU index by stock
                      ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
                      R_S=ch20r$ln_RS,
-                     S=ch20r$Spawners, 
+                     # S=ch20r$Spawners,
+                     S=ch20r$Spawners_Scaled, 
                      forest_loss=ch20r$sqrt.CPD.std, #design matrix for standardized ECA
                      npgo=ch20r$npgo.std, #design matrix for standardized npgo
                      sst=ch20r$sst.std,
@@ -211,7 +227,7 @@ if(Sys.info()[7] == "mariakur") {
   
 }
 
-mcmc_trace(post_ric_chm_eca_npgo_sst,  pars = c("alpha_j[1]"), 
-           facet_args = list(nrow = 1, labeller = label_parsed))
-
+# mcmc_trace(post_ric_chm_eca_npgo_sst,  pars = c("sigma[1]"), 
+#            facet_args = list(nrow = 1, labeller = label_parsed))
+# 
 
