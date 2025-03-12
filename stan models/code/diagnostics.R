@@ -91,4 +91,16 @@ DHARMaRes = createDHARMa(simulatedResponse = sim, observedResponse = testData$ob
 plot(DHARMaRes, quantreg = F)
 
 
+cpd_summary <- read.csv(here('stan models','outs','summary','ric_chm_cpd_npgo_ersst_cc_trial.csv'))
 
+cpd_summary %>% 
+  select(variable, rhat) %>% 
+  filter(rhat > 1.01)
+
+posterior <- read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc_trial.csv'))
+
+color_scheme_set("viridis")
+mcmc_trace_highlight(posterior, pars = c('b_for'),facet_args = list(nrow = 2, labeller = label_parsed))
+
+cpd_summary %>% 
+  filter(variable == "b_for")

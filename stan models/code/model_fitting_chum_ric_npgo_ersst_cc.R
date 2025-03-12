@@ -199,7 +199,7 @@ if(Sys.info()[7] == "mariakur") {
                                   adapt_delta = 0.999,
                                   max_treedepth = 20)
   write.csv(ric_chm_cpd_npgo_sst$summary(),'./stan models/outs/summary/ric_chm_cpd_npgo_ersst_cc_trial.csv')
-  ric_chm_cpd_npgo_sst$save_object('./stan models/outs/fits/ric_chm_cpd_npgo_ersst_Cc_trial.RDS')
+  ric_chm_cpd_npgo_sst$save_object('./stan models/outs/fits/ric_chm_cpd_npgo_ersst_cc_trial.RDS')
   
   post_ric_chm_cpd_npgo_sst=ric_chm_cpd_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',

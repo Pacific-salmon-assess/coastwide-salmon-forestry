@@ -584,6 +584,24 @@ ric_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_np
 ```
 
 
+## Ricker Models with forestry effect on carrying capacity
+
+```{r fig.width=10, fig.height=6}
+
+
+ric_chm_eca_ersst_cc = read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc_trial.csv'),check.names=F)
+
+ric_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc_trial.csv'),check.names=F)
+
+((plot_forestry_effect(posterior = ric_chm_eca_ersst_cc, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST, CC", xlim = c(-3,3)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst_cc, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST, CC", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
+
+
+
+```
+
+
+
 ## Correlation plots
 
 ```{r fig.width=12, fig.height=10}
@@ -2435,6 +2453,33 @@ bh_pk_cpd_ersst <- read.csv(here('stan models', 'outs', 'posterior',
 
 
 ```
+
+
+## Corrected Beverton-Holt Models
+
+```{r fig.width=10, fig.height=3}
+
+
+bh_pk_cpd_ersst_correct = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_cpd_noac_w_npgo_ersst_corrected.csv'),check.names=F)
+
+
+bh_pk_eca_ersst_correct = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_eca_noac_w_npgo_ersst_corrected.csv'),check.names=F)
+
+
+(plot_forestry_effect(posterior = bh_pk_eca_ersst_correct, effect = "eca", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_cpd_ersst_correct, effect = "cpd", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
+
+
+
+```
+
+
+
 
 ## Ricker models
 
