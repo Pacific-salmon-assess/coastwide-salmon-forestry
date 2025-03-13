@@ -551,12 +551,12 @@ bh_chm_cpd_ersst_correct=read.csv(here('stan models','outs','posterior','bh_chm_
 ```{r fig.width=10, fig.height=6}
 
 
-bh_chm_eca_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_static_trial_cc.csv'),check.names=F)
+bh_chm_eca_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_static_cc.csv'),check.names=F)
 
-bh_chm_cpd_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_trial_cc.csv'),check.names=F)
+bh_chm_cpd_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_cc.csv'),check.names=F)
 
-((plot_forestry_effect(posterior = bh_chm_eca_st_cc, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST, CC", xlim = c(-3,3)) + plot_forestry_effect(posterior = bh_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST, CC", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST", xlim = c(-3,3)) +
-    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
+((plot_forestry_effect(posterior = bh_chm_eca_st_cc, effect = "eca", species = "chum", model = "BH model with ECA effect on K", xlim = c(-2,2)) + plot_forestry_effect(posterior = bh_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "BH model with CPD effect on K", xlim = c(-2,2)))/(plot_forestry_effect(posterior = bh_chm_eca_st_correct, effect = "eca", species = "chum", model = "BH model with ECA effect\n on productivity", xlim = c(-2,2)) +
+    plot_forestry_effect(posterior = bh_chm_cpd_st_correct, effect = "cpd", species = "chum", model = "BH model with CPD effect\n on productivity", xlim = c(-2,2))) + plot_layout(guides = "collect"))
 
 
 

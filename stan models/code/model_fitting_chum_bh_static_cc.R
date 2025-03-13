@@ -386,6 +386,6 @@ if(Sys.info()[7] == "mariakur") {
   
 }
 
-mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
+# mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
 
