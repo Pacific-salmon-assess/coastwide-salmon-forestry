@@ -522,7 +522,7 @@ bh_chm_cpd_ersst_pdo=read.csv(here('stan models','outs','posterior','bh_chm_cpd_
 
 ## Corrected Beverton-Holt Models
 
-```{r fig.width= 10, fig.height=12}
+```{r fig.width= 10, fig.height=9}
 
 bh_chm_eca_correct=read.csv(here('stan models','outs','posterior','bh_chm_eca_ac_mar25_corrected.csv'),check.names=F)
 bh_chm_cpd_correct=read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_mar25_corrected.csv'),check.names=F)
@@ -544,6 +544,25 @@ bh_chm_cpd_ersst_correct=read.csv(here('stan models','outs','posterior','bh_chm_
 
 
 ```
+
+## Beverton-Holt Models with forestry effect on carrying capacity
+
+
+```{r fig.width=10, fig.height=6}
+
+
+bh_chm_eca_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_static_trial_cc.csv'),check.names=F)
+
+bh_chm_cpd_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_trial_cc.csv'),check.names=F)
+
+((plot_forestry_effect(posterior = bh_chm_eca_st_cc, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST, CC", xlim = c(-3,3)) + plot_forestry_effect(posterior = bh_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST, CC", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_eca_ersst, effect = "eca", species = "chum", model = "BH model with NPGO, ERSST", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = bh_chm_cpd_ersst, effect = "cpd", species = "chum", model = "BH model with NPGO, ERSST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
+
+
+
+```
+
+
 
 
 ## Ricker Models
@@ -2457,7 +2476,27 @@ bh_pk_cpd_ersst <- read.csv(here('stan models', 'outs', 'posterior',
 
 ## Corrected Beverton-Holt Models
 
-```{r fig.width=10, fig.height=3}
+```{r fig.width=10, fig.height=12}
+
+bh_pk_eca_correct=read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_eca_noac_corrected.csv'),check.names=F)
+
+bh_pk_cpd_correct=read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_cpd_noac_corrected.csv'),check.names=F)
+
+bh_pk_eca_st_correct=read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_eca_st_noac_corrected.csv'),check.names=F)
+
+bh_pk_cpd_st_correct=read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_cpd_st_noac_corrected.csv'),check.names=F)
 
 
 bh_pk_cpd_ersst_correct = read.csv(here('stan models',
@@ -2472,7 +2511,7 @@ bh_pk_eca_ersst_correct = read.csv(here('stan models',
                         'bh_pk_eca_noac_w_npgo_ersst_corrected.csv'),check.names=F)
 
 
-(plot_forestry_effect(posterior = bh_pk_eca_ersst_correct, effect = "eca", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_cpd_ersst_correct, effect = "cpd", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
+(plot_forestry_effect(posterior = bh_pk_eca_st_correct, effect = "eca", species = "pink", model = "BH model with ECA", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_cpd_st_correct, effect = "cpd", species = "pink", model = "BH model with CPD", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_eca_correct, effect = "eca", species = "pink", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_cpd_correct, effect = "cpd", species = "pink", model = "BH model with CPD,\ncoastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_eca_ersst_correct, effect = "eca", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_cpd_ersst_correct, effect = "cpd", species = "pink", model = "BH model with NPGO, ERSST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
 
 
 
@@ -2564,9 +2603,9 @@ ric_pk_cpd_ersst = read.csv(here('stan models',
 
 ```{r fig.width = 12, fig.height = 3}
 
-(plot_sst_effect(posterior = bh_pk_cpd_ersst, effect = "sst", species = "pink", model = "BH model with CPD, NPGO, ERSST") +
-  plot_sst_effect(posterior = ric_pk_cpd_ersst, effect = "sst", species = "pink", model = "Ric model with CPD, NPGO, LH SST", color_by = "CU"))
 
+(plot_sst_effect(posterior = bh_pk_cpd_ersst_correct, effect = "sst", species = "pink", model = "BH model with CPD, NPGO, ERSST") +
+  plot_sst_effect(posterior = ric_pk_cpd_ersst, effect = "sst", species = "pink", model = "Ric model with CPD, NPGO, LH SST", color_by = "CU"))
 
 
 ```
@@ -2575,7 +2614,9 @@ ric_pk_cpd_ersst = read.csv(here('stan models',
 
 ```{r fig.width = 12, fig.height = 3}
 
-plot_npgo_effect(posterior = bh_pk_cpd_ersst, effect = "npgo", species = "pink", model = "BH model with CPD, NPGO, ERSST") +
+
+
+plot_npgo_effect(posterior = bh_pk_cpd_ersst_correct, effect = "npgo", species = "pink", model = "BH model with CPD, NPGO, ERSST") +
   plot_npgo_effect(posterior = ric_pk_cpd_ersst, effect = "npgo", species = "pink", model = "Ric model with CPD, NPGO, ERSST")
 
 ```

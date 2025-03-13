@@ -341,7 +341,7 @@ if(Sys.info()[7] == "mariakur") {
                               iter_warmup = 200,
                               iter_sampling =500,
                               refresh = 100,
-                              adapt_delta = 0.999,
+                              adapt_delta = 0.9,
                               max_treedepth = 20)
   
   write.csv(bh_chm_eca$summary(),here("stan models","outs","summary","bh_chm_eca_static_cc.csv"))
@@ -361,13 +361,13 @@ if(Sys.info()[7] == "mariakur") {
                               iter_warmup = 20,
                               iter_sampling =50,
                               refresh = 10,
-                              adapt_delta = 0.999,
+                              adapt_delta = 0.8,
                               max_treedepth = 20)
-  write.csv(bh_chm_cpd$summary(),'./stan models/outs/summary/bh_chm_cpd_static_trial_cc.csv')
-  bh_chm_cpd$save_object('./stan models/outs/fits/bh_chm_cpd_static_trial_cc.RDS')
+  write.csv(bh_chm_cpd$summary(),'./stan models/outs/summary/bh_chm_cpd_static_trial2_cc.csv')
+  bh_chm_cpd$save_object('./stan models/outs/fits/bh_chm_cpd_static_trial2_cc.RDS')
   
   post_bh_chm_cpd=bh_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_j','Rk','sigma'),format='draws_matrix')
-  write.csv(post_bh_chm_cpd,here('stan models','outs','posterior','bh_chm_cpd_static_trial_cc.csv'))
+  write.csv(post_bh_chm_cpd,here('stan models','outs','posterior','bh_chm_cpd_static_trial2_cc.csv'))
   
 } else {
   bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
@@ -375,7 +375,7 @@ if(Sys.info()[7] == "mariakur") {
                               iter_warmup = 200,
                               iter_sampling =500,
                               refresh = 100,
-                              adapt_delta = 0.999,
+                              adapt_delta = 0.9,
                               max_treedepth = 20)
   
   write.csv(bh_chm_cpd$summary(),here("stan models","outs","summary","bh_chm_cpd_static_cc.csv"))
@@ -386,6 +386,6 @@ if(Sys.info()[7] == "mariakur") {
   
 }
 
-# mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
+mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
 

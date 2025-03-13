@@ -104,3 +104,33 @@ mcmc_trace_highlight(posterior, pars = c('b_for'),facet_args = list(nrow = 2, la
 
 cpd_summary %>% 
   filter(variable == "b_for")
+
+
+
+bh_pk_eca_correct=read.csv(here('stan models',
+                                'outs',
+                                'posterior',
+                                'bh_pk_eca_noac_corrected.csv'),check.names=F)
+
+
+#plot all 6 (500 values) chains with different colors
+
+mcmc_trace(bh_pk_eca_correct[1:500,], pars = c('b_for'))
+mcmc_trace(bh_pk_eca_correct[501:1000,], pars = c('b_for'))
+mcmc_trace(bh_pk_eca_correct[1001:1500,], pars = c('b_for'))
+mcmc_trace(bh_pk_eca_correct[1501:2000,], pars = c('b_for'))
+mcmc_trace(bh_pk_eca_correct[2001:2500,], pars = c('b_for'))
+mcmc_trace(bh_pk_eca_correct[2501:3000,], pars = c('b_for'))
+
+#look at summary
+
+bh_pk_eca_summary <- read.csv(here('stan models','outs','summary','bh_pk_eca_noac_corrected.csv'))
+
+bh_pk_eca_summary %>% 
+  select(variable, rhat) %>% 
+  filter(rhat > 1.02)
+
+bh_pk_cpd_correct=read.csv(here('stan models',
+                                'outs',
+                                'posterior',
+                                'bh_pk_cpd_noac_corrected.csv'),check.names=F)
