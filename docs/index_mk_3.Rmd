@@ -615,6 +615,12 @@ ric_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','ric_chm_c
 ((plot_forestry_effect(posterior = ric_chm_eca_ersst_cc, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST, CC", xlim = c(-3,3)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst_cc, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST, CC", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-3,3)) +
     plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
 
+ric_chm_eca_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc2.csv'),check.names=F)
+
+ric_chm_cpd_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc2.csv'),check.names=F)
+
+((plot_forestry_effect(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST, CC", xlim = c(-3,3)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST, CC", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
 
 
 ```
@@ -1055,6 +1061,30 @@ cpd_plot1_corrected / eca_plot1_corrected
 
 
 ```
+
+
+
+### Models with forestry affecting carrying capacity
+
+```{r fig.width=10, fig.height=10}
+
+cpd_plot1_cc <- cor_plot_bw_models_corrected(posterior1 = ric_chm_cpd_ersst_cc2, posterior2 = bh_chm_cpd_st_cc, effect = "cpd")
+
+eca_plot1_cc <- cor_plot_bw_models_corrected(posterior1 = ric_chm_eca_ersst_cc2, posterior2 = bh_chm_eca_st_cc, effect = "eca")
+
+cpd_plot1_cc / eca_plot1_cc
+
+cor_plot(posterior = bh_chm_cpd_st_cc, effect = "cpd", model = "BH model with CPD effect on K")
+
+cor_plot(posterior = bh_chm_eca_st_cc, effect = "eca", model = "BH model with ECA effect on K")
+
+cor_plot(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", model = "Ricker model with CPD effect on K")
+
+cor_plot(posterior = ric_chm_eca_ersst_cc2, effect = "eca", model = "Ricker model with ECA effect on K")
+
+```
+
+
 
 
 
@@ -2266,7 +2296,7 @@ for(river in rivers){
 # posterior <- ric_chm_cpd_ersst
 # posterior_bh <- bh_chm_cpd_st_correct
 # 
-# plot_recruit_spawner(river = 7, posterior = posterior, posterior_bh = posterior_bh, river_data = river_data)
+# plot_recruit_spawner(river = 7, posterior = ric_chm_cpd_ersst_cc2, posterior_bh = bh_chm_cpd_st_cc)
   
 ```
 

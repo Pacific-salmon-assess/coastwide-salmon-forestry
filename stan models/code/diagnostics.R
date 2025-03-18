@@ -134,3 +134,69 @@ bh_pk_cpd_correct=read.csv(here('stan models',
                                 'outs',
                                 'posterior',
                                 'bh_pk_cpd_noac_corrected.csv'),check.names=F)
+
+ric_chm_eca_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc2.csv'),check.names=F)
+
+ric_chm_cpd_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc2.csv'),check.names=F)
+
+# trace plot for b_for
+
+mcmc_trace(ric_chm_eca_ersst_cc2, pars = c('b_for'))
+
+mcmc_trace(ric_chm_cpd_ersst_cc2, pars = c('b_for'))
+mcmc_trace(ric_chm_cpd_ersst_cc2[1:500,], pars = c('b_for'))
+mcmc_trace(ric_chm_cpd_ersst_cc2[501:1000,], pars = c('b_for'))
+mcmc_trace(ric_chm_cpd_ersst_cc2[1001:1500,], pars = c('b_for'))
+mcmc_trace(ric_chm_cpd_ersst_cc2[1501:2000,], pars = c('b_for'))
+mcmc_trace(ric_chm_cpd_ersst_cc2[2001:2500,], pars = c('b_for'))
+mcmc_trace(ric_chm_cpd_ersst_cc2[2501:3000,], pars = c('b_for'))
+
+
+#look at summary
+
+ric_chm_eca_ersst_cc2_summary <- read.csv(here('stan models','outs','summary','ric_chm_eca_npgo_ersst_cc2.csv'))
+
+ric_chm_eca_ersst_cc2_summary %>% 
+  select(variable, rhat) %>% 
+  filter(rhat > 1.01)
+
+ric_chm_cpd_ersst_cc2_summary <- read.csv(here('stan models','outs','summary','ric_chm_cpd_npgo_ersst_cc2.csv'))
+
+ric_chm_cpd_ersst_cc2_summary %>% 
+  select(variable, rhat) %>% 
+  filter(rhat > 1.04)
+
+ric_chm_cpd_ersst_cc2_summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "b_for_cu")) %>% 
+  filter(rhat > 1.01)
+
+# order by median value for b_for_cu
+
+ric_chm_cpd_ersst_cc2_summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "b_for_cu")) %>% 
+  arrange(-median)
+
+ric_chm_eca_ersst_cc2_summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "b_for_cu")) %>% 
+  arrange(-median)
+
+# lowest b_for_cu is for CU 8 (southern coastal streams) 
+
+
+ric_chm_eca_cc = read.csv(here('stan models','outs','posterior','ric_chm_eca_static_trial_cc.csv'),check.names=F)
+
+# trace plot for b_for
+
+mcmc_trace(ric_chm_eca_cc, pars = c('b_for'))
+
+
+#summary
+
+ric_chm_eca_cc_summary <- read.csv(here('stan models','outs','summary','ric_chm_eca_static_trial_cc.csv'))
+
+ric_chm_eca_cc_summary %>% 
+  select(variable, rhat) %>% 
+  filter(rhat > 1.1)
