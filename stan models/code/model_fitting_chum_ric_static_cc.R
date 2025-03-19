@@ -141,7 +141,7 @@ if(Sys.info()[7] == "mariakur") {
                             iter_warmup = 200,
                             iter_sampling =500,
                             refresh = 100,
-                            adapt_delta = 0.9,
+                            adapt_delta = 0.99,
                             max_treedepth = 20)
   
   write.csv(ric_chm_eca_static$summary(),here("stan models","outs","summary","ric_chm_eca_static_cc.csv"))
@@ -181,7 +181,7 @@ if(Sys.info()[7] == "mariakur") {
                                   iter_warmup = 200,
                                   iter_sampling =500,
                                   refresh = 100,
-                                  adapt_delta = 0.9,
+                                  adapt_delta = 0.99,
                                   max_treedepth = 20)
   
   write.csv(ric_chm_cpd_static$summary(),here("stan models","outs","summary","ric_chm_cpd_static_cc.csv"))
