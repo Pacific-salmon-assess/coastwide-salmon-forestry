@@ -95,13 +95,13 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate fo
     log_Rk[j] = log(Rk[j]); //log-transform recruitment capacity
     log_Rk_for[start_y[j]]=log(Rk[j])+b_for_rv[j]*forest_loss[start_y[j]]; //adjust recruitment capacity based on forest loss
     Rk_for[start_y[j]]=exp(log_Rk_for[start_y[j]]); //convert back to linear scale
-    mu1[start_y[j]]=alpha_t[start_t[j]]+alpha_j[j]-log(1+(exp(alpha_t[start_t[j]]+alpha_j[j])/Rk[j])*S[start_y[j]]); //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+    mu1[start_y[j]]=alpha_t[start_t[j]]+alpha_j[j]-log(1+(exp(alpha_t[start_t[j]]+alpha_j[j])/Rk_for[start_y[j]])*S[start_y[j]]); //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
     e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
 
     for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
       log_Rk_for[t]=log_Rk[j]+b_for_rv[j]*forest_loss[t]; //adjust recruitment capacity based on forest loss
       Rk_for[t]=exp(log_Rk_for[t]); //convert back to linear scale
-      mu2[t]  = alpha_t[ii[t]]+alpha_j[j]-log(1+(exp(alpha_t[ii[t]]+alpha_j[j])/Rk[j])*S[t]); //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+      mu2[t]  = alpha_t[ii[t]]+alpha_j[j]-log(1+(exp(alpha_t[ii[t]]+alpha_j[j])/Rk_for[t])*S[t]); //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]);  //residual for stock j at time t
 	}
   }

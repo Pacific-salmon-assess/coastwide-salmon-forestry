@@ -656,13 +656,25 @@ Model with time varying coast-wide productivity, forestry, without autocorrelati
 $log(R_{t,r}/S_{t,r}) = \alpha_r + \alpha_t - log(1+\frac{(e^{\alpha_r + \alpha_t} - 1)}{K_{t,r}}  S_{t,r})  + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \epsilon_{t,r}$
 
 
-```{r fig.width=10, fig.height=6}
+```{r fig.width=10, fig.height=15}
 
 
 bh_chm_eca_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_static_cc.csv'),check.names=F)
 bh_chm_cpd_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_cc.csv'),check.names=F)
 
+bh_chm_eca_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_ac_cc.csv'),check.names=F)
+bh_chm_cpd_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_cc.csv'),check.names=F)
 
+bh_chm_eca_ersst_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc.csv'),check.names=F)
+bh_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc.csv'),check.names=F)
+
+bh_chm_eca_noac_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_noac_cc.csv'),check.names=F)
+bh_chm_cpd_noac_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_noac_cc.csv'),check.names=F)
+
+((plot_forestry_effect(posterior = bh_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = bh_chm_eca_st_cc, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_cc, effect = "cpd", species = "chum", model = "BH model with CPD,\ncoastwide productivity", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = bh_chm_eca_cc, effect = "eca", species = "chum", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_ersst_cc, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = bh_chm_eca_ersst_cc, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_noac_cc, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST,\n without autocorrelation", xlim = c(-3,3)) + plot_forestry_effect(posterior = bh_chm_eca_noac_cc, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST,\n without autocorrelation", xlim = c(-3,3))) + plot_layout(guides = "collect"))
 
 
 ```
