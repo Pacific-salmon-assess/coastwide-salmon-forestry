@@ -1499,13 +1499,16 @@ color: Black;
 <h2><span class="header-section-number">1.1</span> Beverton-Holt (BH)
 with forestry effect on growth rate:</h2>
 <p>Model with time varying productivity: <span class="math inline">\(log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r -
-log(1+\frac{(e^{\alpha_t+\alpha_r})}{R_{k,r}}*S_{t,r}) +
-\beta_{for,r}*X_{t,r} + \epsilon_{t,r}\)</span></p>
+log(1+\frac{(e^{\alpha_t+\alpha_r+
+\beta_{for,r}*X_{t,r}})}{R_{k,r}}*S_{t,r}) + \beta_{for,r}*X_{t,r} +
+\epsilon_{t,r}\)</span></p>
 <p>Model with static productivity: <span class="math inline">\(log(R_{t,r}/S_{t,r}) = \alpha_r -
-log(1+(\frac{(e^{\alpha_t+\alpha_r})}{R_{k,r}})*S_{t,r}) +
-\beta_{for,r}*X_{t,r} + \epsilon_{t,r}\)</span></p>
+log(1+(\frac{(e^{\alpha_t+\alpha_r+
+\beta_{for,r}*X_{t,r}})}{R_{k,r}})*S_{t,r}) + \beta_{for,r}*X_{t,r} +
+\epsilon_{t,r}\)</span></p>
 <p>Model with ocean covariates: <span class="math inline">\(log(R_{t,r}/S_{t,r}) = \alpha_r -
-log(1+\frac{(e^{\alpha_t+\alpha_r})}{R_{k,r}}*S_{t,r}) +
+log(1+\frac{(e^{\alpha_t+\alpha_r+ \beta_{for,r}*X_{t,r} +
+\beta_{npgo,r}*Y_{t} + \beta_{sst,r}*Z_{t,r}})}{R_{k,r}}*S_{t,r}) +
 \beta_{for,r}*X_{t,r} + \beta_{npgo,r}*Y_{t} + \beta_{sst,r}*Z_{t,r} +
 \epsilon_{t,r}\)</span></p>
 </div>
@@ -1527,7 +1530,7 @@ effect on growth rate:</h2>
 with forestry effect on carrying capacity:</h2>
 <p><span class="math inline">\(log(R_{t,r}/S_{t,r}) = log(r_r) -
 log(1+\frac{(r_r - 1)}{K_{t,r}} * S_{t,r})  + \beta_{npgo,r}*Y{t} +
-\beta_{sst,r}*Z{t,r} + \epsilon_{t,r}\)</span> <span class="math inline">\(K_{t,r} = K_r + \beta_{for,r}*X_{t,r}\)</span></p>
+\beta_{sst,r}*Z{t,r} + \epsilon_{t,r}\)</span></p>
 <p>Prior on <span class="math inline">\(K_r\)</span></p>
 <p><span class="math inline">\(K_{t,r} = K_r +
 \beta_{for,r}*X_{t,r}\)</span></p>
@@ -1547,6 +1550,14 @@ effect on carrying capacity:</h2>
 \beta_{for,r}*X_{t,r}\)</span></p>
 <p><span class="math inline">\(K_r \sim lognormal(S_{mean,r},
 5*S_{mean,r})\)</span></p>
+</div>
+<div id="forestry-effect-on-carrying-capacity" class="section level2" number="1.5">
+<h2><span class="header-section-number">1.5</span> Forestry effect on
+carrying capacity</h2>
+<p><span class="math inline">\(log(K_{t,r}) = log(K_r) +
+\beta_{for,r}*X_{t,r}\)</span></p>
+<p><span class="math inline">\(K_{t,r} =
+K_r*e^{\beta_{for,r}*X_{t,r}}\)</span></p>
 </div>
 </div>
 

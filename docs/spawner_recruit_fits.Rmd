@@ -616,6 +616,124 @@ plot_recruit_spawner(data = df, species = species, river = 5, river_data , poste
 ```
 
 
+## Spawner Recruit fits for models with forestry effects on K
+
+```{r, spawner-recruit-k, fig.width = 10, fig.height = 8}
+
+
+plot_recruit_spawner_river_k <- function(data, species = "chum", river, river_data,  posterior, posterior_bh){
+  
+  # river_data <- df %>% filter(River_n == river)
+  
+  
+  
+  if(species == "chum"){
+    posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_rv_k <- posterior %>% 
+      select(starts_with('k')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    #bh
+    
+    posterior_bh_rv_b_for <- posterior_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_alpha_j <- posterior_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_k <- posterior_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+  } else if(species == "pink"){
+    
+    river_wo_broodline <- river_data$River_n
+    river_w_broodline <- river_data$River_n2
+    
+    posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_rv_k <- posterior %>% 
+      select(starts_with('k')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    #bh
+    
+    posterior_bh_rv_b_for <- posterior_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_bh_rv_alpha_j <- posterior_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_bh_rv_k <- posterior_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    
+    
+  }
+ 
+    
+    spawners_predicted_scaled <- seq(0, max(river_data$Spawners_Scaled), length.out = 100)
+    
+    spawners_predicted <- seq(0, max(river_data$Spawners), length.out = 100)
+    
+    low_cpd <- min(river_data$sqrt.CPD.std)
+    high_cpd <- max(river_data$sqrt.CPD.std)
+    # avg_cpd <- mean(river_data$sqrt.CPD.std)
+    mid_cpd <- min(river_data$sqrt.CPD.std) + (max(river_data$sqrt.CPD.std) - min(river_data$sqrt.CPD.std))/2
+    
+    mid_cpd_real <- min(river_data$disturbedarea_prct_cs) + (max(river_data$disturbedarea_prct_cs) - min(river_data$disturbedarea_prct_cs))/2
+    
+    # recruits_predicted <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - 
+    #                                    as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+    # 
+    k_rv_inv = as.matrix(1/exp(matrix(posterior_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))))
+    
+    recruits_predicted <- dexp(apply(matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))*(1 -  k_rv_inv%*%spawners_predicted_scaled), 2, median))*spawners_predicted
+    
+    # recruits_predicted_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted), 2, quantile, c(0.025)))*spawners_predicted
+    # 
+    # recruits_predicted_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted), 2, quantile, c(0.975)))*spawners_predicted
+    
+    
+    
+    
+}
+
+spawner_scale=10^floor(log10(max(ch20rsc$Spawners)))
+ch20rsc$Spawners_Scaled <- ch20rsc$Spawners/spawner_scale
+
+posterior = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc2.csv'),check.names=F)
+
+posterior_bh = read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_cc.csv'),check.names=F)
+
+river = 52
+
+river_data <- ch20rsc %>% filter(River_n == river)
+
+
+
+
+```
+
+
 ## Residual plots
 
 ```{r, residual-plots, fig.width = 12, fig.height = 8, results="asis"}

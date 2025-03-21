@@ -607,6 +607,13 @@ ric_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_np
 
 ```{r fig.width=10, fig.height=6}
 
+ric_chm_eca_st_cc = read.csv(here('stan models','outs','posterior','ric_chm_eca_static_cc.csv'),check.names=F)
+
+ric_chm_cpd_st_cc = read.csv(here('stan models','outs','posterior','ric_chm_cpd_static_cc.csv'),check.names=F)
+
+((plot_forestry_effect(posterior = ric_chm_eca_st_cc, effect = "eca", species = "chum", model = "Ricker model with ECA effect on K", xlim = c(-3,3)) + plot_forestry_effect(posterior = ric_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "Ricker model with CPD effect on K", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model with ECA effect \non productivity", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model with CPD effect \non productivity", xlim = c(-3,3))) + plot_layout(guides = "collect"))
+
 
 ric_chm_eca_ersst_cc = read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc_trial.csv'),check.names=F)
 
@@ -619,8 +626,9 @@ ric_chm_eca_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_
 
 ric_chm_cpd_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc2.csv'),check.names=F)
 
-((plot_forestry_effect(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST, CC", xlim = c(-3,3)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST, CC", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-3,3)) +
-    plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
+((plot_forestry_effect(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST, \nECA effect on K", xlim = c(-3,3)) + plot_forestry_effect(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST, \nCPD effect on K", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_eca_ersst, effect = "eca", species = "chum", model = "Ricker model with NPGO, ERSST,\nECA effect on productivity", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = ric_chm_cpd_ersst, effect = "cpd", species = "chum", model = "Ricker model with NPGO, ERSST,\nCPD effect on productivity", xlim = c(-3,3))) + plot_layout(guides = "collect"))
+
 
 
 ```

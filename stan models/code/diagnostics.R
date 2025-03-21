@@ -195,8 +195,10 @@ mcmc_trace(ric_chm_eca_cc, pars = c('b_for'))
 
 #summary
 
-ric_chm_eca_cc_summary <- read.csv(here('stan models','outs','summary','ric_chm_eca_static_trial_cc.csv'))
+ric_chm_cpd_cc_summary <- read.csv(here('stan models','outs','summary','ric_chm_cpd_static_trial_cc.csv'))
 
-ric_chm_eca_cc_summary %>% 
-  select(variable, rhat) %>% 
-  filter(rhat > 1.1)
+ric_chm_cpd_cc_summary %>% 
+  select(variable, mean) %>% 
+  filter(variable == "alpha0")
+
+mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
