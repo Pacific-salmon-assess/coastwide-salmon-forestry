@@ -112,7 +112,7 @@ if(Sys.info()[7] == "mariakur") {
   write.csv(ric_chm_eca$summary(),'./stan models/outs/summary/ric_chm_eca_trial_cc.csv')
   ric_chm_eca$save_object('./stan models/outs/fits/ric_chm_eca_trial_cc.RDS')
 
-  post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','k_rv','sigma'),format='draws_matrix')
+  post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','k','sigma'),format='draws_matrix')
   write.csv(post_ric_chm_eca,here('stan models','outs','posterior','ric_chm_eca_trial_cc.csv'))
 
 } else {
@@ -127,7 +127,7 @@ if(Sys.info()[7] == "mariakur") {
   write.csv(ric_chm_eca$summary(),here("stan models","outs","summary","ric_chm_eca_ac_cc.csv"))
   ric_chm_eca$save_object(here("stan models","outs","fits","ric_chm_eca_ac_cc.RDS"))
 
-  post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','k_rv','sigma'),format='draws_matrix')
+  post_ric_chm_eca=ric_chm_eca$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','k','sigma'),format='draws_matrix')
   write.csv(post_ric_chm_eca,here('stan models','outs','posterior','ric_chm_eca_ac_cc.csv'))
 
 }
@@ -169,7 +169,7 @@ if(Sys.info()[7] == "mariakur") {
   write.csv(ric_chm_cpd$summary(),'./stan models/outs/summary/ric_chm_cpd_trial_cc.csv')
   ric_chm_cpd$save_object('./stan models/outs/fits/ric_chm_cpd_trial_cc.RDS')
   
-  post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','k_rv','sigma',
+  post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','k','sigma',
                                                  'sigma_for_cu','sigma_for_rv'),format='draws_matrix')
   write.csv(post_ric_chm_cpd,here('stan models','outs','posterior','ric_chm_cpd_trial_cc.csv'))
   
@@ -185,7 +185,7 @@ if(Sys.info()[7] == "mariakur") {
   write.csv(ric_chm_cpd$summary(),here("stan models","outs","summary","ric_chm_cpd_ac_cc.csv"))
   ric_chm_cpd$save_object(here("stan models","outs","fits","ric_chm_cpd_ac_cc.RDS"))
   
-  post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','k_rv','sigma',
+  post_ric_chm_cpd=ric_chm_cpd$draws(variables=c('b_for','b_for_cu','b_for_rv','alpha_t','alpha_j','k','sigma',
                                                  'sigma_for_cu','sigma_for_rv'),format='draws_matrix')
   write.csv(post_ric_chm_cpd,here('stan models','outs','posterior','ric_chm_cpd_ac_cc.csv'))
   
