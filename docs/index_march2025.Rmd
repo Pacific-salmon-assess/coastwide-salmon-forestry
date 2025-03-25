@@ -341,9 +341,13 @@ plot_forestry_effect <- function(posterior = bh_chm_eca, effect = "eca", species
           axis.title.y = element_text(size = 12),
           axis.text.x = element_text(size = 10),
           axis.text.y = element_text(size = 10),
+          legend.text = element_text(size = 7),
+          legend.spacing.y = unit(0.001, "cm"),
+          legend.key.width = unit(0.5, "cm"),
+          legend.key.height = unit(0.8, "lines"),
           plot.title = element_text(size = 14, hjust = 0.5)
           )+
-    guides(color = guide_legend(override.aes = list(alpha = 1), ncol = 1))
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.6), ncol = 1))
   }
   
   
@@ -674,8 +678,7 @@ bh_chm_cpd_noac_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_
 ((plot_forestry_effect(posterior = bh_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-3,3)) +
     plot_forestry_effect(posterior = bh_chm_eca_st_cc, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_cc, effect = "cpd", species = "chum", model = "BH model with CPD,\ncoastwide productivity", xlim = c(-3,3)) +
     plot_forestry_effect(posterior = bh_chm_eca_cc, effect = "eca", species = "chum", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_ersst_cc, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-3,3)) +
-    plot_forestry_effect(posterior = bh_chm_eca_ersst_cc, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_noac_cc, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST,\n without autocorrelation", xlim = c(-3,3)) + plot_forestry_effect(posterior = bh_chm_eca_noac_cc, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST,\n without autocorrelation", xlim = c(-3,3))) + plot_layout(guides = "collect"))
-
+    plot_forestry_effect(posterior = bh_chm_eca_ersst_cc, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_noac_cc, effect = "cpd", species = "chum", model = "BH model with CPD, coastwide productivity,\n without autocorrelation", xlim = c(-3,3)) + plot_forestry_effect(posterior = bh_chm_eca_noac_cc, effect = "eca", species = "chum", model = "BH model with ECA, coastwide productivity,\n without autocorrelation", xlim = c(-3,3))) + plot_layout(guides = "collect"))
 
 ```
 
@@ -723,5 +726,10 @@ ric_chm_cpd_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_
     plot_forestry_effect(posterior = ric_chm_eca_st_cc, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_cpd_cc, effect = "cpd", species = "chum", model = "Ricker model with CPD,\ncoastwide productivity", xlim = c(-3,3)) +
     plot_forestry_effect(posterior = ric_chm_eca_cc, effect = "eca", species = "chum", model = "Ricker model with ECA,\ncoastwide productivity", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-3,3)) +
     plot_forestry_effect(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
+
+
+(plot_forestry_effect(posterior = ric_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "Ricker model with CPD", xlim = c(-3,3), color_by_cu = TRUE) + plot_forestry_effect(posterior = ric_chm_eca_st_cc, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-3,3), color_by_cu = TRUE)) + plot_layout(guides = "collect")
+
+
 
 ```
