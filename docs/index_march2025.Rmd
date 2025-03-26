@@ -357,6 +357,8 @@ plot_forestry_effect <- function(posterior = bh_chm_eca, effect = "eca", species
   return(plot1)
 }
 
+
+
 plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST"){
   
   
@@ -542,6 +544,8 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
   
 }
   
+
+
 ```
 
 
@@ -1049,5 +1053,202 @@ cpd_plot1 / eca_plot1 + plot_layout(guides = "collect")
 ```
 
 
+## Carrying Capacity Decline
+
+```{r fig.width=10, fig.height=8}
+
+
+plot_capacity_decline <- function(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", species = "chum", model = "BH model with NPGO, SST"){
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  if(effect == "eca"){
+    forestry <- seq(0,1,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "cpd"){
+    forestry <- seq(0,100,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "sst"){
+    forestry <- seq(10,15,length.out=100)
+    b <- posterior %>% select(ends_with("b_sst"))
+    
+    forestry_sqrt_std = (forestry-mean(forestry))/sd(forestry)
+    
+  }
+  
+  
+  
+  no_forestry <- min(forestry_sqrt_std)
+  
+  # bh_chm_eca_sst=read.csv(here('stan models','outs','posterior',bh_chm_eca_sst),check.names=F)
+  
+  
+  
+  global_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                 (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+  
+  global_025 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.025), 
+                      row.names = c("q025"))
+  
+  global_975 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.975),
+                      row.names = c("q975"))
+  
+  global_df <- data.frame(forestry = forestry,
+                          capacity_median = global_prediction,
+                          q025 = global_025,
+                          q975 = global_975)
+  
+  full_capacity <- NULL
+  
+  # no_forestry <- min(eca_std_sqrt)
+  for (i in 1:length(unique(df$River_n))){
+    river <- unique(df$River_n)[i]
+    
+    river_data <- df %>% filter(River_n == river)
+    
+    if(effect == "eca"){
+      b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
+      forestry_sqrt_std_river <- seq(no_forestry,max(river_data$sqrt.ECA.std),length.out=100)
+      
+      forestry_river <- seq(0,max(river_data$ECA_age_proxy_forested_only),length.out=100)
+      
+      
+    } else if(effect == "cpd"){
+      b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
+      forestry_sqrt_std_river <- seq(no_forestry,max(river_data$sqrt.CPD.std),length.out=100)
+      
+      forestry_river <- seq(0,max(river_data$disturbedarea_prct_cs),length.out=100)
+      
+      
+    } else if(effect == "sst"){
+      b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
+      # use only spring_ersst
+      
+      forestry_sqrt_std_river <- seq(no_forestry,max(river_data$sst.std),length.out=100)
+      
+      forestry_river <- seq(10,max(river_data$spring_ersst),length.out=100)
+      
+    }
+    
+    
+
+    
+    
+    
+    
+    capacity <- (exp(as.matrix(b_rv[,1])%*%
+                           (forestry_sqrt_std-no_forestry)))*100 - 100
+    
+    capacity_median <- apply(capacity,2,median)
+    
+    capacity_median_df <- data.frame(River = unique(river_data$River),
+                                         capacity_median = capacity_median,
+                                         forestry = forestry_river) %>% 
+  filter(forestry >= min(forestry_river), forestry <= max(forestry_river))
+    
+    full_capacity <- rbind(full_capacity, capacity_median_df)
+    
+  }
+  
+  # b <- posterior %>% select(ends_with("b_for"))
+  
+  median_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+  
+  median_df <- data.frame(forestry = forestry,
+                          capacity_median = median_prediction)
+  
+  if(effect == "eca" || effect == "cpd"){
+    p1 <- ggplot(full_capacity) +
+    geom_line(aes(x = forestry, y = capacity_median, group = River,
+                  color = "watershed level\nforestry effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = capacity_median, color = "global forestry effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("watershed level\nforestry effect" = "darkgray", 
+                                     "global forestry effect" = "black")) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5) +
+    labs(title = model,
+      x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative percent disturbed (%)"),
+      y = "Median change\n in capacity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          # legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  } else if(effect == "sst"){
+    p1 <- ggplot(full_capacity) +
+    geom_line(aes(x = forestry, y = capacity_median, group = River,
+                  color = "watershed level\nSST effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = capacity_median, color = "global SST effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("watershed level\nSST effect" = "darkgray", 
+                                     "global SST effect" = "black")) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
+    labs(title = model,
+      x = "Spring SST (°C)",
+      y = "Median change\n in capacity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          # legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  }
+  
+  return(p1)
+  
+}
+  
+
+(plot_capacity_decline(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST") + plot_capacity_decline(posterior = bh_chm_eca_ersst_correct, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST"))/(plot_capacity_decline(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST") + plot_capacity_decline(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST")
+  
+) + plot_layout(guides = "collect")
+
+
+```
 
 
