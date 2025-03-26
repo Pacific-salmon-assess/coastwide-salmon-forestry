@@ -202,3 +202,25 @@ ric_chm_cpd_cc_summary %>%
   filter(variable == "alpha0")
 
 mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
+
+# generic
+
+posterior <- read.csv(here('stan models','outs','posterior','ric_pk_cpd_st_noac_npgo_ersst_cc.csv'))
+
+mcmc_trace(posterior[1:500,], pars = c('b_for'))
+mcmc_trace(posterior[501:1000,], pars = c('b_for'))
+mcmc_trace(posterior[1001:1500,], pars = c('b_for'))
+mcmc_trace(posterior[1501:2000,], pars = c('b_for'))
+mcmc_trace(posterior[2001:2500,], pars = c('b_for'))
+mcmc_trace(posterior[2501:3000,], pars = c('b_for'))
+
+summary <- read.csv(here('stan models','outs','summary','ric_pk_cpd_st_noac_npgo_ersst_cc.csv'))
+
+summary %>% 
+  select(variable, rhat, mean) %>% 
+  filter(rhat > 1.011) %>% 
+  #decresing rhat values
+  arrange(-rhat)
+
+
+

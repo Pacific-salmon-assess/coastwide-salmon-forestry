@@ -121,14 +121,14 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_j; //non-centered CU-varying estimate for
     log_k_rv[start_y[j]] = log_k[j] + b_for_rv[R_i[j]]*forest_loss[start_y[j]];
     k_rv[start_y[j]] = exp(log_k_rv[start_y[j]]);
     b[start_y[j]]=1/k_rv[start_y[j]];
-   mu1[start_y[j]]=alpha_j[j]*(1-b[j]*S[start_y[j]])+b_npgo_rv[R_i[j]]*npgo[start_y[j]]+b_sst_rv[R_i[j]]*sst[start_y[j]];
+   mu1[start_y[j]]=alpha_j[j]*(1-b[start_y[j]]*S[start_y[j]])+b_npgo_rv[R_i[j]]*npgo[start_y[j]]+b_sst_rv[R_i[j]]*sst[start_y[j]];
    e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
    
 	for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
 	  log_k_rv[t] = log_k[j] + b_for_rv[R_i[j]]*forest_loss[t];
     k_rv[t] = exp(log_k_rv[t]);
     b[t]=1/k_rv[t];
-	  mu2[t]  = alpha_j[j]*(1-b[j]*S[t])+b_npgo_rv[R_i[j]]*npgo[t]+b_sst_rv[R_i[j]]*sst[t];
+	  mu2[t]  = alpha_j[j]*(1-b[t]*S[t])+b_npgo_rv[R_i[j]]*npgo[t]+b_sst_rv[R_i[j]]*sst[t];
 	  e_t[t] = R_S[t] - mu2[t];   //residual for stock j at time t
 	
 	}
