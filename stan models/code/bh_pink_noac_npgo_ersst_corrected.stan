@@ -33,8 +33,9 @@ logRk_pr[t]=log(pRk_mean[t])-0.5*logRk_pr_sig[t]*logRk_pr_sig[t]; //convert smax
 }
 parameters{
   //initial productivity for each CU
-  real alpha_01; //initial global productivity - even lineage
-  real alpha_02; //initial global productivity - odd lineage
+  // real alpha_01; //initial global productivity - even lineage
+  // real alpha_02; //initial global productivity - odd lineage
+  real alpha_0; //initial global productivity
   vector[C] z_a_cu; //CU-specific z-score deviation
   vector[J] z_a_j; //River-specific  z-score deviation
   real<lower=0> sigma_a_cu; //variance in long-term productivity among CUs
@@ -93,7 +94,7 @@ vector<lower=0>[C] cu_sigma; ///CU-level sigma
 vector<lower = 0>[J] sigma; ///stock-level sigma
 //vector<lower = 0>[J] sigmaAR; ///stock-level sigma
 
-alpha_cu = sigma_a_cu*z_a_cu; //non-centered estimate for CU time-invariant productivity
+alpha_cu = alpha_0 + sigma_a_cu*z_a_cu; //non-centered estimate for CU time-invariant productivity
 alpha_j = alpha_cu[C_i]+ sigma_a_j*z_a_j; //non-centered estimate for River time-invariant productivity
 
 b_for_cu = b_for + sigma_for_cu*z_for_cu; //non-centered CU-varying estimate for forestry effects 
@@ -120,13 +121,13 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_j; //non-centered CU-varying estimate for
 
 //residual productivity deviations
    for(j in 1:J){ //for every stock
-   alpha_j_for[start_y[j]] = alpha_j[j]+b_for_rv[R_i[j]]*forest_loss[start_y[j]]; //forestry effects on just productivity
-   mu1[start_y[j]]=alpha_j_for[start_y[j]]-log(1+(exp(alpha_j_for[start_y[j]])/Rk[j])*S[start_y[j]])+ b_npgo_rv[R_i[j]]*npgo[start_y[j]]+ b_sst_rv[R_i[j]]*sst[start_y[j]];
+   alpha_j_for[start_y[j]] = alpha_j[j]+b_for_rv[R_i[j]]*forest_loss[start_y[j]]+ b_npgo_rv[R_i[j]]*npgo[start_y[j]]+ b_sst_rv[R_i[j]]*sst[start_y[j]]; //forestry effects on just productivity
+   mu1[start_y[j]]=alpha_j_for[start_y[j]]-log(1+(exp(alpha_j_for[start_y[j]])/Rk[j])*S[start_y[j]]);
    e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
    
 	for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
-	  alpha_j_for[t] = alpha_j[j]+b_for_rv[R_i[j]]*forest_loss[t]; //forestry effects on just productivity
-	  mu2[t]  = alpha_j_for[t] -log(1+(exp(alpha_j_for[t])/Rk[j])*S[t])+ b_npgo_rv[R_i[j]]*npgo[t]+ b_sst_rv[R_i[j]]*sst[t];
+	  alpha_j_for[t] = alpha_j[j]+b_for_rv[R_i[j]]*forest_loss[t]+ b_npgo_rv[R_i[j]]*npgo[t]+ b_sst_rv[R_i[j]]*sst[t]; //forestry effects on just productivity
+	  mu2[t]  = alpha_j_for[t] -log(1+(exp(alpha_j_for[t])/Rk[j])*S[t]);
 	  e_t[t] = R_S[t] - (mu2[t]);   //residual for stock j at time t
 	
 	}
@@ -137,9 +138,10 @@ sigma = cu_sigma[C_i] + sd_sigma*z_sig_j; //non-centered CU-varying estimate for
 model{
   //priors
   //productivity
-  alpha_01 ~ normal(4,5); //global intrinsic productivity for all stocks at time t=1;
-  alpha_02 ~ normal(4,5); //global intrinsic productivity for all stocks at time t=1;
- 
+  // alpha_01 ~ normal(4,5); //global intrinsic productivity for all stocks at time t=1;
+  // alpha_02 ~ normal(4,5); //global intrinsic productivity for all stocks at time t=1;
+  alpha_0 ~ normal(4,5); //global intrinsic productivity for all stocks at time t=1;
+
   z_a_cu ~ std_normal(); //CU-specific deviations in intrinsic productivity
  z_a_j ~ std_normal(); //river-specific static productivity adjustment (time-invariant)
   

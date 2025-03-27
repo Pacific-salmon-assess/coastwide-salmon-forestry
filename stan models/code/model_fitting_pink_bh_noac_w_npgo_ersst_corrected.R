@@ -126,7 +126,7 @@ dl_pk_eca=list(N=nrow(pk10r),
                pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
                pSmax_sig=smax_prior$m.s*3,
                pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
-               pRk_sig=smax_prior$m.r)
+               pRk_sig=smax_prior$m.r*2)
 
 dl_pk_cpd=list(N=nrow(pk10r),
                L=length(unique(pk10r$BroodYear))/2, #total time now /2 for each broodline
@@ -150,7 +150,7 @@ dl_pk_cpd=list(N=nrow(pk10r),
                pSmax_mean=0.5*smax_prior$m.s, #prior for smax based on max observed spawners
                pSmax_sig=smax_prior$m.s*3,
                pRk_mean=0.75*smax_prior$m.r, #prior for smax based on max observed spawners
-               pRk_sig=smax_prior$m.r)
+               pRk_sig=smax_prior$m.r*2)
 
 
 print("eca")
