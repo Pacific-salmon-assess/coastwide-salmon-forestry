@@ -171,17 +171,17 @@ if(Sys.info()[7] == "mariakur") {
                             iter_warmup = 200,
                             iter_sampling =500,
                             refresh = 100,
-                            adapt_delta = 0.9,
+                            adapt_delta = 0.95,
                             max_treedepth = 20)
   
-  write.csv(ric_chm_eca_npgo_sst$summary(),here("stan models","outs","summary","ric_chm_eca_npgo_ersst_cc2.csv"))
-  ric_chm_eca_npgo_sst$save_object(here("stan models","outs","fits","ric_chm_eca_npgo_ersst_cc2.RDS"))
+  write.csv(ric_chm_eca_npgo_sst$summary(),here("stan models","outs","summary","ric_chm_eca_npgo_ersst_cc_ad95.csv"))
+  ric_chm_eca_npgo_sst$save_object(here("stan models","outs","fits","ric_chm_eca_npgo_ersst_cc_ad95.RDS"))
   
   post_ric_chm_eca_npgo_sst=ric_chm_eca_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
                                                            'alpha_j','k','sigma'),format='draws_matrix')
-  write.csv(post_ric_chm_eca_npgo_sst,here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc2.csv'))
+  write.csv(post_ric_chm_eca_npgo_sst,here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc_ad95.csv'))
   
 }
 
@@ -213,17 +213,17 @@ if(Sys.info()[7] == "mariakur") {
                                   iter_warmup = 200,
                                   iter_sampling =500,
                                   refresh = 100,
-                                  adapt_delta = 0.9,
+                                  adapt_delta = 0.95,
                                   max_treedepth = 20)
   
-  write.csv(ric_chm_cpd_npgo_sst$summary(),here("stan models","outs","summary","ric_chm_cpd_npgo_ersst_cc2.csv"))
-  ric_chm_cpd_npgo_sst$save_object(here("stan models","outs","fits","ric_chm_cpd_npgo_ersst_cc2.RDS"))
+  write.csv(ric_chm_cpd_npgo_sst$summary(),here("stan models","outs","summary","ric_chm_cpd_npgo_ersst_cc_ad95.csv"))
+  ric_chm_cpd_npgo_sst$save_object(here("stan models","outs","fits","ric_chm_cpd_npgo_ersst_cc_ad95.RDS"))
   
   post_ric_chm_cpd_npgo_sst=ric_chm_cpd_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
                                                            'alpha_j','k','sigma'),format='draws_matrix')
-  write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc2.csv'))
+  write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc_ad95.csv'))
   
 }
 

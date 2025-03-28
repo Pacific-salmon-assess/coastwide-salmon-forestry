@@ -3,6 +3,10 @@ title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
 author: ''
 date: "March 2025"
 output:
+  word_document:
+    toc: true
+  pdf_document:
+    toc: true
   html_document:
     collapsed: false
     fig_caption: true
@@ -12,10 +16,6 @@ output:
     theme: sandstone
     toc: true
     toc_float: true
-  pdf_document:
-    toc: true
-  word_document:
-    toc: true
 ---
 
 ```{=html}
@@ -986,15 +986,22 @@ $log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{(e^{\alpha_r} - 1)}{K_{t,r}}  S_{
 
 Model with time varying coastwide productivity, forestry:
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r + \alpha_t - log(1+\frac{(e^{\alpha_r + \alpha_t} - 1)}{K_{t,r}}  S_{t,r})  + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \rho\epsilon_{t-1,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r + \alpha_t - log(1+\frac{(e^{\alpha_r + \alpha_t} - 1)}{K_{t,r}}  S_{t,r})  + \rho\epsilon_{t-1,r}$
 
 Model with ocean covariates, forestry:
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{(e^{\alpha_r} - 1)}{K_{t,r}}  S_{t,r})  + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \rho\epsilon_{t-1,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{(e^{\alpha_r  + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} } - 1)}{K_{t,r}}  S_{t,r})  + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \rho\epsilon_{t-1,r}$
 
 Model with time varying coast-wide productivity, forestry, without autocorrelation:
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r + \alpha_t - log(1+\frac{(e^{\alpha_r + \alpha_t} - 1)}{K_{t,r}}  S_{t,r})  + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \epsilon_{t,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r + \alpha_t - log(1+\frac{(e^{\alpha_r + \alpha_t} - 1)}{K_{t,r}}  S_{t,r})  \epsilon_{t,r}$
+
+### Forestry effect  on carrying capacity
+
+$log(K_{t,r}) = log(K_r) + \beta_{forestry,r}Forestry_{t,r}$
+
+$K_{t,r} = K_r e^{\beta_{forestry,r}Forestry_{t,r}}$
+
 
 
 ```{r fig.width=10, fig.height=9}
@@ -1006,8 +1013,10 @@ bh_chm_cpd_st_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_st
 bh_chm_eca_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_ac_cc.csv'),check.names=F)
 bh_chm_cpd_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_ac_cc.csv'),check.names=F)
 
-bh_chm_eca_ersst_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc.csv'),check.names=F)
-bh_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc.csv'),check.names=F)
+bh_chm_eca_ersst_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc_2.csv'),check.names=F)
+bh_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc_2.csv'),check.names=F)
+
+# _2 because initially I didnt have npgo and SST only effecting productivity, but now I do 
 
 bh_chm_eca_noac_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_noac_cc.csv'),check.names=F)
 bh_chm_cpd_noac_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_noac_cc.csv'),check.names=F)
@@ -1249,15 +1258,123 @@ plot_capacity_decline <- function(posterior = bh_chm_cpd_ersst_correct, effect =
 }
   
 
-(plot_capacity_decline(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST") + plot_capacity_decline(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST")/(plot_capacity_decline(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST") + plot_capacity_decline(posterior = bh_chm_eca_ersst_correct, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST"))
-  
-) + plot_layout(guides = "collect")
+(plot_capacity_decline(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST") + plot_capacity_decline(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST"))/(plot_capacity_decline(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST") + plot_capacity_decline(posterior = bh_chm_eca_ersst_correct, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST")) + plot_layout(guides = "collect")
 
 
 ```
 
 
-# Pink
+# Pink Salmon
+
+```{r}
+
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"))
+
+#odd year pinks
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"))
+
+options(mc.cores=8)
+
+# Pink salmon - even/odd broodlines #####
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_o$River)
+pk10r_o=pk10r_o[order(factor(pk10r_o$River),pk10r_o$BroodYear),]
+rownames(pk10r_o)=seq(1:nrow(pk10r_o))
+
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_e$River)
+pk10r_e=pk10r_e[order(factor(pk10r_e$River),pk10r_e$BroodYear),]
+rownames(pk10r_e)=seq(1:nrow(pk10r_e))
+
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.ECA=sqrt(pk10r_o$ECA_age_proxy_forested_only)
+pk10r_o$sqrt.ECA.std=(pk10r_o$sqrt.ECA-mean(pk10r_o$sqrt.ECA))/sd(pk10r_o$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.CPD=sqrt(pk10r_o$disturbedarea_prct_cs)
+pk10r_o$sqrt.CPD.std=(pk10r_o$sqrt.CPD-mean(pk10r_o$sqrt.CPD))/sd(pk10r_o$sqrt.CPD)
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.ECA=sqrt(pk10r_e$ECA_age_proxy_forested_only)
+pk10r_e$sqrt.ECA.std=(pk10r_e$sqrt.ECA-mean(pk10r_e$sqrt.ECA))/sd(pk10r_e$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.CPD=sqrt(pk10r_e$disturbedarea_prct_cs)
+pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.CPD)
+
+
+#standardize npgo
+pk10r_o$npgo.std=(pk10r_o$npgo-mean(pk10r_o$npgo))/sd(pk10r_o$npgo)
+pk10r_e$npgo.std=(pk10r_e$npgo-mean(pk10r_e$npgo))/sd(pk10r_e$npgo)
+
+# pk10r_o$sst.std = (pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
+# pk10r_e$sst.std = (pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
+
+pk10r_o$sst.std = (pk10r_o$spring_ersst-mean(pk10r_o$spring_ersst))/sd(pk10r_o$spring_ersst)
+pk10r_e$sst.std = (pk10r_e$spring_ersst-mean(pk10r_e$spring_ersst))/sd(pk10r_e$spring_ersst)
+
+
+pk10r_o$escapement.t_1=pk10r_e$Spawners[match(paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear-1),paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear))]
+pk10r_e$escapement.t_1=pk10r_o$Spawners[match(paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear-1),paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear))]
+
+pk10r_o$Broodline='Odd'
+pk10r_e$Broodline='Even'
+
+L_o=pk10r_o%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_o$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_o$BroodYear))/2)
+L_e=pk10r_e%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_e$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_e$BroodYear))/2)
+L_o$River2=paste(L_o$River,'Odd',sep='_')
+L_e$River2=paste(L_e$River,'Even',sep='_')
+L_all=rbind(L_e,L_o)
+L_all=L_all[order(factor(L_all$River2)),]
+
+pk10r_o$ii=as.numeric(factor(pk10r_o$BroodYear))
+pk10r_e$ii=as.numeric(factor(pk10r_e$BroodYear))
+
+pk10r=rbind(pk10r_e,pk10r_o)
+pk10r$River2=paste(pk10r$River,pk10r$Broodline,sep='_')
+pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
+
+#extract max S for priors on capacity & eq. recruitment
+smax_prior=pk10r%>%group_by(River2) %>%summarize(m.s=max(Spawners),m.r=max(Recruits))
+
+#ragged start and end points for each SR series
+# N_s=rag_n(pk10r$River2)
+
+#cus by stock
+cu1=distinct(pk10r,CU,.keep_all = T)
+cu2=distinct(pk10r,River,.keep_all = T)
+cu3=distinct(pk10r,River2,.keep_all = T)
+
+pk10r$River_n <- as.numeric(factor(pk10r$River))
+pk10r$River_n2 <- as.numeric(factor(pk10r$River2))
+pk10r$CU_name <- pk10r$CU_NAME
+
+max_eca_pink_df <- pk10r %>% 
+  select(River2, River, River_n, CU, ECA_age_proxy_forested_only) %>%
+  group_by(River) %>%
+  summarize(River = first(River),
+            River_n = first(River_n),
+            CU = first(CU),
+            eca_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(eca_level = case_when(eca_max < 12 ~ 'low',
+                               eca_max >= 12 & eca_max < 24 ~ 'medium',
+                               eca_max >= 24 ~ 'high'))
+
+max_cpd_pink_df <- pk10r %>%
+  select(River2, River, River_n,  CU, disturbedarea_prct_cs) %>%
+  group_by(River) %>% 
+  summarize(River = first(River),
+            River_n = first(River_n),
+            CU = first(CU),
+            cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE))
+
+
+```
 
 ## Models with forestry effects on productivity
 
@@ -1390,8 +1507,16 @@ bh_pk_eca_ersst_correct = read.csv(here('stan models',
 
 
 
+## Beverton-Holt
+
+```{r fig.width=10, fig.height=3}
+
+bh_pk_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','bh_pk_cpd_noac_w_npgo_ersst_cc.csv'),check.names=F)
+
+bh_pk_eca_ersst_cc = read.csv(here('stan models','outs','posterior','bh_pk_eca_noac_w_npgo_ersst_cc.csv'),check.names=F)
+
+((plot_forestry_effect(posterior = bh_pk_cpd_ersst_cc, effect = "cpd", species = "pink", model = "BH model with CPD, NPGO, SST", xlim = c(-1,1)) +
+    plot_forestry_effect(posterior = bh_pk_eca_ersst_cc, effect = "eca", species = "pink", model = "BH model with ECA, NPGO, SST", xlim = c(-1,1))) + plot_layout(guides = "collect"))
 
 
-
-
-
+```
