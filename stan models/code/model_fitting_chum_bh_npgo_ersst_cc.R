@@ -36,6 +36,13 @@ options(mc.cores=8)
 
 ## data formatting ####
 
+#run this part if you want to subset the data - remove CM-18, CM-14,CM-25
+subset = TRUE
+if(subset){
+  ch20r <- ch20r%>%filter(CU != 'CM-18',CU != 'CM-14',CU != 'CM-25')
+}
+
+
 #two rivers with duplicated names:
 ch20r$River=ifelse(ch20r$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20r$River)
 ch20r$River=ifelse(ch20r$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20r$River)
@@ -327,86 +334,172 @@ dl_chm_cpd_npgo=list(N=nrow(ch20r),
 #                                             .progress=TRUE)
 ####
 
-
-
-print("eca")
-
-if(Sys.info()[7] == "mariakur") {
-  print("Running on local machine")
-  bh_chm_eca_npgo <- mbh$sample(data=dl_chm_eca_npgo,
-                              chains = 1,
-                              iter_warmup = 20,
-                              iter_sampling =50,
-                              refresh = 10,
-                              adapt_delta = 0.95,
-                              max_treedepth = 20)
-  write.csv(bh_chm_eca_npgo$summary(),'./stan models/outs/summary/bh_chm_eca_npgo_ersst_cc_trial_2.csv')
-  bh_chm_eca_npgo$save_object('./stan models/outs/fits/bh_chm_eca_npgo_ersst_cc_trial_2.RDS')
-
-  post_bh_chm_eca_npgo=bh_chm_eca_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
-                                                         'b_npgo','b_npgo_cu','b_npgo_rv',
-                                                         'b_sst','b_sst_cu','b_sst_rv',
-                                                         'alpha_j','Rk','sigma'),format='draws_matrix')
-  write.csv(post_bh_chm_eca_npgo,here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc_trial_2.csv'))
-
-} else {
-  bh_chm_eca_npgo <- mbh$sample(data=dl_chm_eca_npgo,
-                              chains = 6,
-                              iter_warmup = 200,
-                              iter_sampling =500,
-                              refresh = 100,
-                              adapt_delta = 0.95,
-                              max_treedepth = 20)
-
-  write.csv(bh_chm_eca_npgo$summary(),here("stan models","outs","summary","bh_chm_eca_npgo_ersst_cc_2.csv"))
-  bh_chm_eca_npgo$save_object(here("stan models","outs","fits","bh_chm_eca_npgo_ersst_cc_2.RDS"))
-
-  post_bh_chm_eca_npgo=bh_chm_eca_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
-                                                         'b_npgo','b_npgo_cu','b_npgo_rv',
-                                                         'b_sst','b_sst_cu','b_sst_rv',
-                                                         'alpha_j','Rk','sigma'),format='draws_matrix')
-  write.csv(post_bh_chm_eca_npgo,here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc_2.csv'))
-
+if(subset){
+  
+  print("eca subset")
+  
+  if(Sys.info()[7] == "mariakur") {
+    print("Running on local machine")
+    bh_chm_eca_npgo <- mbh$sample(data=dl_chm_eca_npgo,
+                                  chains = 1,
+                                  iter_warmup = 20,
+                                  iter_sampling =50,
+                                  refresh = 10,
+                                  adapt_delta = 0.95,
+                                  max_treedepth = 20)
+    write.csv(bh_chm_eca_npgo$summary(),'./stan models/outs/summary/bh_chm_eca_npgo_ersst_cc_trial_subset.csv')
+    bh_chm_eca_npgo$save_object('./stan models/outs/fits/bh_chm_eca_npgo_ersst_cc_trial_subset.RDS')
+    
+    post_bh_chm_eca_npgo=bh_chm_eca_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
+                                                           'b_npgo','b_npgo_cu','b_npgo_rv',
+                                                           'b_sst','b_sst_cu','b_sst_rv',
+                                                           'alpha_j','Rk','sigma'),format='draws_matrix')
+    write.csv(post_bh_chm_eca_npgo,here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc_trial_subset.csv'))
+    
+  } else {
+    bh_chm_eca_npgo <- mbh$sample(data=dl_chm_eca_npgo,
+                                  chains = 6,
+                                  iter_warmup = 200,
+                                  iter_sampling =500,
+                                  refresh = 100,
+                                  adapt_delta = 0.95,
+                                  max_treedepth = 20)
+    
+    write.csv(bh_chm_eca_npgo$summary(),here("stan models","outs","summary","bh_chm_eca_npgo_ersst_cc_subset.csv"))
+    bh_chm_eca_npgo$save_object(here("stan models","outs","fits","bh_chm_eca_npgo_ersst_cc_subset.RDS"))
+    
+    post_bh_chm_eca_npgo=bh_chm_eca_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
+                                                           'b_npgo','b_npgo_cu','b_npgo_rv',
+                                                           'b_sst','b_sst_cu','b_sst_rv',
+                                                           'alpha_j','Rk','sigma'),format='draws_matrix')
+    write.csv(post_bh_chm_eca_npgo,here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc_subset.csv'))
+    
+  }
+  
+  print("cpd subset")
+  
+  if(Sys.info()[7] == "mariakur") {
+    print("Running on local machine")
+    bh_chm_cpd_npgo <- mbh$sample(data=dl_chm_cpd_npgo,
+                                  chains = 1, 
+                                  iter_warmup = 20,
+                                  iter_sampling =50,
+                                  refresh = 10,
+                                  adapt_delta = 0.95,
+                                  max_treedepth = 20)
+    write.csv(bh_chm_cpd_npgo$summary(),'./stan models/outs/summary/bh_chm_cpd_npgo_ersst_cc_trial_subset.csv')
+    bh_chm_cpd_npgo$save_object('./stan models/outs/fits/bh_chm_cpd_npgo_ersst_cc_trial_subset.RDS')
+    
+    post_bh_chm_cpd_npgo=bh_chm_cpd_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
+                                                           'b_npgo','b_npgo_cu','b_npgo_rv',
+                                                           'b_sst','b_sst_cu','b_sst_rv',
+                                                           'alpha_j','Rk','sigma'),format='draws_matrix')
+    write.csv(post_bh_chm_cpd_npgo,here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc_trial_subset.csv'))
+    
+  } else {
+    bh_chm_cpd_npgo <- mbh$sample(data=dl_chm_cpd_npgo,
+                                  chains = 6, 
+                                  iter_warmup = 200,
+                                  iter_sampling =500,
+                                  refresh = 100,
+                                  adapt_delta = 0.95,
+                                  max_treedepth = 20)
+    
+    write.csv(bh_chm_cpd_npgo$summary(),here("stan models","outs","summary","bh_chm_cpd_npgo_ersst_cc_subset.csv"))
+    bh_chm_cpd_npgo$save_object(here("stan models","outs","fits","bh_chm_cpd_npgo_ersst_cc_subset.RDS"))
+    
+    post_bh_chm_cpd_npgo=bh_chm_cpd_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
+                                                           'b_npgo','b_npgo_cu','b_npgo_rv',
+                                                           'b_sst','b_sst_cu','b_sst_rv',
+                                                           'alpha_j','Rk','sigma'),format='draws_matrix')
+    write.csv(post_bh_chm_cpd_npgo,here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc_subset.csv'))
+    
+  }
+  
+  
+  
+} else{
+  
+  print("eca")
+  
+  if(Sys.info()[7] == "mariakur") {
+    print("Running on local machine")
+    bh_chm_eca_npgo <- mbh$sample(data=dl_chm_eca_npgo,
+                                  chains = 1,
+                                  iter_warmup = 20,
+                                  iter_sampling =50,
+                                  refresh = 10,
+                                  adapt_delta = 0.95,
+                                  max_treedepth = 20)
+    write.csv(bh_chm_eca_npgo$summary(),'./stan models/outs/summary/bh_chm_eca_npgo_ersst_cc_trial_2.csv')
+    bh_chm_eca_npgo$save_object('./stan models/outs/fits/bh_chm_eca_npgo_ersst_cc_trial_2.RDS')
+    
+    post_bh_chm_eca_npgo=bh_chm_eca_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
+                                                           'b_npgo','b_npgo_cu','b_npgo_rv',
+                                                           'b_sst','b_sst_cu','b_sst_rv',
+                                                           'alpha_j','Rk','sigma'),format='draws_matrix')
+    write.csv(post_bh_chm_eca_npgo,here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc_trial_2.csv'))
+    
+  } else {
+    bh_chm_eca_npgo <- mbh$sample(data=dl_chm_eca_npgo,
+                                  chains = 6,
+                                  iter_warmup = 200,
+                                  iter_sampling =500,
+                                  refresh = 100,
+                                  adapt_delta = 0.95,
+                                  max_treedepth = 20)
+    
+    write.csv(bh_chm_eca_npgo$summary(),here("stan models","outs","summary","bh_chm_eca_npgo_ersst_cc_2.csv"))
+    bh_chm_eca_npgo$save_object(here("stan models","outs","fits","bh_chm_eca_npgo_ersst_cc_2.RDS"))
+    
+    post_bh_chm_eca_npgo=bh_chm_eca_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
+                                                           'b_npgo','b_npgo_cu','b_npgo_rv',
+                                                           'b_sst','b_sst_cu','b_sst_rv',
+                                                           'alpha_j','Rk','sigma'),format='draws_matrix')
+    write.csv(post_bh_chm_eca_npgo,here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc_2.csv'))
+    
+  }
+  
+  print("cpd")
+  
+  if(Sys.info()[7] == "mariakur") {
+    print("Running on local machine")
+    bh_chm_cpd_npgo <- mbh$sample(data=dl_chm_cpd_npgo,
+                                  chains = 1, 
+                                  iter_warmup = 20,
+                                  iter_sampling =50,
+                                  refresh = 10,
+                                  adapt_delta = 0.95,
+                                  max_treedepth = 20)
+    write.csv(bh_chm_cpd_npgo$summary(),'./stan models/outs/summary/bh_chm_cpd_npgo_ersst_cc_trial_2.csv')
+    bh_chm_cpd_npgo$save_object('./stan models/outs/fits/bh_chm_cpd_npgo_ersst_cc_trial_2.RDS')
+    
+    post_bh_chm_cpd_npgo=bh_chm_cpd_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
+                                                           'b_npgo','b_npgo_cu','b_npgo_rv',
+                                                           'b_sst','b_sst_cu','b_sst_rv',
+                                                           'alpha_j','Rk','sigma'),format='draws_matrix')
+    write.csv(post_bh_chm_cpd_npgo,here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc_trial_2.csv'))
+    
+  } else {
+    bh_chm_cpd_npgo <- mbh$sample(data=dl_chm_cpd_npgo,
+                                  chains = 6, 
+                                  iter_warmup = 200,
+                                  iter_sampling =500,
+                                  refresh = 100,
+                                  adapt_delta = 0.95,
+                                  max_treedepth = 20)
+    
+    write.csv(bh_chm_cpd_npgo$summary(),here("stan models","outs","summary","bh_chm_cpd_npgo_ersst_cc_2.csv"))
+    bh_chm_cpd_npgo$save_object(here("stan models","outs","fits","bh_chm_cpd_npgo_ersst_cc_2.RDS"))
+    
+    post_bh_chm_cpd_npgo=bh_chm_cpd_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
+                                                           'b_npgo','b_npgo_cu','b_npgo_rv',
+                                                           'b_sst','b_sst_cu','b_sst_rv',
+                                                           'alpha_j','Rk','sigma'),format='draws_matrix')
+    write.csv(post_bh_chm_cpd_npgo,here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc_2.csv'))
+    
+  }
+  
+  
+  
 }
-
-print("cpd")
-
-if(Sys.info()[7] == "mariakur") {
-  print("Running on local machine")
-  bh_chm_cpd_npgo <- mbh$sample(data=dl_chm_cpd_npgo,
-                              chains = 1, 
-                              iter_warmup = 20,
-                              iter_sampling =50,
-                              refresh = 10,
-                              adapt_delta = 0.95,
-                              max_treedepth = 20)
-  write.csv(bh_chm_cpd_npgo$summary(),'./stan models/outs/summary/bh_chm_cpd_npgo_ersst_cc_trial_2.csv')
-  bh_chm_cpd_npgo$save_object('./stan models/outs/fits/bh_chm_cpd_npgo_ersst_cc_trial_2.RDS')
-  
-  post_bh_chm_cpd_npgo=bh_chm_cpd_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
-                                                         'b_npgo','b_npgo_cu','b_npgo_rv',
-                                                         'b_sst','b_sst_cu','b_sst_rv',
-                                                         'alpha_j','Rk','sigma'),format='draws_matrix')
-  write.csv(post_bh_chm_cpd_npgo,here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc_trial_2.csv'))
-  
-} else {
-  bh_chm_cpd_npgo <- mbh$sample(data=dl_chm_cpd_npgo,
-                              chains = 6, 
-                              iter_warmup = 200,
-                              iter_sampling =500,
-                              refresh = 100,
-                              adapt_delta = 0.95,
-                              max_treedepth = 20)
-  
-  write.csv(bh_chm_cpd_npgo$summary(),here("stan models","outs","summary","bh_chm_cpd_npgo_ersst_cc_2.csv"))
-  bh_chm_cpd_npgo$save_object(here("stan models","outs","fits","bh_chm_cpd_npgo_ersst_cc_2.RDS"))
-  
-  post_bh_chm_cpd_npgo=bh_chm_cpd_npgo$draws(variables=c('b_for','b_for_cu','b_for_rv',
-                                                         'b_npgo','b_npgo_cu','b_npgo_rv',
-                                                         'b_sst','b_sst_cu','b_sst_rv',
-                                                         'alpha_j','Rk','sigma'),format='draws_matrix')
-  write.csv(post_bh_chm_cpd_npgo,here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc_2.csv'))
-  
-}
-
-

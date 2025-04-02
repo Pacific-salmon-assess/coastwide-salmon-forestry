@@ -965,10 +965,10 @@ ric_chm_cpd_st_cc = read.csv(here('stan models','outs','posterior','ric_chm_cpd_
 
 ric_chm_eca_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc2.csv'),check.names=F)
 
-ric_chm_cpd_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc2.csv'),check.names=F)
+ric_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_ersst_cc.csv'),check.names=F)
 
 ((plot_forestry_effect(posterior = ric_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "Ricker model with CPD", xlim = c(-3,3)) +
-    plot_forestry_effect(posterior = ric_chm_eca_st_cc, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = ric_chm_eca_st_cc, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-3,3)))/(plot_forestry_effect(posterior = ric_chm_cpd_ersst_cc, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-3,3)) +
     plot_forestry_effect(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
 
 
@@ -977,6 +977,8 @@ ric_chm_cpd_ersst_cc2 = read.csv(here('stan models','outs','posterior','ric_chm_
 
 
 ```
+
+
 
 ## Beverton-Holt (BH):
 
@@ -1262,6 +1264,367 @@ plot_capacity_decline <- function(posterior = bh_chm_cpd_ersst_correct, effect =
 
 
 ```
+
+## Spawner Recruit curves
+
+```{r fig.width=10, fig.height=8}
+plot_recruit_spawner <- function(data, species = "chum", river, river_data,  posterior, posterior_bh, posterior_cc, posterior_bh_cc){
+  
+  # river_data <- df %>% filter(River_n == river)
+  
+  
+  
+  if(species == "chum"){
+    posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_rv_S_max <- posterior %>% 
+      select(starts_with('Smax')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_cc_rv_b_for <- posterior_cc %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_cc_rv_alpha_j <- posterior_cc %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_cc_rv_k <- posterior_cc %>%
+      select(starts_with('K')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    #bh
+    
+    posterior_bh_rv_b_for <- posterior_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_alpha_j <- posterior_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_Rk <- posterior_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_cc_rv_b_for <- posterior_bh_cc %>%
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_cc_rv_alpha_j <- posterior_bh_cc %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_cc_rv_k <- posterior_bh_cc %>%
+      select(starts_with('K')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    
+  } else if(species == "pink"){
+    
+    river_wo_broodline <- river_data$River_n
+    river_w_broodline <- river_data$River_n2
+    
+    posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_rv_S_max <- posterior %>% 
+      select(starts_with('Smax')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    
+    
+    #bh
+    
+    posterior_bh_rv_b_for <- posterior_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_bh_rv_alpha_j <- posterior_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_bh_rv_Rk <- posterior_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    
+    
+  }
+ 
+    
+    spawners_predicted <- seq(0, max(river_data$Spawners), length.out = 100)
+    
+    # calculate recruit prediction
+    
+    low_cpd <- min(river_data$sqrt.CPD.std)
+    high_cpd <- max(river_data$sqrt.CPD.std)
+    # avg_cpd <- mean(river_data$sqrt.CPD.std)
+    mid_cpd <- min(river_data$sqrt.CPD.std) + (max(river_data$sqrt.CPD.std) - min(river_data$sqrt.CPD.std))/2
+    
+    mid_cpd_real <- min(river_data$disturbedarea_prct_cs) + (max(river_data$disturbedarea_prct_cs) - min(river_data$disturbedarea_prct_cs))/2
+    
+    recruits_predicted <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - 
+                                       as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+    
+    recruits_predicted_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted), 2, quantile, c(0.025)))*spawners_predicted
+    
+    recruits_predicted_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted), 2, quantile, c(0.975)))*spawners_predicted
+                          
+    
+    
+    # if(low_cpd == high_cpd){
+    #   scale_color <- scale_color_manual(name = 'CPD in River (%)', values = c("black"))
+    #   
+    # } else{
+    #    scale_color <- scale_color_gradient2(name = 'CPD in River (%)',
+    #                                     low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    # }
+    
+    
+    recruits_predicted_low_cpd <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+    
+    recruits_predicted_high_cpd <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+    
+    #make dataframe
+    
+    prediction_df <- data.frame(spawners = spawners_predicted,
+                                recruits = recruits_predicted,
+                                recruits_lower = recruits_predicted_lower,
+                                recruits_upper = recruits_predicted_upper,
+                                recruits_low_cpd = recruits_predicted_low_cpd,
+                                recruits_high_cpd = recruits_predicted_high_cpd,
+                                log_RS = log(recruits_predicted/spawners_predicted))
+    
+    
+    
+    
+    # recruits_bh_predicted <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+    
+    recruits_bh_predicted <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1] + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+      
+    recruits_bh_predicted_lower <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1] + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
+                                       
+                                    
+    recruits_bh_predicted_upper <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1]+matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
+    
+    
+    recruits_bh_predicted_low_cpd <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1]+matrix(posterior_bh_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+    
+    recruits_bh_predicted_high_cpd <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1]+matrix(posterior_bh_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+                                         
+          
+    
+    
+      
+    prediction_bh_df <- data.frame(spawners = spawners_predicted,
+                                recruits = recruits_bh_predicted,
+                                recruits_lower = recruits_bh_predicted_lower,
+                                recruits_upper = recruits_bh_predicted_upper,
+                                recruits_low_cpd = recruits_bh_predicted_low_cpd,
+                                recruits_high_cpd = recruits_bh_predicted_high_cpd,
+                                log_RS = log(recruits_bh_predicted/spawners_predicted))
+      
+  
+  
+    #plot the time varying productivity vs year, with log(R/S) data
+    
+    
+    
+    
+    
+    #plot recruit vs spawner as points
+    
+    p1 <- ggplot() +
+      geom_point(data = river_data,aes(x = Spawners, y = Recruits, color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+      geom_line(data = prediction_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_df, aes(x = spawners, y = recruits), color = "black", size = 1, alpha = 0.5) +
+      geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_lower, ymax = recruits_upper), fill = "gray", alpha = 0.5) +
+      #make y log scale
+      # scale_y_log10() +
+      labs(title = "Ricker model with CPD, NPGO, ERSST", x = "Spawners", y = "Recruits") +
+      # scale_color_manual(name = "CPD", values = c("Low" = '#35978f', "High" = '#bf812d')) +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
+      theme_classic() +
+      theme(legend.position = "right",
+            legend.key.width = unit(0.5, "cm"),
+            legend.key.height = unit(1, "lines"),
+            legend.text = element_text(size = 7),
+            legend.spacing.y = unit(0.001, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 12),
+            axis.text.y = element_text(size = 12),
+            plot.title = element_text(size = 16, hjust = 0.5)
+            )
+    
+    p2 <- ggplot(river_data) +
+      geom_point(aes(x = Spawners, y = Recruits, color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+      #make y log scale
+      # scale_y_log10() +
+      
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = recruits), color = "black", size = 1, alpha = 0.5) +
+      geom_ribbon(data = prediction_bh_df, aes(x = spawners, ymin = recruits_lower, ymax = recruits_upper), fill = "gray", alpha = 0.5) +
+      
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
+      labs(title = "BH model with CPD, NPGO, ERSST", x = "Spawners", y = "Recruits") +
+      theme_classic() +
+      theme(legend.position = "right",
+            legend.key.width = unit(0.5, "cm"),
+            legend.key.height = unit(1, "lines"),
+            legend.text = element_text(size = 7),
+            legend.spacing.y = unit(0.001, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 12),
+            axis.text.y = element_text(size = 12),
+            plot.title = element_text(size = 16, hjust = 0.5)
+            )
+    
+    # p3 log R/s vs spawners
+    
+    p3 <- ggplot(river_data) + 
+      geom_point(aes(x = Spawners, y = log(Recruits/Spawners), color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+      geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_low_cpd/spawners_predicted)), color = '#35978f', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_high_cpd/spawners_predicted)), color = '#bf812d', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_df, aes(x = spawners, y = log_RS), color = "black", size = 1, alpha = 0.5) +
+      geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_lower/spawners_predicted), ymax = log(recruits_predicted_upper/spawners_predicted)), fill = "gray", alpha = 0.5) +
+      labs(#title = "Ricker model with CPD, NPGO, ERSST", 
+           x = "Spawners", y = TeX(r"($\log \left(\frac{Recruits}{Spawners}\right)$)")) +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
+      theme_classic() +
+      theme(legend.position = "right",
+            legend.key.width = unit(0.5, "cm"),
+            legend.key.height = unit(1, "lines"),
+            legend.text = element_text(size = 7),
+            legend.spacing.y = unit(0.001, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 12),
+            axis.text.y = element_text(size = 12),
+            plot.title = element_text(size = 16, hjust = 0.5)
+            )
+    
+    p4 <- ggplot(river_data) + 
+      geom_point(aes(x = Spawners, y = log(Recruits/Spawners), color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = log(recruits_bh_predicted_low_cpd/spawners_predicted)), color = '#35978f', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = log(recruits_bh_predicted_high_cpd/spawners_predicted)), color = '#bf812d', size = 1, alpha = 0.5) +
+      geom_line(data = prediction_bh_df, aes(x = spawners, y = log_RS), color = "black", size = 1, alpha = 0.5) +
+      geom_ribbon(data = prediction_bh_df, aes(x = spawners, ymin = log(recruits_bh_predicted_lower/spawners_predicted), ymax = log(recruits_bh_predicted_upper/spawners_predicted)), fill = "gray", alpha = 0.5) +
+      labs(#title = "BH model with CPD, NPGO, ERSST", 
+           x = "Spawners", y = TeX(r"($\log \left(\frac{Recruits}{Spawners}\right)$)")) +
+             # "log(Recruits/Spawners)") +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
+      theme_classic() +
+      theme(legend.position = "right",
+            legend.key.width = unit(0.5, "cm"),
+            legend.key.height = unit(1, "lines"),
+            legend.text = element_text(size = 7),
+            legend.spacing.y = unit(0.001, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 12),
+            axis.text.y = element_text(size = 12),
+            plot.title = element_text(size = 16, hjust = 0.5)
+            )
+    
+    
+    # p5 residuals of ricker model vs predicted values of ricker model
+    
+    residual_df <- data.frame(spawners = river_data$Spawners,
+                              recruits = river_data$Recruits,
+                              observed_log_RS = river_data$ln_RS,
+                              predicted_log_RS = apply((matrix(posterior_rv_alpha_j[,1], ncol = length(river_data$Spawners), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%river_data$Spawners), 2, median),
+                              cpd = river_data$disturbedarea_prct_cs
+    )
+    
+    residual_df$residuals <- residual_df$observed_log_RS - residual_df$predicted_log_RS
+    
+    p5 <- ggplot(residual_df)+
+      geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.5, size = 2) +
+      geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+      labs(#title = "Ricker model with CPD, NPGO, ERSST", 
+        x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), 
+        y = "Residuals") +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
+      theme_classic() +
+      theme(legend.position = "right",
+            legend.key.width = unit(0.5, "cm"),
+            legend.key.height = unit(1, "lines"),
+            legend.text = element_text(size = 7),
+            legend.spacing.y = unit(0.001, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 12),
+            axis.text.y = element_text(size = 12),
+            plot.title = element_text(size = 16, hjust = 0.5)
+            )
+    
+    residual_bh_df <- data.frame(spawners = river_data$Spawners,
+                              recruits = river_data$Recruits,
+                              observed_log_RS = river_data$ln_RS,
+                              predicted_log_RS = apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(river_data$Spawners), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%river_data$Spawners)), 2, median),
+                              cpd = river_data$disturbedarea_prct_cs
+    )
+    
+    residual_bh_df$residuals <- residual_bh_df$observed_log_RS - residual_bh_df$predicted_log_RS
+    
+    p6 <- ggplot(residual_bh_df)+
+      geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.5, size = 2) +
+      geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+      labs(#title = "BH model with CPD, NPGO, ERSST", 
+           x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+      scale_color_gradient2(name = 'CPD in River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
+      theme_classic() +
+      theme(legend.position = "right",
+            legend.key.width = unit(0.5, "cm"),
+            legend.key.height = unit(1, "lines"),
+            legend.text = element_text(size = 7),
+            legend.spacing.y = unit(0.001, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 12),
+            axis.text.y = element_text(size = 12),
+            plot.title = element_text(size = 16, hjust = 0.5)
+            )
+    
+    
+    
+    
+    
+    print((p1+p2)/(p3+p4)/(p5+p6) + plot_layout(guides = "collect", heights = c(3,2,1)))
+    cat('\n')
+  
+    
+    
+  return()
+}
+  
+```
+
+
+
+
 
 
 # Pink Salmon
