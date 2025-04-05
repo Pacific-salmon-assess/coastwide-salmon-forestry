@@ -205,16 +205,16 @@ mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
 # generic
 
-posterior <- read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_ersst_cc_ad95.csv'))
+posterior <- read.csv(here('stan models','outs','posterior','bh_chm_eca_static_K_trial.csv'))
 
-mcmc_trace(posterior[1:500,], pars = c('b_for'))
-mcmc_trace(posterior[501:1000,], pars = c('b_for'))
+mcmc_trace(posterior[1:50,], pars = c('b_for'))
+mcmc_trace(posterior[51:100,], pars = c('b_for'))
 mcmc_trace(posterior[1001:1500,], pars = c('b_for'))
 mcmc_trace(posterior[1501:2000,], pars = c('b_for'))
 mcmc_trace(posterior[2001:2500,], pars = c('b_for'))
 mcmc_trace(posterior[2501:3000,], pars = c('b_for'))
 
-summary <- read.csv(here('stan models','outs','summary','ric_chm_eca_npgo_ersst_cc_ad95.csv'))
+summary <- read.csv(here('stan models','outs','summary','bh_chm_eca_static_K_trial.csv'))
 
 summary %>% 
   select(variable, rhat, mean) %>% 
@@ -225,5 +225,17 @@ summary %>%
 #very high rhat - cnanot use this posterior ric_chm_eca_npgo_ersst_cc.csv,ric_chm_cpd_npgo_ersst_cc_ad95.csv,ric_chm_eca_npgo_ersst_cc_ad95.csv
 
 
+# look at the mean alpha values in the summary of the ricker models
 
+summary <- read.csv(here('stan models','outs','summary','ric_chm_eca_static_cc.csv'))
+
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "alpha_j"))
+
+summary <- read.csv(here('stan models','outs','summary','bh_chm_eca_static_K_trial.csv'))
+
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "b_for"))
 

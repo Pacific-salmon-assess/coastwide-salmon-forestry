@@ -959,6 +959,7 @@ $K_{t,r} = K_r e^{\beta_{forestry,r}Forestry_{t,r}}$
 ```{r fig.width=10, fig.height=6}
 
 ric_chm_eca_st_cc = read.csv(here('stan models','outs','posterior','ric_chm_eca_static_cc.csv'),check.names=F)
+#has one divergent chain - need to run again
 
 ric_chm_cpd_st_cc = read.csv(here('stan models','outs','posterior','ric_chm_cpd_static_cc.csv'),check.names=F)
 
@@ -1020,13 +1021,18 @@ bh_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd
 
 # _2 because initially I didnt have npgo and SST only effecting productivity, but now I do 
 
-bh_chm_eca_noac_cc = read.csv(here('stan models','outs','posterior','bh_chm_eca_noac_cc.csv'),check.names=F)
-bh_chm_cpd_noac_cc = read.csv(here('stan models','outs','posterior','bh_chm_cpd_noac_cc.csv'),check.names=F)
+bh_chm_eca_ersst_cc_subset = read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_ersst_cc_subset.csv'),check.names=F)
+bh_chm_cpd_ersst_cc_subset = read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_ersst_cc_subset.csv'),check.names=F)
 
 ((plot_forestry_effect(posterior = bh_chm_cpd_st_cc, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-2,2)) +
     plot_forestry_effect(posterior = bh_chm_eca_st_cc, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-2,2)))/(plot_forestry_effect(posterior = bh_chm_cpd_cc, effect = "cpd", species = "chum", model = "BH model with CPD,\ncoastwide productivity", xlim = c(-2,2)) +
     plot_forestry_effect(posterior = bh_chm_eca_cc, effect = "eca", species = "chum", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-2,2)))/(plot_forestry_effect(posterior = bh_chm_cpd_ersst_cc, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-2,2)) +
     plot_forestry_effect(posterior = bh_chm_eca_ersst_cc, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-2,2))) + plot_layout(guides = "collect"))
+
+
+(plot_forestry_effect(posterior = bh_chm_cpd_ersst_cc_subset, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-2,2)) +
+    plot_forestry_effect(posterior = bh_chm_eca_ersst_cc_subset, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-2,2)))/(plot_forestry_effect(posterior = bh_chm_cpd_ersst_cc, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-2,2)) +
+    plot_forestry_effect(posterior = bh_chm_eca_ersst_cc, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-2,2))) + plot_layout(guides = "collect")
 
 ```
 
@@ -1260,7 +1266,7 @@ plot_capacity_decline <- function(posterior = bh_chm_cpd_ersst_correct, effect =
 }
   
 
-(plot_capacity_decline(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST") + plot_capacity_decline(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST"))/(plot_capacity_decline(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST") + plot_capacity_decline(posterior = bh_chm_eca_ersst_correct, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST")) + plot_layout(guides = "collect")
+(plot_capacity_decline(posterior = ric_chm_cpd_ersst_cc2, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST") + plot_capacity_decline(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST"))/(plot_capacity_decline(posterior = bh_chm_cpd_ersst_cc, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST") + plot_capacity_decline(posterior = bh_chm_eca_ersst_cc, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST")) + plot_layout(guides = "collect")
 
 
 ```
@@ -1321,8 +1327,8 @@ plot_recruit_spawner <- function(data, species = "chum", river, river_data,  pos
       select(starts_with('alpha_j')) %>%
       select(ends_with(paste0("[",river,"]")))
     
-    posterior_bh_cc_rv_k <- posterior_bh_cc %>%
-      select(starts_with('K')) %>%
+    posterior_bh_cc_rv_Rk <- posterior_bh_cc %>%
+      select(starts_with('Rk')) %>%
       select(ends_with(paste0("[",river,"]")))
     
     
@@ -1415,15 +1421,16 @@ plot_recruit_spawner <- function(data, species = "chum", river, river_data,  pos
     recruits_bh_predicted <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1] + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
       
     recruits_bh_predicted_lower <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1] + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
-                                       
                                     
     recruits_bh_predicted_upper <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1]+matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
-    
     
     recruits_bh_predicted_low_cpd <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1]+matrix(posterior_bh_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
     
     recruits_bh_predicted_high_cpd <- exp(apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1]+matrix(posterior_bh_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1])))/posterior_bh_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_rv_alpha_j[,1]))), 2, median))*spawners_predicted
-                                         
+    
+    posterior_bh_cc_rv_Rk_for <- posterior_bh_cc_rv_Rk*exp(posterior_bh_cc_rv_b_for[,1]*mid_cpd)
+    
+    recruits_bh_cc_predicted <- (matrix(posterior_bh_cc_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_bh_cc_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_cc_rv_alpha_j[,1] + matrix(posterior_bh_cc_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_cc_rv_alpha_j[,1])))/posterior_bh_cc_rv_Rk)%*%spawners_predicted) + matrix(posterior_bh_cc_rv_b_for[,1]*mid_cpd, ncol = length(spawners_predicted), nrow = length(posterior_bh_cc_rv_alpha_j[,1])))          
           
     
     
@@ -1620,6 +1627,62 @@ plot_recruit_spawner <- function(data, species = "chum", river, river_data,  pos
   return()
 }
   
+
+species = "chum"
+if(species == "chum"){
+    df <- ch20rsc
+    posterior <- ric_chm_cpd_ersst
+  
+    posterior_bh <- bh_chm_cpd_ersst_correct
+    
+    posterior_cc <- ric_chm_cpd_ersst_cc2
+    
+    posterior_bh_cc <- bh_chm_cpd_ersst_cc
+    
+    
+    
+    rivers <- unique(df$River_n)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    
+    posterior <- ric_pk_cpd_ersst
+    
+    posterior_bh <- bh_pk_cpd_ersst
+    
+    
+    
+    rivers <- unique(df$River_n2)
+  }
+  
+for(river in rivers){
+
+  if(species == "chum"){
+    river_data <- df %>% filter(River_n == river)
+    cat('\n')
+    cat("### ", river_data$River[1], "\n")
+  } else if(species == "pink"){
+    river_data <- df %>% filter(River_n2 == river)
+    cat('\n')
+    cat("### ", river_data$River2[1], "\n")
+  }
+  # river_data_even <- river_data %>% filter(Broodline=='Even')
+  # river_data_odd <- river_data %>% filter(Broodline=='Odd')
+
+
+  plot_recruit_spawner(data = df, species = species, river = river, river_data, posterior = posterior, posterior_bh = posterior_bh, 
+                       posterior_a_t = posterior_a_t, posterior_a_t_bh = posterior_a_t_bh)
+}
+
+# posterior <- ric_chm_cpd_ersst
+# posterior_bh <- bh_chm_cpd_st_correct
+# 
+river = 52
+river_data <- ch20rsc %>% filter(River_n == river)
+plot_recruit_spawner(df, species = "chum", river, river_data, posterior = ric_chm_cpd_ersst, posterior_bh = bh_chm_cpd_ersst_correct, posterior_cc, posterior_bh_cc)
+  
+
+
 ```
 
 

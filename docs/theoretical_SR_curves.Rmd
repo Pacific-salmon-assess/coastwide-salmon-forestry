@@ -1,0 +1,481 @@
+---
+title: "Theoretical Spawner Recruit Curves"
+author: 'Maria Kuruvilla'
+date: "April 2025"
+output:
+  html_document:
+    collapsed: false
+    fig_caption: true
+    highlight: espresso
+    number_sections: true
+    smooth_scroll: true
+    theme: sandstone
+    toc: true
+    toc_float: true
+  pdf_document:
+    toc: true
+  word_document:
+    toc: true
+---
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=FALSE)
+options(max.print=23)
+library(cmdstanr)
+library(here);library(dplyr); library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(bayesplot)
+library(patchwork)
+library(hues)
+library(GGally)
+library(latex2exp)
+library(ggforce)
+```
+
+
+# Model
+
+## Beverton-Holt (BH):
+
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_t+\alpha_r + \beta_{forestry,r}*Forestry_{t,r} }}{R_{k,r}})*S_{t,r}) + \beta_{forestry,r}*Forestry_{t,r} + \rho \epsilon_{t-1,r}$
+
+```{r bh}
+
+bh_alpha <- function(St, alpha, beta, Rk, Forestry){
+  log_Rt_St = alpha - log(1+(exp(alpha+beta*Forestry)/Rk)*St) + beta*Forestry
+  return(exp(log_Rt_St)*St)
+}
+
+St <- seq(0,1000,10)
+
+alpha <- 5
+beta <- -0.5
+Rk <- 10000
+Forestry <- c(-1,0,1)
+
+df <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df[[paste0("Rt_",Forestry[i])]] <- bh_alpha(St, alpha, beta, Rk, Forestry[i])
+}
+
+df_long <- df %>% 
+  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry))
+
+
+#plot Rt vs St
+
+df_long %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  #add 1 to 1 line
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed")+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry }}{R_{k}})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  theme_classic()
+
+
+
+```
+
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_r + \beta_{forestry,r}*Forestry_{t,r} } - 1 }{R_{k,r}})*S_{t,r}) + \beta_{forestry,r}*Forestry_{t,r} + \rho \epsilon_{t-1,r}$
+
+```{r bh_1}
+
+bh_alpha_1 <- function(St, alpha, beta, K, Forestry){
+  log_Rt_St = alpha - log(1+(exp(alpha+beta*Forestry) - 1)/K*St) + beta*Forestry
+  return(exp(log_Rt_St)*St)
+}
+
+St <- seq(0,1000,10)
+
+alpha <- 5
+beta <- -0.5
+K <- 10000*(alpha -1)/alpha
+Forestry <- c(-1,0,1)
+
+df_1 <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_1[[paste0("Rt_",Forestry[i])]] <- bh_alpha_1(St, alpha, beta, K, Forestry[i])
+}
+
+df_long_1 <- df_1 %>% 
+  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry))
+
+
+#plot Rt vs St
+
+df_long_1 %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry } -1}{K})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  theme_classic()
+
+```
+
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{(e^{\alpha_r} - 1)}{K_{t,r}}  S_{t,r}) + \rho\epsilon_{t-1,r}$
+
+
+$log(K_{t,r}) = log(K_r) + \beta_{forestry,r}Forestry_{t,r}$
+
+$K_{t,r} = K_r e^{\beta_{forestry,r}Forestry_{t,r}}$
+
+```{r bh_2}
+
+bh_alpha_2 <- function(St, alpha, beta, K, Forestry){
+  K_for = K*exp(beta*Forestry)
+  log_Rt_St = alpha - log(1+((exp(alpha) -1)/K_for)*St)
+  return(exp(log_Rt_St)*St)
+}
+
+St <- seq(0,1000,10)
+
+alpha <- 5
+beta <- -0.5
+K <- 10000*(alpha-1)/alpha
+Forestry <- c(-1,0,1)
+
+df_2 <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_2[[paste0("Rt_",Forestry[i])]] <- bh_alpha_2(St, alpha, beta, K, Forestry[i])
+}
+
+df_long_2 <- df_2 %>% 
+  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry))
+
+
+df_long_2 %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+\\frac{(e^{\\alpha} - 1)}{K e^{\\beta_{forestry} Forestry}} S) $"), size = 5)+
+  theme_classic()
+
+
+
+
+```
+
+
+
+
+## Ricker:
+
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}*Forestry_{t,r} + \epsilon_{t-1,r}$
+
+
+
+```{r ricker}
+
+ricker_alpha <- function(St, alpha, beta, Smax, Forestry){
+  log_Rt_St = alpha - St/Smax + beta*Forestry
+  return(exp(log_Rt_St)*St)
+}
+
+
+St <- seq(0,1000,10)
+
+alpha <- 1.1
+
+beta <- -0.5
+
+Smax <- 500
+
+Forestry <- c(-1,0,1)
+
+df_ricker <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_ricker[[paste0("Rt_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])
+}
+
+df_long_ricker <- df_ricker %>% 
+  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry))
+
+df_long_ricker %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  theme_classic()
+
+
+```
+
+
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{(\alpha_r + \beta_{forestry,r}*Forestry_{t,r} )S_{t,r}}{K} + \beta_{forestry,r}*Forestry_{t,r} + \epsilon_{t-1,r}$
+
+
+
+```{r ricker_1}
+
+ricker_alpha_1 <- function(St, alpha, beta, K, Forestry){
+  log_Rt_St = alpha - (alpha + beta*Forestry)*St/K + beta*Forestry
+  return(exp(log_Rt_St)*St)
+}
+
+
+St <- seq(0,1000,10)
+
+alpha <- 1.1
+
+beta <- -0.5
+
+K = 500*2
+
+Forestry <- c(-1,0,1)
+
+df_ricker_1 <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_ricker_1[[paste0("Rt_",Forestry[i])]] <- ricker_alpha_1(St, alpha, beta, K, Forestry[i])
+}
+
+df_long_ricker_1 <- df_ricker_1 %>% 
+  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry))
+
+df_long_ricker_1 %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{(\\alpha + \\beta_{forestry} Forestry)S}{K} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  theme_classic()
+
+
+
+```
+
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{(\alpha_r )S_{t,r}}{Ke^{\beta_{forestry,r}*Forestry_{t,r}}} + \epsilon_{t-1,r}$
+
+
+
+
+```{r ricker_2}
+
+ricker_alpha_2 <- function(St, alpha, beta, Smax, Forestry){
+  K_forestry = K*exp(beta*Forestry)
+  log_Rt_St = alpha - (alpha)*St/K_forestry
+  return(exp(log_Rt_St)*St)
+}
+
+
+St <- seq(0,1000,10)
+
+alpha <- 1.1
+
+beta <- -0.5
+
+K = 500
+
+Forestry <- c(-1,0,1)
+
+df_ricker_2 <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_ricker_2[[paste0("Rt_",Forestry[i])]] <- ricker_alpha_2(St, alpha, beta, K, Forestry[i])
+}
+
+df_long_ricker_2 <- df_ricker_2 %>% 
+  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry))
+
+df_long_ricker_2 %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 5)+
+  theme_classic()
+
+
+
+```
+
+
+
+
+
+## Ricker and Beverton-Holt model with the same $$\alpha$$
+
+
+```{r ricker_bh}
+
+
+St <- seq(0,1000,10)
+
+alpha <- 1
+
+beta <- -0.5
+
+K = 500
+
+Forestry <- c(-1,0,1)
+
+df_ricker_bh <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_ricker_bh[[paste0("Rt_ric_",Forestry[i])]] <- ricker_alpha_1(St, alpha, beta, K, Forestry[i])
+  df_ricker_bh[[paste0("Rt_bh_",Forestry[i])]] <- bh_alpha_1(St, alpha*2, beta, K, Forestry[i])
+}
+
+df_long_ricker_bh <- df_ricker_bh %>% 
+  pivot_longer(cols = -St, names_to = c("Model", "Forestry"), values_to = "Rt", names_sep = "_", names_prefix = "Rt_") %>%
+  mutate(Forestry = as.numeric(Forestry))
+
+
+df_long_ricker_bh %>%
+  # filter(Forestry == 0) %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, linetype = Model, color = Forestry, group = interaction(Model, Forestry)))+
+  geom_line(size = 1.5, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) +
+  scale_linetype_manual(name = 'Model', values = c("solid", "dashed"), labels = c("Beverton-Holt", "Ricker"))+
+  labs(title = "Ricker and Beverton-Holt Spawner Recruit Curve with the same K",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x = 500, y = 90, label = TeX("$R_{ricker} = \\alpha - \\frac{(\\alpha + \\beta_{forestry} Forestry)S}{K} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3.5)+
+  annotate("text", x = 500, y = 200, label = TeX("$R_{bh} = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry } -1}{K})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3.5)+
+  theme_classic()
+
+
+
+
+
+
+
+
+
+```
+
+
+## Ricker and Beverton-Holt model with the same $$\alpha$$
+
+```{r ricker_bh_1}
+
+St <- seq(0,1000,10)
+
+alpha <- 2
+
+beta <- -0.5
+
+K = 500
+
+Forestry <- c(-1,0,1)
+
+df_ricker_bh_1 <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_ricker_bh_1[[paste0("Rt_ric_",Forestry[i])]] <- ricker_alpha_1(St, alpha, beta, K, Forestry[i])
+  df_ricker_bh_1[[paste0("Rt_bh_",Forestry[i])]] <- bh_alpha_1(St, alpha, beta, K*2, Forestry[i])
+}
+
+df_long_ricker_bh_1 <- df_ricker_bh_1 %>% 
+  pivot_longer(cols = -St, names_to = c("Model", "Forestry"), values_to = "Rt", names_sep = "_", names_prefix = "Rt_") %>%
+  mutate(Forestry = as.numeric(Forestry))
+
+df_long_ricker_bh_1 %>%
+  
+  # filter(Forestry == 0) %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, linetype = Model, color = Forestry, group = interaction(Model, Forestry)))+
+  geom_line(size = 1.5, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) +
+  scale_linetype_manual(name = 'Model', values = c("solid", "dashed"), labels = c("Beverton-Holt", "Ricker"))+
+  labs(title = "Ricker and Beverton-Holt Spawner Recruit Curve with the same alpha",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  
+  annotate("text", x = 500, y = 90, label = TeX("$R_{ricker} = \\alpha - \\frac{(\\alpha + \\beta_{forestry} Forestry)S}{K} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3.5)+
+  annotate("text", x = 500, y = 200, label = TeX("$R_{bh} = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry } -1}{K})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3.5)+
+  theme_classic()
+
+
+
+```
+
+
+
+
