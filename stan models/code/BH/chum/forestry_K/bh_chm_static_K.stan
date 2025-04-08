@@ -103,7 +103,7 @@ transformed parameters{
 
 model{
   //priors
-  alpha0 ~ normal(1.5,1); //global intrinsic productivity for all stocks at time t=1;
+  alpha0 ~ normal(4,2); //global intrinsic productivity for all stocks at time t=1;
   z_a_cu ~ std_normal(); //std normal prior for CU-deviations
   z_a_rv ~ std_normal(); //std normal prior for River-deviations
     

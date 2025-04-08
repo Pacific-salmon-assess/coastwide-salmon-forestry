@@ -125,7 +125,7 @@ print("eca")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   bh_chm_eca <- mbh$sample(data=dl_chm_eca,
-                           chains = 2, 
+                           chains = 6, 
                            iter_warmup = 20,
                            iter_sampling =50,
                            refresh = 10,
