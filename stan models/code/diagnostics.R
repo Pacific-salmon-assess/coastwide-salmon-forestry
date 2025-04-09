@@ -205,7 +205,7 @@ mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
 # generic
 
-posterior <- read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_K.csv'))
+posterior <- read.csv(here('stan models','outs','posterior','ric_chm_cpd_static_alpha.csv'))
 
 mcmc_trace(posterior[1:500,], pars = c('b_for'))
 mcmc_trace(posterior[501:1000,], pars = c('b_for'))
@@ -214,11 +214,11 @@ mcmc_trace(posterior[1501:2000,], pars = c('b_for'))
 mcmc_trace(posterior[2001:2500,], pars = c('b_for'))
 mcmc_trace(posterior[2501:3000,], pars = c('b_for'))
 
-summary <- read.csv(here('stan models','outs','summary','bh_chm_cpd_static_K.csv'))
+summary <- read.csv(here('stan models','outs','summary','ric_chm_cpd_static_alpha.csv'))
 
 summary %>% 
   select(variable, rhat, mean) %>% 
-  filter(startsWith(variable, "alpha_j")) %>% 
+  # filter(startsWith(variable, "alpha_j")) %>% 
   filter(rhat > 1.011) %>% 
   #decresing rhat values
   arrange(rhat)

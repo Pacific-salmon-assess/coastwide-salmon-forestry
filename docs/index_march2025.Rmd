@@ -555,7 +555,7 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
 
 
 
-# Models with forestry effects on productivity
+# Models with forestry effects on the density independent term:
 
 
 ## Ricker:
@@ -600,6 +600,38 @@ ric_chm_cpd_ersst=read.csv(here('stan models','outs','posterior','ric_chm_cpd_np
 
 
 ```
+
+
+
+# Models with forestry effects on productivity:
+
+
+## Ricker:
+
+Model with static productivity, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_{t,r}*(1 - \frac{S_{t,r}}{Smax_r})  + \rho \epsilon_{t-1,r}$
+
+### Forestry effect on productivity
+
+$\alpha_{t,r}  = \alpha_{r}  + \beta_{forestry,r}Forestry_{t,r}$
+
+```{r fig.width=10, fig.height=3}
+
+ric_chm_eca_alpha=read.csv(here('stan models','outs','posterior','ric_chm_eca_static_alpha.csv'),check.names=F)
+ric_chm_cpd_alpha=read.csv(here('stan models','outs','posterior','ric_chm_cpd_static_alpha.csv'),check.names=F)
+
+
+(plot_forestry_effect(posterior = ric_chm_cpd_alpha, effect = "cpd", species = "chum", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_chm_eca_alpha, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
+
+
+```
+
+
+
+
+
 
 ## Beverton-Holt (BH):
 

@@ -54,7 +54,8 @@ parameters{
 transformed parameters{
   //estimated parameters
   vector[C] alpha_cu; //persistent CU-level differences in productivity
-  vector[J] alpha_j; //persistent river-level differences in productivity
+  vector[J] alpha_j; //persistent river-level differences in productivity]
+  vector[J] b; 
   vector[C] b_for_cu; //CU-specific forestry effect
   vector[J] b_for_rv; //River-specific forestry effect
   vector<lower=0>[C] cu_sigma; ///CU-level sigma
@@ -65,8 +66,6 @@ transformed parameters{
   vector[N] mu1; //initial expectation at each time for each stock
   vector[N] mu2; //autocorr. adjusted expectation at each time for each stock
   vector<lower=0>[N] K_for; //carrying capacity adjusted for forest loss - varying with time and river
-  vector[N] d_for; 
-  vector[N] s_k_for; // s/k
   vector[J] log_K; //log-transformed capacity - river speciifc
   vector[N] log_K_for; //log-transformed capacity adjusted for forest loss - varying with time and river
   
@@ -84,17 +83,14 @@ transformed parameters{
     log_K[j] = log(K[j]); //log transform the carrying capacity
     log_K_for[start_y[j]] = log_K[j] + b_for_rv[j]*forest_loss[start_y[j]]; //log transform the carrying capacity adjusted for forest loss
     K_for[start_y[j]]=exp(log_K_for[start_y[j]]); //convert back to linear scale
-    d_for[start_y[j]] = (exp(alpha_j[j]) )*(S[start_y[j]]/K_for[start_y[j]]);
-    s_k_for[start_y[j]] = (S[start_y[j]]/K_for[start_y[j]]);
-    mu1[start_y[j]]=alpha_j[j]-log(1+d_for[start_y[j]]-s_k_for[start_y[j]]); 
+    b[j] = exp(alpha_j[j]) - 1;
+    mu1[start_y[j]]=log(1+b[j])-log(1+(b[j]/K_for[start_y[j]])*S[start_y[j]]); 
     e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
     
     for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
       log_K_for[t]=log_K[j]+b_for_rv[j]*forest_loss[t]; //adjust recruitment capacity based on forest loss
       K_for[t]=exp(log_K_for[t]); //convert back to linear scale
-      d_for[t] = (exp(alpha_j[j]) )*(S[t]/K_for[t]);
-      s_k_for[t] = (S[t]/K_for[t]);
-      mu2[t]  = alpha_j[j]-log(1+d_for[t]- s_k_for[t])+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+      mu2[t]  = log(1+b[j])-log(1+(b[j]/K_for[t])*S[t])+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
     }
   }
@@ -103,7 +99,7 @@ transformed parameters{
 
 model{
   //priors
-  alpha0 ~ normal(4,2); //global intrinsic productivity for all stocks at time t=1;
+  alpha0 ~ normal(1.5,2); //global intrinsic productivity for all stocks at time t=1;
   z_a_cu ~ std_normal(); //std normal prior for CU-deviations
   z_a_rv ~ std_normal(); //std normal prior for River-deviations
     

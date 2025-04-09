@@ -126,10 +126,16 @@ if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   bh_chm_eca <- mbh$sample(data=dl_chm_eca,
                            chains = 6, 
+                           init = list(list(alpha0 = 1), 
+                                        list(alpha0 = 1.5),
+                                        list(alpha0 = 2),
+                                        list(alpha0 = 2.5),
+                                        list(alpha0 = 3),
+                                        list(alpha0 = 3.5)),
                            iter_warmup = 20,
                            iter_sampling =50,
                            refresh = 10,
-                           adapt_delta = 0.999,
+                           adapt_delta = 0.95,
                            max_treedepth = 20)
   write.csv(bh_chm_eca$summary(),'./stan models/outs/summary/bh_chm_eca_static_K_trial.csv')
   bh_chm_eca$save_object('./stan models/outs/fits/bh_chm_eca_static_K_trial.RDS')
@@ -140,7 +146,13 @@ if(Sys.info()[7] == "mariakur") {
 } else {
   bh_chm_eca <- mbh$sample(data=dl_chm_eca,
                            chains = 6, 
-                           iter_warmup = 200,
+                           init = list(list(alpha0 = 1), 
+                                       list(alpha0 = 1.5),
+                                       list(alpha0 = 2),
+                                       list(alpha0 = 2.5),
+                                       list(alpha0 = 3),
+                                       list(alpha0 = 3.5)),
+                           iter_warmup = 400,
                            iter_sampling =500,
                            refresh = 100,
                            adapt_delta = 0.999,
@@ -174,7 +186,13 @@ if(Sys.info()[7] == "mariakur") {
 } else {
   bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
                            chains = 6, 
-                           iter_warmup = 200,
+                           init = list(list(alpha0 = 1), 
+                                       list(alpha0 = 1.5),
+                                       list(alpha0 = 2),
+                                       list(alpha0 = 2.5),
+                                       list(alpha0 = 3),
+                                       list(alpha0 = 3.5)),
+                           iter_warmup = 400,
                            iter_sampling =500,
                            refresh = 100,
                            adapt_delta = 0.999,
