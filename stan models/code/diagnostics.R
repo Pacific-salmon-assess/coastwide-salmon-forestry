@@ -204,8 +204,9 @@ ric_chm_cpd_cc_summary %>%
 mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
 # generic
+file <- 'bh_chm_eca_static_K.csv'
 
-posterior <- read.csv(here('stan models','outs','posterior','ric_chm_cpd_static_alpha.csv'))
+posterior <- read.csv(here('stan models','outs','posterior',file))
 
 mcmc_trace(posterior[1:500,], pars = c('b_for'))
 mcmc_trace(posterior[501:1000,], pars = c('b_for'))
@@ -214,14 +215,27 @@ mcmc_trace(posterior[1501:2000,], pars = c('b_for'))
 mcmc_trace(posterior[2001:2500,], pars = c('b_for'))
 mcmc_trace(posterior[2501:3000,], pars = c('b_for'))
 
-summary <- read.csv(here('stan models','outs','summary','ric_chm_cpd_static_alpha.csv'))
+mcmc_trace(posterior[1:500,], pars = c('K.54.'))
+mcmc_trace(posterior[501:1000,], pars = c('b_for'))
+mcmc_trace(posterior[1001:1500,], pars = c('b_for'))
+mcmc_trace(posterior[1501:2000,], pars = c('b_for'))
+mcmc_trace(posterior[2001:2500,], pars = c('b_for'))
+mcmc_trace(posterior[2501:3000,], pars = c('b_for'))
+
+#plot all chains in one plot with different colors
+
+
+
+
+
+summary <- read.csv(here('stan models','outs','summary',file))
 
 summary %>% 
   select(variable, rhat, mean) %>% 
   # filter(startsWith(variable, "alpha_j")) %>% 
   filter(rhat > 1.011) %>% 
   #decresing rhat values
-  arrange(rhat)
+  arrange(-rhat)
 
 #very high rhat - cnanot use this posterior ric_chm_eca_npgo_ersst_cc.csv,ric_chm_cpd_npgo_ersst_cc_ad95.csv,ric_chm_eca_npgo_ersst_cc_ad95.csv
 

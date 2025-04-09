@@ -1039,6 +1039,53 @@ $K_{t,r} = K_r e^{\beta_{forestry,r}Forestry_{t,r}}$
 
 
 
+
+```{r fig.width=10, fig.height=4}
+
+
+bh_chm_eca_st_K = read.csv(here('stan models','outs','posterior','bh_chm_eca_static_K.csv'),check.names=F)
+bh_chm_cpd_st_K = read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_K.csv'),check.names=F)
+
+(plot_forestry_effect(posterior = bh_chm_cpd_st_K, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-2,2)) +
+    plot_forestry_effect(posterior = bh_chm_eca_st_K, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-2,2))) + plot_layout(guides = "collect")
+
+
+```
+
+
+
+
+
+
+
+# Models with forestry effects of Maximum Recruitment
+
+## Beverton-Holt (BH):
+
+Model with static productivity, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{(e^{\alpha_r})}{Rk_{t,r}}  S_{t,r}) + \rho\epsilon_{t-1,r}$
+
+Model with time varying coastwide productivity, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r + \alpha_t - log(1+\frac{(e^{\alpha_r + \alpha_t} )}{Rk_{t,r}}  S_{t,r})  + \rho\epsilon_{t-1,r}$
+
+Model with ocean covariates, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{(e^{\alpha_r  + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} } )}{Rk_{t,r}}  S_{t,r})  + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \rho\epsilon_{t-1,r}$
+
+Model with time varying coast-wide productivity, forestry, without autocorrelation:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r + \alpha_t - log(1+\frac{(e^{\alpha_r + \alpha_t})}{Rk_{t,r}}  S_{t,r})  \epsilon_{t,r}$
+
+### Forestry effect  on carrying capacity
+
+$log(Rk_{t,r}) = log(Rk_r) + \beta_{forestry,r}Forestry_{t,r}$
+
+$Rk_{t,r} = Rk_r e^{\beta_{forestry,r}Forestry_{t,r}}$
+
+
+
 ```{r fig.width=10, fig.height=9}
 
 
