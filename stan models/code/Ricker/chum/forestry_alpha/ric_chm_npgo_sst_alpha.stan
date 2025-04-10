@@ -134,6 +134,9 @@ model{
  
  //covariate effects
   b_for ~ normal(0,1); //standard normal prior for the effect of forest loss
+  b_npgo ~ normal(0,1); //standard normal prior for the effect of npgo
+  b_sst ~ normal(0,1); //standard normal prior for the effect of sst
+  
   z_for_cu ~ std_normal(); //std normal prior for CU-deviations
   z_for_rv ~ std_normal(); //std normal prior for River-deviations
    
@@ -141,6 +144,20 @@ model{
   sigma_for_cu ~ normal(0,1); //variance in stock-level forest loss effects
   sigma_for_rv ~ normal(0,1); //variance in stock-level forest loss effects
     
+  z_npgo_cu ~ std_normal(); //std normal prior for CU-deviations
+  z_npgo_rv ~ std_normal(); //std normal prior for River-deviations
+  
+  //hierarchical variances
+  sigma_npgo_cu ~ normal(0,1); //variance in stock-level npgo effects
+  sigma_npgo_rv ~ normal(0,1); //variance in stock-level npgo effects
+  
+  z_sst_cu ~ std_normal(); //std normal prior for CU-deviations
+  z_sst_rv ~ std_normal(); //std normal prior for River-deviations
+  
+  //hierarchical variances
+  sigma_sst_cu ~ normal(0,1); //variance in stock-level sst effects
+  sigma_sst_rv ~ normal(0,1); //variance in stock-level sst effects
+  
   //variance terms
   mu_sigma ~ normal(1,1);
   z_sig_cu ~ std_normal();

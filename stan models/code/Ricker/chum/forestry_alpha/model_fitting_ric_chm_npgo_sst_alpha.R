@@ -134,11 +134,11 @@ print("eca")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_chm_eca <- mric$sample(data=dl_chm_eca,
-                             chains = 2, 
+                             chains = 6, 
                              iter_warmup = 20,
                              iter_sampling =50,
                              refresh = 10,
-                             adapt_delta = 0.999,
+                             adapt_delta = 0.95,
                              max_treedepth = 20)
   write.csv(ric_chm_eca$summary(),'./stan models/outs/summary/ric_chm_eca_npgo_sst_alpha_trial.csv')
   ric_chm_eca$save_object('./stan models/outs/fits/ric_chm_eca_npgo_sst_alpha_trial.RDS')
@@ -174,11 +174,11 @@ print("cpd")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_chm_cpd <- mric$sample(data=dl_chm_cpd,
-                             chains = 2, 
+                             chains = 6, 
                              iter_warmup = 20,
                              iter_sampling =50,
                              refresh = 10,
-                             adapt_delta = 0.999,
+                             adapt_delta = 0.95,
                              max_treedepth = 20)
   write.csv(ric_chm_cpd$summary(),'./stan models/outs/summary/ric_chm_cpd_npgo_sst_alpha_trial.csv')
   ric_chm_cpd$save_object('./stan models/outs/fits/ric_chm_cpd_npgo_sst_alpha_trial.RDS')
