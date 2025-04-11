@@ -159,6 +159,9 @@ model{
   
   z_sst_cu ~ std_normal(); //std normal prior for CU-deviations
   z_sst_rv ~ std_normal(); //std normal prior for River-deviations
+
+  sigma_sst_cu ~ normal(0,1);
+  sigma_sst_rv ~ normal(0,1);
     
   //variance terms
   mu_sigma ~ normal(1,1);

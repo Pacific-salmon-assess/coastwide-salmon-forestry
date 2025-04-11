@@ -23,7 +23,7 @@ library(furrr)
 source(here('stan models','code','funcs.R'))
 
 # load Stan model sets####
-file_bh=file.path(here('stan models', 'code','BH','chum','forestry_alpha','bh_chm_static_npgo_sst_alpha.stan'))
+file_bh=file.path(here('stan models', 'code','BH','chum','forestry_alpha','bh_chm_npgo_sst_alpha.stan'))
 mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 # load datasets####

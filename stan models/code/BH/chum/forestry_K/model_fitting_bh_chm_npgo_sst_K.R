@@ -23,7 +23,7 @@ library(furrr)
 source(here('stan models','code','funcs.R'))
 
 # load Stan model sets####
-file_bh=file.path(here('stan models', 'code','BH','chum','forestry_K','bh_chm_static_npgo_sst_K.stan'))
+file_bh=file.path(here('stan models', 'code','BH','chum','forestry_K','bh_chm_npgo_sst_K.stan'))
 mbh=cmdstanr::cmdstan_model(file_bh) #compile stan code to C++
 
 # load datasets####
@@ -96,7 +96,7 @@ dl_chm_eca_npgo=list(N=nrow(ch20r),
                      C_i=as.numeric(factor(cu$CU)), #CU index by stock
                      ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
                      R_S=ch20r$ln_RS,
-                     S=ch20r$Spawners, 
+                     S=ch20r$Spawners_Scaled, 
                      forest_loss=as.vector(ch20r$sqrt.ECA.std), #design matrix for standardized ECA
                      npgo=as.vector(ch20r$npgo.std),
                      sst=as.vector(ch20r$sst.std),
@@ -116,7 +116,7 @@ dl_chm_cpd_npgo=list(N=nrow(ch20r),
                      C_i=as.numeric(factor(cu$CU)), #CU index by stock
                      ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
                      R_S=ch20r$ln_RS,
-                     S=ch20r$Spawners, 
+                     S=ch20r$Spawners_Scaled, 
                      forest_loss=as.vector(ch20r$sqrt.CPD.std), #design matrix for standardized ECA
                      npgo = as.vector(ch20r$npgo.std),
                      sst = as.vector(ch20r$sst.std),
