@@ -86,9 +86,11 @@ transformed parameters{
   vector[N] e_t; //stock residual productivity at time t
   vector[N] mu1; //initial expectation at each time for each stock
   vector[N] mu2; //autocorr. adjusted expectation at each time for each stock
-  vector[N] K_for; //time varying K with forestry
+  vector<lower=0>[N] K_for; //time varying K with forestry
   vector[N] alpha_npgo_sst; //time varying alpha with npgo and sst
   vector<lower=0>[N] b; 
+  vector[N] log_K_for; //log transformed K with forestry
+  vector[J] log_K; //log transformed K
   
   alpha_cu = alpha0 + sigma_a_cu*z_a_cu; //non-centered estimate for CU time-invariant productivity
   alpha_j = alpha_cu[C_i] + sigma_a_rv*z_a_rv; //non-centered estimate for river time-invariant productivity
@@ -108,14 +110,17 @@ transformed parameters{
   //residual deviations in productivity
   for(j in 1:J){//for every stock
     alpha_npgo_sst[start_y[j]] = alpha_j[j] + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust productivity based on  npgo, sst
-    K_for[start_y[j]] = K[j] + b_for_rv[j]*forest_loss[start_y[j]]; //adjust K based on forest loss, npgo, sst
+    log_K[j] = log(K[j]); //log transform the carrying capacity
+    log_K_for[start_y[j]] = log_K[j] + b_for_rv[j]*forest_loss[start_y[j]]; //log transform the carrying capacity adjusted for forest loss
+    K_for[start_y[j]]=exp(log_K_for[start_y[j]]); 
     b[start_y[j]] = 1/K_for[start_y[j]];
     mu1[start_y[j]]=alpha_npgo_sst[start_y[j]]*(1-b[start_y[j]]*S[start_y[j]]); 
     e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
     
     for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
       alpha_npgo_sst[t] = alpha_j[j] + b_npgo_rv[j]*npgo[t] + b_sst_rv[j]*sst[t]; //adjust productivity based on forest loss
-      K_for[t] = K[j] + b_for_rv[j]*forest_loss[t]; //adjust K based on forest loss
+      log_K_for[t] = log_K[j] + b_for_rv[j]*forest_loss[t]; //log transform the carrying capacity adjusted for forest loss
+      K_for[t]=exp(log_K_for[t]); //exponentiate to get the carrying capacity
       b[t] = 1/K_for[t];
       mu2[t]  = alpha_npgo_sst[t]*(1 - b[j]*S[t]) + rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t

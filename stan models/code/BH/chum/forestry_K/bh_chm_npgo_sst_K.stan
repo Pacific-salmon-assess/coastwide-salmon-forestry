@@ -110,7 +110,7 @@ transformed parameters{
     log_K_for[start_y[j]] = log_K[j] + b_for_rv[j]*forest_loss[start_y[j]]; //log transform the carrying capacity adjusted for forest loss
     K_for[start_y[j]]=exp(log_K_for[start_y[j]]); //convert back to linear scale
     alpha_npgo_sst[start_y[j]] = alpha_j[j] + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust productivity for npgo and sst
-    b[start_y[j]] = exp(alpha_npgo_sst[start_y[j]]) - 1;
+    b[start_y[j]] = exp(alpha_npgo_sst[start_y[j]]) ;
     mu1[start_y[j]]=log(1+b[start_y[j]])-log(1+(b[start_y[j]]/K_for[start_y[j]])*S[start_y[j]]); 
     e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
     
@@ -118,7 +118,7 @@ transformed parameters{
       log_K_for[t]=log_K[j]+b_for_rv[j]*forest_loss[t]; //adjust recruitment capacity based on forest loss
       K_for[t]=exp(log_K_for[t]); //convert back to linear scale
       alpha_npgo_sst[t] = alpha_j[j] + b_npgo_rv[j]*npgo[t] + b_sst_rv[j]*sst[t]; //adjust productivity for npgo and sst
-      b[t] = exp(alpha_npgo_sst[t]) - 1; //adjust productivity for npgo and sst
+      b[t] = exp(alpha_npgo_sst[t]) -1; //adjust productivity for npgo and sst
       mu2[t]  = log(1+b[t])-log(1+(b[t]/K_for[t])*S[t])+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
     }

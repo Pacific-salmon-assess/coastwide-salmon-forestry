@@ -158,10 +158,10 @@ if(Sys.info()[7] == "mariakur") {
 } else {
   ric_chm_eca <- mric$sample(data=dl_chm_eca,
                              chains = 6, 
-                             iter_warmup = 200,
+                             iter_warmup = 400,
                              iter_sampling =500,
                              refresh = 100,
-                             adapt_delta = 0.999,
+                             adapt_delta = 0.99,
                              max_treedepth = 20)
   
   write.csv(ric_chm_eca$summary(),here("stan models","outs","summary","ric_chm_eca_npgo_sst_K.csv"))
@@ -200,10 +200,10 @@ if(Sys.info()[7] == "mariakur") {
 } else {
   ric_chm_cpd <- mric$sample(data=dl_chm_cpd,
                              chains = 6, 
-                             iter_warmup = 200,
+                             iter_warmup = 400,
                              iter_sampling =500,
                              refresh = 100,
-                             adapt_delta = 0.999,
+                             adapt_delta = 0.99,
                              max_treedepth = 20)
   
   write.csv(ric_chm_cpd$summary(),here("stan models","outs","summary","ric_chm_cpd_npgo_sst_K.csv"))

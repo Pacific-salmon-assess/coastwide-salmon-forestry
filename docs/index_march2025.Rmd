@@ -612,18 +612,36 @@ Model with static productivity, forestry:
 
 $log(R_{t,r}/S_{t,r}) = \alpha_{t,r}*(1 - \frac{S_{t,r}}{Smax_r})  + \rho \epsilon_{t-1,r}$
 
+
+Model with NPGO, SST:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_{t,r}*(1 - \frac{S_{t,r}}{Smax_r}) + \rho \epsilon_{t-1,r}$
+
+$alpha_{t,r} = \alpha_{r} + \beta_{forestry,r}Forestry_{t,r}+ \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} $
+
 ### Forestry effect on productivity
 
 $\alpha_{t,r}  = \alpha_{r}  + \beta_{forestry,r}Forestry_{t,r}$
 
-```{r fig.width=10, fig.height=3}
+
+
+```{r fig.width=10, fig.height=6}
 
 ric_chm_eca_alpha=read.csv(here('stan models','outs','posterior','ric_chm_eca_static_alpha.csv'),check.names=F)
 ric_chm_cpd_alpha=read.csv(here('stan models','outs','posterior','ric_chm_cpd_static_alpha.csv'),check.names=F)
 
+ric_chm_eca_npgo_sst_alpha=read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_sst_alpha.csv'),check.names=F)
 
-(plot_forestry_effect(posterior = ric_chm_cpd_alpha, effect = "cpd", species = "chum", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_chm_eca_alpha, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
+ric_chm_cpd_npgo_sst_alpha=read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_sst_alpha.csv'),check.names=F)
+
+((plot_forestry_effect(posterior = ric_chm_cpd_alpha, effect = "cpd", species = "chum", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_chm_eca_alpha, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_chm_cpd_npgo_sst_alpha, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_chm_eca_npgo_sst_alpha, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect"))
+
+
+
+(plot_npgo_effect(posterior = ric_chm_cpd_npgo_sst_alpha, effect = "npgo", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) +
+  plot_npgo_effect(posterior = ric_chm_eca_npgo_sst_alpha, effect = "npgo", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5)))/(plot_sst_effect(posterior = ric_chm_cpd_npgo_sst_alpha, effect = "sst", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) + plot_sst_effect(posterior = ric_chm_eca_npgo_sst_alpha, effect = "sst", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
 
 
 ```
@@ -669,6 +687,13 @@ bh_chm_cpd_ersst_correct=read.csv(here('stan models','outs','posterior','bh_chm_
     plot_forestry_effect(posterior = bh_chm_eca_correct, effect = "eca", species = "chum", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-3,3)))/(plot_forestry_effect(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-3,3)) +
     plot_forestry_effect(posterior = bh_chm_eca_ersst_correct, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
 
+bh_chm_eca_npgo_sst_alpha=read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_sst_alpha.csv'),check.names=F)
+
+bh_chm_cpd_npgo_sst_alpha=read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_sst_alpha.csv'),check.names=F)
+
+
+
+(plot_npgo_effect(posterior = bh_chm_cpd_npgo_sst_alpha, effect = "npgo", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-3,3)) + plot_npgo_effect(posterior = bh_chm_cpd_ersst_correct, effect = "npgo", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-3,3)))/(plot_sst_effect(posterior = bh_chm_cpd_npgo_sst_alpha, effect = "sst", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-3,3)) + plot_sst_effect(posterior = bh_chm_cpd_ersst_correct, effect = "sst", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-3,3))) + plot_layout(guides = "collect")
 
 ```
 

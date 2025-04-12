@@ -204,7 +204,7 @@ ric_chm_cpd_cc_summary %>%
 mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
 # generic
-file <- 'bh_chm_cpd_static_K.csv'
+file <- 'bh_chm_cpd_npgo_sst_alpha.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
@@ -228,7 +228,7 @@ summary <- read.csv(here('stan models','outs','summary',file))
 
 summary %>% 
   select(variable, rhat, mean) %>% 
-  # filter(startsWith(variable, "alpha_j")) %>% 
+  filter(startsWith(variable, "sigma")) %>%
   filter(rhat > 1.011) %>% 
   #decresing rhat values
   arrange(-rhat)

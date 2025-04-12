@@ -106,7 +106,7 @@ dl_chm_eca_npgo=list(N=nrow(ch20r),
                      end_t=L_i$tmax,
                      # pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
                      # pSmax_sig=smax_prior$m.s,
-                     p_K_mean=k_prior$max_recruits*0.9, ##prior for K - K = Rk(alpha)/e^(alpha-1). I have used alpha = 1.5
+                     p_K_mean=k_prior$max_recruits*0.75, ##prior for K - K = Rk(alpha)/e^(alpha-1). I have used alpha = 1.5
                      p_K_sig=k_prior$max_recruits)
 
 dl_chm_cpd_npgo=list(N=nrow(ch20r),
@@ -127,7 +127,7 @@ dl_chm_cpd_npgo=list(N=nrow(ch20r),
                      end_t=L_i$tmax,
                      # pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
                      # pSmax_sig=smax_prior$m.s,
-                     p_K_mean=k_prior$max_recruits*0.9, ##prior for K - K = Rk(alpha)/e^(alpha-1). I have used alpha = 1.5
+                     p_K_mean=k_prior$max_recruits*0.75, ##prior for K - K = Rk(alpha)/e^(alpha-1). I have used alpha = 1.5
                      p_K_sig=k_prior$max_recruits)
 
 
@@ -137,8 +137,10 @@ print("eca")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   bh_chm_eca_npgo <- mbh$sample(data=dl_chm_eca_npgo,
-                                chains = 6,
-                                iter_warmup = 20,
+                                chains = 2,
+                                init = list(list(alpha0 = 6, b_for = 0, b_sst = 0, b_npgo = 0), 
+                                            list(alpha0 = 6.5, b_for = 0, b_sst = 0, b_npgo = 0)),
+                                iter_warmup = 200,
                                 iter_sampling =50,
                                 refresh = 10,
                                 adapt_delta = 0.95,
@@ -155,10 +157,10 @@ if(Sys.info()[7] == "mariakur") {
 } else {
   bh_chm_eca_npgo <- mbh$sample(data=dl_chm_eca_npgo,
                                 chains = 6,
-                                init = list(list(alpha0 = 1), 
-                                            list(alpha0 = 1.5),
-                                            list(alpha0 = 2),
-                                            list(alpha0 = 2.5),
+                                init = list(list(alpha0 = 4), 
+                                            list(alpha0 = 4.5),
+                                            list(alpha0 = 5),
+                                            list(alpha0 = 5.5),
                                             list(alpha0 = 3),
                                             list(alpha0 = 3.5)),
                                 iter_warmup = 400,
@@ -184,6 +186,12 @@ if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   bh_chm_cpd_npgo <- mbh$sample(data=dl_chm_cpd_npgo,
                                 chains = 6, 
+                                init = list(list(alpha0 = 7), 
+                                            list(alpha0 = 8),
+                                            list(alpha0 = 9),
+                                            list(alpha0 = 6),
+                                            list(alpha0 = 5),
+                                            list(alpha0 = 4)),
                                 iter_warmup = 20,
                                 iter_sampling =50,
                                 refresh = 10,
@@ -201,12 +209,12 @@ if(Sys.info()[7] == "mariakur") {
 } else {
   bh_chm_cpd_npgo <- mbh$sample(data=dl_chm_cpd_npgo,
                                 chains = 6, 
-                                init = list(list(alpha0 = 1), 
-                                            list(alpha0 = 1.5),
-                                            list(alpha0 = 2),
-                                            list(alpha0 = 2.5),
-                                            list(alpha0 = 3),
-                                            list(alpha0 = 3.5)),
+                                init = list(list(alpha0 = 7), 
+                                            list(alpha0 = 4.5),
+                                            list(alpha0 = 5),
+                                            list(alpha0 = 5.5),
+                                            list(alpha0 = 6),
+                                            list(alpha0 = 6.5)),
                                 iter_warmup = 400,
                                 iter_sampling =600,
                                 refresh = 100,
