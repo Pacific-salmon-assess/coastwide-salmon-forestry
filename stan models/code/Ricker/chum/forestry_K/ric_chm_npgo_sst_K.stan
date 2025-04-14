@@ -122,7 +122,7 @@ transformed parameters{
       log_K_for[t] = log_K[j] + b_for_rv[j]*forest_loss[t]; //log transform the carrying capacity adjusted for forest loss
       K_for[t]=exp(log_K_for[t]); //exponentiate to get the carrying capacity
       b[t] = 1/K_for[t];
-      mu2[t]  = alpha_npgo_sst[t]*(1 - b[j]*S[t]) + rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
+      mu2[t]  = alpha_npgo_sst[t]*(1 - b[t]*S[t]) + rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
       e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
     }
   }

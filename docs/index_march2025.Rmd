@@ -1030,6 +1030,13 @@ ric_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','ric_chm_c
     plot_forestry_effect(posterior = ric_chm_eca_ersst_cc2, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-3,3))) + plot_layout(guides = "collect"))
 
 
+ric_chm_eca_npgo_sst_K = read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_sst_K.csv'), check.names=F)
+
+ric_chm_cpd_npgo_sst_K = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_sst_K.csv'), check.names=F)
+
+(plot_forestry_effect(posterior = ric_chm_cpd_npgo_sst_K, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-3,3)) +
+    plot_forestry_effect(posterior = ric_chm_eca_npgo_sst_K, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-3,3))) + plot_layout(guides = "collect")
+
 
 
 
