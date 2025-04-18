@@ -1031,13 +1031,12 @@ ric_chm_cpd_ersst_cc = read.csv(here('stan models','outs','posterior','ric_chm_c
 
 
 ric_chm_eca_npgo_sst_K = read.csv(here('stan models','outs','posterior','ric_chm_eca_npgo_sst_K.csv'), check.names=F)
+#divergent chains and high rhat
 
 ric_chm_cpd_npgo_sst_K = read.csv(here('stan models','outs','posterior','ric_chm_cpd_npgo_sst_K.csv'), check.names=F)
 
-(plot_forestry_effect(posterior = ric_chm_cpd_npgo_sst_K, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-3,3)) +
-    plot_forestry_effect(posterior = ric_chm_eca_npgo_sst_K, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-3,3))) + plot_layout(guides = "collect")
-
-
+(plot_forestry_effect(posterior = ric_chm_cpd_npgo_sst_K, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-2,2)) +
+    plot_forestry_effect(posterior = ric_chm_eca_npgo_sst_K, effect = "eca", species = "chum", model = "Ricker model with ECA, NPGO, SST", xlim = c(-2,2)))/(plot_npgo_effect(posterior = ric_chm_cpd_npgo_sst_K, effect = "npgo", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) + plot_sst_effect(posterior = ric_chm_cpd_npgo_sst_K, effect = "sst", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
 
 
 

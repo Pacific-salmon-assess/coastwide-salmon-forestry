@@ -67,8 +67,9 @@ library(ggforce)
 
 ## Beverton-Holt (BH):
 
+In this model, the effect of forestry is on the growth rate or the alpha term.
 
-$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_t+\alpha_r + \beta_{forestry,r}*Forestry_{t,r} }}{R_{k,r}})*S_{t,r}) + \beta_{forestry,r}*Forestry_{t,r} + \rho \epsilon_{t-1,r}$
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_r + \beta_{forestry,r}*Forestry_{t,r} }}{R_{k,r}})*S_{t,r}) + \beta_{forestry,r}*Forestry_{t,r} + \rho \epsilon_{t-1,r}$
 
 ```{r bh}
 
@@ -97,7 +98,7 @@ df_long <- df %>%
 
 #plot Rt vs St
 
-df_long %>% 
+p1_bh_rk <- df_long %>% 
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
@@ -105,17 +106,19 @@ df_long %>%
   # geom_abline(intercept = 0, slope = 1, linetype = "dashed")+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
-  labs(title = "Beverton-Holt Spawner Recruit Curve",
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry }}{R_{k}})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry }}{R_{k}})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
   theme_classic()
 
 
 
 ```
 
+
+In this model the effect of forestry is on the growth rate or alpha term. This is a different formulation of the Beverton-Holt model with carrying capacity insteado maximum recruitment.
 
 $log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_r + \beta_{forestry,r}*Forestry_{t,r} } - 1 }{R_{k,r}})*S_{t,r}) + \beta_{forestry,r}*Forestry_{t,r} + \rho \epsilon_{t-1,r}$
 
@@ -146,21 +149,22 @@ df_long_1 <- df_1 %>%
 
 #plot Rt vs St
 
-df_long_1 %>% 
+p2_bh_alpha <-df_long_1 %>% 
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
-  labs(title = "Beverton-Holt Spawner Recruit Curve",
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry } -1}{K})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry } -1}{K})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
   theme_classic()
 
 ```
 
+In this model, the effect of forestry is on the carrying capacity or K.
 
 $log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+\frac{(e^{\alpha_r} - 1)}{K_{t,r}}  S_{t,r}) + \rho\epsilon_{t-1,r}$
 
@@ -195,17 +199,17 @@ df_long_2 <- df_2 %>%
   mutate(Forestry = as.numeric(Forestry))
 
 
-df_long_2 %>% 
+p3_bh_K <- df_long_2 %>% 
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
-  labs(title = "Beverton-Holt Spawner Recruit Curve",
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+\\frac{(e^{\\alpha} - 1)}{K e^{\\beta_{forestry} Forestry}} S) $"), size = 5)+
+  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+\\frac{(e^{\\alpha} - 1)}{K e^{\\beta_{forestry} Forestry}} S) $"), size = 3)+
   theme_classic()
 
 
@@ -218,6 +222,7 @@ df_long_2 %>%
 
 ## Ricker:
 
+In this model, the effect of forestry is on the density dependent term. This is the formulation of the Ricker model with the level of spawners at which recruitment is maximized.
 
 $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}*Forestry_{t,r} + \epsilon_{t-1,r}$
 
@@ -227,7 +232,7 @@ $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}*F
 
 ricker_alpha <- function(St, alpha, beta, Smax, Forestry){
   log_Rt_St = alpha - St/Smax + beta*Forestry
-  return(exp(log_Rt_St)*St)
+  return(cbind(exp(log_Rt_St)*St, log_Rt_St))
 }
 
 
@@ -244,30 +249,49 @@ Forestry <- c(-1,0,1)
 df_ricker <- data.frame(St = St)
 
 for (i in 1:length(Forestry)){
-  df_ricker[[paste0("Rt_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])
+  df_ricker[[paste0("Rt_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])[,1]
+  df_ricker[[paste0("ln_Rt_St_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])[,2]
 }
 
 df_long_ricker <- df_ricker %>% 
-  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
-  mutate(Forestry = as.numeric(Forestry))
+  pivot_longer(cols = starts_with("Rt_"), names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry)) %>% 
+  pivot_longer(cols = starts_with("ln_"), names_to = "Forestry2", values_to = "ln_Rt_St", names_prefix = "ln_Rt_St_") %>% 
+  mutate(Forestry2 = as.numeric(Forestry2))
 
-df_long_ricker %>% 
+p4_ric_1 <- df_long_ricker %>% 
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
-  labs(title = "Ricker Spawner Recruit Curve",
+  labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
   theme_classic()
 
+
+q4_ric_1 <- df_long_ricker %>%
+  as.data.frame() %>% 
+  select(ln_Rt_St, Forestry2, St) %>% 
+  distinct() %>% 
+  ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
+  geom_line(size = 2, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "log (Recruits/Spawners)")+
+  #annotate equation
+  # annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 5)+
+  theme_classic()
 
 ```
 
 
+In this model, the effect of forestry is on the growth rate or alpha. This is a different formulation of the Ricker model with carrying capacity instead of Smax.
 
 $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{(\alpha_r + \beta_{forestry,r}*Forestry_{t,r} )S_{t,r}}{K} + \beta_{forestry,r}*Forestry_{t,r} + \epsilon_{t-1,r}$
 
@@ -277,7 +301,7 @@ $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{(\alpha_r + \beta_{forestry,r}*Forestry
 
 ricker_alpha_1 <- function(St, alpha, beta, K, Forestry){
   log_Rt_St = alpha - (alpha + beta*Forestry)*St/K + beta*Forestry
-  return(exp(log_Rt_St)*St)
+  return(cbind(exp(log_Rt_St)*St, log_Rt_St))
 }
 
 
@@ -294,30 +318,48 @@ Forestry <- c(-1,0,1)
 df_ricker_1 <- data.frame(St = St)
 
 for (i in 1:length(Forestry)){
-  df_ricker_1[[paste0("Rt_",Forestry[i])]] <- ricker_alpha_1(St, alpha, beta, K, Forestry[i])
+  df_ricker_1[[paste0("Rt_",Forestry[i])]] <- ricker_alpha_1(St, alpha, beta, K, Forestry[i])[,1]
+  df_ricker_1[[paste0("ln_Rt_St_",Forestry[i])]] <- ricker_alpha_1(St, alpha, beta, K, Forestry[i])[,2]
 }
 
 df_long_ricker_1 <- df_ricker_1 %>% 
-  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
-  mutate(Forestry = as.numeric(Forestry))
+  pivot_longer(cols = starts_with("Rt"), names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry))%>% 
+  pivot_longer(cols =  starts_with("ln_Rt_St"), names_to = "Forestry2", values_to = "ln_Rt_St", names_prefix = "ln_Rt_St_") %>% 
+  mutate(Forestry2 = as.numeric(Forestry2))
 
-df_long_ricker_1 %>%
+p5_ric_alpha <- df_long_ricker_1 %>%
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
-  labs(title = "Ricker Spawner Recruit Curve",
+  labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{(\\alpha + \\beta_{forestry} Forestry)S}{K} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{(\\alpha + \\beta_{forestry} Forestry)S}{K} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
   theme_classic()
 
+q5_ric_alpha  <- df_long_ricker_1 %>%
+  as.data.frame() %>% 
+  select(ln_Rt_St, Forestry2, St) %>% 
+  distinct() %>% 
+  ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
+  geom_line(size = 2, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "log (Recruits/Spawners)")+
+  #annotate equation
+  # annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 5)+
+  theme_classic()
 
 
 ```
 
+In this model, the effect of forestry is on the carrying capacity or K. This is a different formulation of the Ricker model with K instead of Smax.
 
 $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{(\alpha_r )S_{t,r}}{Ke^{\beta_{forestry,r}*Forestry_{t,r}}} + \epsilon_{t-1,r}$
 
@@ -329,7 +371,7 @@ $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{(\alpha_r )S_{t,r}}{Ke^{\beta_{forestry
 ricker_alpha_2 <- function(St, alpha, beta, Smax, Forestry){
   K_forestry = K*exp(beta*Forestry)
   log_Rt_St = alpha - (alpha)*St/K_forestry
-  return(exp(log_Rt_St)*St)
+  return(cbind(exp(log_Rt_St)*St, log_Rt_St))
 }
 
 
@@ -346,30 +388,87 @@ Forestry <- c(-1,0,1)
 df_ricker_2 <- data.frame(St = St)
 
 for (i in 1:length(Forestry)){
-  df_ricker_2[[paste0("Rt_",Forestry[i])]] <- ricker_alpha_2(St, alpha, beta, K, Forestry[i])
+  df_ricker_2[[paste0("Rt_",Forestry[i])]] <- ricker_alpha_2(St, alpha, beta, K, Forestry[i])[,1]
+  df_ricker_2[[paste0("ln_Rt_St_",Forestry[i])]] <- ricker_alpha_2(St, alpha, beta, K, Forestry[i])[,2]
 }
 
 df_long_ricker_2 <- df_ricker_2 %>% 
-  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
-  mutate(Forestry = as.numeric(Forestry))
+  pivot_longer(cols = starts_with("Rt_"), names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry)) %>% 
+  pivot_longer(cols =  starts_with("ln_Rt_St"), names_to = "Forestry2", values_to = "ln_Rt_St", names_prefix = "ln_Rt_St_") %>% 
+  mutate(Forestry2 = as.numeric(Forestry2))
 
-df_long_ricker_2 %>%
+p6_ric_K <- df_long_ricker_2 %>%
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
-  labs(title = "Ricker Spawner Recruit Curve",
+  labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 5)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 3)+
   theme_classic()
+
+q6_ric_K  <- df_long_ricker_2 %>%
+  as.data.frame() %>% 
+  select(ln_Rt_St, Forestry2, St) %>% 
+  distinct() %>% 
+  ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
+  geom_line(size = 2, alpha = 0.5)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "log (Recruits/Spawners)")+
+  #annotate equation
+  # annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 5)+
+  theme_classic()
+
 
 
 
 ```
 
+
+
+```{r plots, fig.width = 12, fig.height = 4}
+
+# put all the bh figures together
+
+p1_bh_rk + 
+  p2_bh_alpha + 
+  p3_bh_K +
+  plot_layout(ncol = 3, guides = "collect") +
+  plot_annotation(title = "Beverton-Holt Spawner Recruit Curves",
+                  theme = theme(plot.title = element_text(size = 20, hjust = 0.5)))
+
+#log transform the y axis
+
+
+
+```
+
+
+
+```{r plots2, fig.width = 11, fig.height = 6}
+
+# put all the bh figures together
+
+
+((p4_ric_1 + 
+  p5_ric_alpha + 
+  p6_ric_K)/(q4_ric_1 + 
+  q5_ric_alpha + 
+  q6_ric_K)) +plot_layout(guides = "collect")
+  
+
+#log transform the y axis
+
+
+
+```
 
 
 

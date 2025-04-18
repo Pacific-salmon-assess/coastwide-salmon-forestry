@@ -204,7 +204,7 @@ ric_chm_cpd_cc_summary %>%
 mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
 # generic
-file <- 'ric_chm_eca_npgo_sst_K.csv'
+file <- 'ric_chm_cpd_npgo_sst_K.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
@@ -237,6 +237,7 @@ summary %>%
   arrange(-rhat)
 
 #very high rhat - cnanot use this posterior ric_chm_eca_npgo_ersst_cc.csv,ric_chm_cpd_npgo_ersst_cc_ad95.csv,ric_chm_eca_npgo_ersst_cc_ad95.csv
+#ric_chm_eca_npgo_sst_K has very high rhat and one chain was divergent
 
 
 # look at the mean alpha values in the summary of the ricker models
