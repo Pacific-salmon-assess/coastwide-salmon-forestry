@@ -810,12 +810,25 @@ cor_plot_2 <- cor_plot(posterior = ric_chm_eca_ersst, effect = "eca", model = "R
 
 # cor_plot_1 + cor_plot_2 + plot_layout(guides = "collect")
 
-cor_plot_3 <- cor_plot(posterior = bh_chm_cpd_ersst_correct, effect = "cpd", model = "BH model with CPD, NPGO, SST", color_by_cu = TRUE)
+cor_plot_3 <- cor_plot(posterior = bh_chm_cpd_ersst, effect = "cpd", model = "BH model with CPD, NPGO, SST", color_by_cu = TRUE)
 
 cor_plot_4 <- cor_plot(posterior = bh_chm_eca_ersst_correct, effect = "eca", model = "BH model with ECA, NPGO, SST", color_by_cu = TRUE)
 
 (cor_plot_1 + cor_plot_2 )/( cor_plot_3 + cor_plot_4) + plot_layout(guides = "collect")
 
+ggsave(here('figures','correlation_forestry_effects_bh.png'),
+       plot = cor_plot_3+
+         theme(legend.position = "right",
+          # legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 20, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 0.8, size = 4), ncol = 1)),
+       width = 12, height = 8, dpi = 300)
 
 
 ```
@@ -1071,14 +1084,20 @@ $K_{t,r} = K_r e^{\beta_{forestry,r}Forestry_{t,r}}$
 
 
 
-```{r fig.width=10, fig.height=4}
+```{r fig.width=10, fig.height=6}
 
 
 bh_chm_eca_st_K = read.csv(here('stan models','outs','posterior','bh_chm_eca_static_K.csv'),check.names=F)
 bh_chm_cpd_st_K = read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_K.csv'),check.names=F)
 
+bh_chm_eca_npgo_sst_K = read.csv(here('stan models','outs','posterior','bh_chm_eca_npgo_sst_K.csv'),check.names=F)
+
+bh_chm_cpd_npgo_sst_K = read.csv(here('stan models','outs','posterior','bh_chm_cpd_npgo_sst_K.csv'),check.names=F)
+
 (plot_forestry_effect(posterior = bh_chm_cpd_st_K, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-2,2)) +
-    plot_forestry_effect(posterior = bh_chm_eca_st_K, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-2,2))) + plot_layout(guides = "collect")
+    plot_forestry_effect(posterior = bh_chm_eca_st_K, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-2,2)))/(plot_forestry_effect(posterior = bh_chm_cpd_npgo_sst_K, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-2,2)) + plot_forestry_effect(posterior = bh_chm_eca_npgo_sst_K, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-2,2))) + plot_layout(guides = "collect")
+  
+  
 
 
 ```

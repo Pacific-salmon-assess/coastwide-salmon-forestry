@@ -74,15 +74,15 @@ $log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_r + \beta_{forestry,r}
 ```{r bh}
 
 bh_alpha <- function(St, alpha, beta, Rk, Forestry){
-  log_Rt_St = alpha - log(1+(exp(alpha+beta*Forestry)/Rk)*St) + beta*Forestry
+  log_Rt_St = alpha - log(1+(exp(alpha)/Rk)*St) + beta*Forestry
   return(exp(log_Rt_St)*St)
 }
 
 St <- seq(0,1000,10)
 
-alpha <- 5
+alpha <- 5.4
 beta <- -0.5
-Rk <- 10000
+Rk <- 500*(alpha)/(alpha-1)
 Forestry <- c(-1,0,1)
 
 df <- data.frame(St = St)
@@ -102,6 +102,7 @@ p1_bh_rk <- df_long %>%
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
   #add 1 to 1 line
   # geom_abline(intercept = 0, slope = 1, linetype = "dashed")+
   scale_color_gradient2(name = 'Forestry',
@@ -110,9 +111,67 @@ p1_bh_rk <- df_long %>%
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry }}{R_{k}})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = S e^{\\alpha - log(1+(\\frac{e^{\\alpha}}{R_{k}})*S) + \\beta_{forestry} Forestry}$"), parse = TRUE, size = 4)+
   theme_classic()
 
+q1_bh_rk <- df_long %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=log(Rt/St), group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,6)+
+  #add 1 to 1 line
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed")+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "log (Recruits/Spawners)")+
+  #annotate equation
+  annotate("text", x = 500, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - log(1+(\\frac{e^{\\alpha}}{R_{k}})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
+  theme_classic()
+
+bh_presentation_1 <- df_long %>% 
+  # filter(Forestry == 0) %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\frac{S e^{\\alpha + \\beta_{forestry} Forestry}}{1+(\\frac{e^{\\alpha}}{R_{k}})S}$"), parse = TRUE, size = 5)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+ggsave(here("figures", "presentation_bh_w_forestry_low_alpha.png"),
+       plot = bh_presentation_1, 
+       width = 8, height = 6, dpi = 300)
+
+bh_presentation_linear <- df_long %>% 
+  # filter(Forestry == 0) %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=log(Rt/St), group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,6)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "ln (Recruits/Spawners)")+
+  annotate("text", x = 500, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - log(1+(\\frac{e^{\\alpha}}{R_{k}})S)+ \\beta_{forestry} Forestry $"), parse = TRUE, size = 5)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+ggsave(here("figures", "presentation_bh_linear_w_forestry_low_alpha.png"),
+       plot = bh_presentation_linear, 
+       width = 8, height = 6, dpi = 300)
 
 
 ```
@@ -131,9 +190,9 @@ bh_alpha_1 <- function(St, alpha, beta, K, Forestry){
 
 St <- seq(0,1000,10)
 
-alpha <- 5
+alpha <- 5.4
 beta <- -0.5
-K <- 10000*(alpha -1)/alpha
+K <- 500
 Forestry <- c(-1,0,1)
 
 df_1 <- data.frame(St = St)
@@ -153,13 +212,28 @@ p2_bh_alpha <-df_long_1 %>%
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
   labs(#title = "Beverton-Holt Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry } -1}{K})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = s e^{\\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry } -1}{K})*S) + \\beta_{forestry} Forestry}$"), parse = TRUE, size = 4)+
+  theme_classic()
+
+q2_bh_alpha <- df_long_1 %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=log(Rt/St), group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,4)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "log (Recruits/Spawners)")+
+  #annotate equation
+  annotate("text", x = 500, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - log(1+(\\frac{e^{\\alpha + \\beta_{forestry} Forestry } -1}{K})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
   theme_classic()
 
 ```
@@ -183,9 +257,9 @@ bh_alpha_2 <- function(St, alpha, beta, K, Forestry){
 
 St <- seq(0,1000,10)
 
-alpha <- 5
+alpha <- 5.4
 beta <- -0.5
-K <- 10000*(alpha-1)/alpha
+K <- 500
 Forestry <- c(-1,0,1)
 
 df_2 <- data.frame(St = St)
@@ -203,15 +277,29 @@ p3_bh_K <- df_long_2 %>%
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
   labs(#title = "Beverton-Holt Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 500, label = TeX("$R = \\alpha - log(1+\\frac{(e^{\\alpha} - 1)}{K e^{\\beta_{forestry} Forestry}} S) $"), size = 3)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = S e ^{\\alpha - log(1+\\frac{(e^{\\alpha} - 1)}{K e^{\\beta_{forestry} Forestry}} S) }$"), size = 4)+
   theme_classic()
 
+q3_bh_K <- df_long_2 %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=log(Rt/St), group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,4)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "log (Recruits/Spawners)")+
+  #annotate equation
+  annotate("text", x = 500, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - log(1+\\frac{(e^{\\alpha} - 1)}{K e^{\\beta_{forestry} Forestry}} S) $"), size = 3)+
+  theme_classic()
 
 
 
@@ -238,7 +326,7 @@ ricker_alpha <- function(St, alpha, beta, Smax, Forestry){
 
 St <- seq(0,1000,10)
 
-alpha <- 1.1
+alpha <- 1.2
 
 beta <- -0.5
 
@@ -263,13 +351,15 @@ p4_ric_1 <- df_long_ricker %>%
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1000)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
   labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
+  annotate("text", x =500, y = 200, label = TeX("$R = S e^{\\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$}"), parse = TRUE, size = 4)+
+  
   theme_classic()
 
 
@@ -279,14 +369,58 @@ q4_ric_1 <- df_long_ricker %>%
   distinct() %>% 
   ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,2)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
   labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "log (Recruits/Spawners)")+
   #annotate equation
-  # annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 5)+
+  annotate("text", x = 300, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
   theme_classic()
+
+presentation_ric_1 <- df_long_ricker %>% 
+  # filter(Forestry == 0) %>%
+  as.data.frame() %>%
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  
+  annotate("text", x =500, y = 200, label = TeX("$R = S e^{\\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$}"), parse = TRUE, size = 5)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+ggsave(here("figures", "presentation_ricker_w_forestry.png"), 
+       plot = presentation_ric_1, 
+       width = 8, height = 6, dpi = 300)
+
+presentation_linear_ric_1 <- df_long_ricker %>% 
+  # filter(Forestry2 == 0) %>%
+  as.data.frame() %>%
+  ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,2)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "ln (Recruits/Spawners)")+
+  annotate("text", x = 300, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+ggsave(here("figures", "presentation_ricker_linear_w_forestry.png"),
+       plot = presentation_linear_ric_1, 
+       width = 8, height = 6, dpi = 300)
 
 ```
 
@@ -307,11 +441,11 @@ ricker_alpha_1 <- function(St, alpha, beta, K, Forestry){
 
 St <- seq(0,1000,10)
 
-alpha <- 1.1
+alpha <- 1.2
 
 beta <- -0.5
 
-K = 500*2
+K = 500
 
 Forestry <- c(-1,0,1)
 
@@ -332,13 +466,14 @@ p5_ric_alpha <- df_long_ricker_1 %>%
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1000)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
   labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{(\\alpha + \\beta_{forestry} Forestry)S}{K} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = S e ^{\\alpha - \\frac{(\\alpha + \\beta_{forestry} Forestry)S}{K} + \\beta_{forestry} Forestry$}"), parse = TRUE, size = 4)+
   theme_classic()
 
 q5_ric_alpha  <- df_long_ricker_1 %>%
@@ -347,13 +482,14 @@ q5_ric_alpha  <- df_long_ricker_1 %>%
   distinct() %>% 
   ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,2)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
   labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "log (Recruits/Spawners)")+
   #annotate equation
-  # annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 5)+
+  annotate("text", x = 500, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{(\\alpha + \\beta_{forestry} Forestry)S}{K} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
   theme_classic()
 
 
@@ -377,7 +513,7 @@ ricker_alpha_2 <- function(St, alpha, beta, Smax, Forestry){
 
 St <- seq(0,1000,10)
 
-alpha <- 1.1
+alpha <- 1.2
 
 beta <- -0.5
 
@@ -402,13 +538,14 @@ p6_ric_K <- df_long_ricker_2 %>%
   as.data.frame() %>% 
   ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1000)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
   labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "Recruits")+
   #annotate equation
-  annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 3)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = S e^{\\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} }$"), parse = TRUE, size = 4)+
   theme_classic()
 
 q6_ric_K  <- df_long_ricker_2 %>%
@@ -417,13 +554,14 @@ q6_ric_K  <- df_long_ricker_2 %>%
   distinct() %>% 
   ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
   geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,2)+
   scale_color_gradient2(name = 'Forestry',
                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
   labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "log (Recruits/Spawners)")+
   #annotate equation
-  # annotate("text", x = 500, y = 200, label = TeX("$R = \\alpha - \\frac{\\alpha S}{Ke^{\\beta_{forestry} Forestry}} $"), parse = TRUE, size = 5)+
+  annotate("text", x = 300, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha (1 - \\frac{S}{Ke^{\\beta_{forestry} Forestry}}) $"), parse = TRUE, size = 3)+
   theme_classic()
 
 
@@ -431,21 +569,27 @@ q6_ric_K  <- df_long_ricker_2 %>%
 
 ```
 
+In this model, the forestry effect is on the density dependent term. This is a different formulation of the Ricker model with K instead of Smax.
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{(\\alpha_r + \\beta_{forestry,r}*Forestry_{t,r} )S_{t,r}}{Ke^{\\beta_{forestry,r}*Forestry_{t,r}}} + \epsilon_{t-1,r}$
 
 
-```{r plots, fig.width = 12, fig.height = 4}
+
+```{r plots, fig.width = 12, fig.height = 6}
 
 # put all the bh figures together
 
-p1_bh_rk + 
-  p2_bh_alpha + 
-  p3_bh_K +
-  plot_layout(ncol = 3, guides = "collect") +
-  plot_annotation(title = "Beverton-Holt Spawner Recruit Curves",
-                  theme = theme(plot.title = element_text(size = 20, hjust = 0.5)))
+bh_models <- ((p1_bh_rk + labs(title = "Density Independent") + 
+  p2_bh_alpha + labs(title = "Productivity") + 
+  p3_bh_K+ labs(title = "Carrying Capacity") ) + plot_layout(axes = "collect"))/((q1_bh_rk + q2_bh_alpha + q3_bh_K) + plot_layout(axes = "collect")) +
+  plot_layout(guides = "collect") 
 
 #log transform the y axis
 
+
+ggsave(here("figures", "presentation_all_bh_models.png"), 
+       plot = bh_models, 
+       width = 12, height = 6, dpi = 300)
 
 
 ```
@@ -457,15 +601,15 @@ p1_bh_rk +
 # put all the bh figures together
 
 
-((p4_ric_1 + 
-  p5_ric_alpha + 
-  p6_ric_K)/(q4_ric_1 + 
+ricker_models <- (((p4_ric_1 + ylim(0,1100) + labs(title = "Density Independent") + 
+  p5_ric_alpha + ylim(0,1100)+ labs(title = "Productivity") +
+  p6_ric_K+ ylim(0,1100)+ labs(title = "Carrying Capacity"))+plot_layout(axes = "collect"))/((q4_ric_1 + 
   q5_ric_alpha + 
-  q6_ric_K)) +plot_layout(guides = "collect")
+  q6_ric_K)+plot_layout(axes = "collect"))) +plot_layout(guides = "collect")
   
-
-#log transform the y axis
-
+ggsave(here("figures", "presentation_all_ricker_models.png"), 
+       plot = ricker_models, 
+       width = 12, height = 6, dpi = 300)
 
 
 ```

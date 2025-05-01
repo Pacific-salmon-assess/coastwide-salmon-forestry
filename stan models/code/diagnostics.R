@@ -195,16 +195,23 @@ mcmc_trace(ric_chm_eca_cc, pars = c('b_for'))
 
 #summary
 
-ric_chm_cpd_cc_summary <- read.csv(here('stan models','outs','summary','ric_chm_cpd_static_trial_cc.csv'))
+ric_chm_cpd_cc_summary <- read.csv(here('stan models','outs','summary','ric_chm_cpd_npgo_ersst.csv'))
 
 ric_chm_cpd_cc_summary %>% 
   select(variable, mean) %>% 
-  filter(variable == "alpha0")
+  filter(startsWith(variable, "alpha"))
+
+
+bh_chm_cpd_summary <- read.csv(here('stan models','outs','summary','bh_chm_cpd_npgo_ersst.csv'))
+
+bh_chm_cpd_summary %>% 
+  select(variable, mean) %>% 
+  filter(startsWith(variable, "alpha"))
 
 mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
 # generic
-file <- 'ric_chm_cpd_npgo_sst_K.csv'
+file <- 'bh_chm_cpd_npgo_sst_K.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
