@@ -119,8 +119,8 @@ model{
    z_a_cu ~ std_normal(); //std normal prior for CU-deviations
    z_a_rv ~ std_normal(); //std normal prior for River-deviations
     
-  sigma_a_cu ~  normal(0,1); //variance in CU time-invariant productivities
-  sigma_a_rv ~  normal(0,1); //variance in river-level time-invariant productivities
+  sigma_a_cu ~  normal(1,0.25); //variance in CU time-invariant productivities
+  sigma_a_rv ~  normal(1,0.25); //variance in river-level time-invariant productivities
  
    //recruitment capacity for each stock - fit individually with weakly informative priors based on maximum observed recruitment
   for(j in 1:J) Rk[j] ~ lognormal(logRk_pr[j],logRk_pr_sig[j]); //stock-specific recruitment capacity

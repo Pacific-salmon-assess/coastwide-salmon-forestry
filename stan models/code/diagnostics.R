@@ -210,8 +210,16 @@ bh_chm_cpd_summary %>%
 
 mcmc_trace(post_bh_chm_cpd, pars = c('b_for'))
 
+mcmc_trace(post_bh_chm_eca_npgo, c('b_for'))
+
+#summary
+bh_chm_eca_npgo$summary() %>% 
+  select(variable, mean) %>% 
+  filter(startsWith(variable, "alpha"))
+
+
 # generic
-file <- 'bh_chm_cpd_npgo_sst_K.csv'
+file <- 'bh_chm_eca_npgo_ersst_fixed_alpha_trial.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
@@ -238,7 +246,8 @@ summary <- read.csv(here('stan models','outs','summary',file))
 
 summary %>% 
   select(variable, rhat, mean) %>% 
-  # filter(startsWith(variable, "sigma")) %>%
+  # filter(startsWith(variable, "alpha")) %>% 
+  filter(startsWith(variable, "sigma")) %>%
   filter(rhat > 1.011) %>% 
   #decresing rhat values
   arrange(-rhat)
@@ -253,11 +262,69 @@ summary <- read.csv(here('stan models','outs','summary','ric_chm_eca_static_cc.c
 
 summary %>% 
   select(variable, rhat, mean, median) %>% 
-  filter(startsWith(variable, "alpha_j"))
+  filter(startsWith(variable, "sigma_a_rv"))
 
 summary <- read.csv(here('stan models','outs','summary','bh_chm_eca_static_K_trial.csv'))
 
 summary %>% 
   select(variable, rhat, mean, median) %>% 
   filter(startsWith(variable, "b_for"))
+
+
+# plotting histogram of river level alphas
+
+file <- 'bh_chm_cpd_npgo_ersst_fixed_alpha.csv'
+
+posterior <- read.csv(here('stan models','outs','posterior',file))
+
+summary <- read.csv(here('stan models','outs','summary',file))
+
+
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "alpha_j")) %>% 
+  ggplot(aes(x = mean)) +
+  geom_histogram(bins = 30, fill = "salmon", alpha = 0.5, color = "black")+
+  theme_classic()+
+  labs(x = "Mean river level alpha values", y = "Count")
+
+
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "alpha_cu")) %>% 
+  ggplot(aes(x = mean)) +
+  geom_histogram(bins = 30, fill = "salmon", alpha = 0.5, color = "black")+
+  theme_classic()+
+  labs(x = "Mean CU level alpha values", y = "Count")
+
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "sigma")) 
+
+
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "z_a_rv")) %>%
+  ggplot(aes(x = mean)) +
+  geom_histogram(bins = 30, fill = "salmon", alpha = 0.5, color = "black")+
+  theme_classic()+
+  labs(x = "Mean z score deviations", y = "Count")
+
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "z_a_cu")) %>%
+  ggplot(aes(x = mean)) +
+  geom_histogram(bins = 30, fill = "salmon", alpha = 0.5, color = "black")+
+  theme_classic()+
+  labs(x = "Mean z score deviations", y = "Count")
+
+
+
+
+
+
+
+
+
+
 
