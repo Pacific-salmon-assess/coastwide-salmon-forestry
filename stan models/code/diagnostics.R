@@ -219,7 +219,7 @@ bh_chm_eca_npgo$summary() %>%
 
 
 # generic
-file <- 'bh_chm_eca_npgo_ersst_fixed_alpha_trial.csv'
+file <- 'bh_chm_cpd_noac.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
@@ -247,7 +247,7 @@ summary <- read.csv(here('stan models','outs','summary',file))
 summary %>% 
   select(variable, rhat, mean) %>% 
   # filter(startsWith(variable, "alpha")) %>% 
-  filter(startsWith(variable, "sigma")) %>%
+  # filter(startsWith(variable, "sigma")) %>%
   filter(rhat > 1.011) %>% 
   #decresing rhat values
   arrange(-rhat)
