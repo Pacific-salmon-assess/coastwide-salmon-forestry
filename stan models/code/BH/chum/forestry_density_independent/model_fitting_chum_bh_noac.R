@@ -56,7 +56,10 @@ ch20r$sqrt.CPD.std=(ch20r$sqrt.CPD-mean(ch20r$sqrt.CPD))/sd(ch20r$sqrt.CPD)
 eca_s=ch20r%>%group_by(River)%>%summarize(m=mean(ECA_age_proxy_forested_only*100),range=max(ECA_age_proxy_forested_only*100)-min(ECA_age_proxy_forested_only*100),cu=unique(CU))
 
 #extract max S for priors on capacity & eq. recruitment
-smax_prior=ch20r%>%group_by(River) %>%summarize(m.s=max(Spawners),m.r=max(Recruits))
+smax_prior=
+  ch20r %>%
+  group_by(River) %>%
+  summarize(m.s=Spawners[which.max(Recruits)],m.r=max(Recruits))
 
 #ragged start and end points for each SR series
 N_s=rag_n(ch20r$River)
@@ -82,7 +85,7 @@ dl_chm_eca=list(N=nrow(ch20r),
                 end_y=N_s[,2],
                 start_t=L_i$tmin,
                 end_t=L_i$tmax,
-                pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
+                pSmax_mean=smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
                 pSmax_sig=smax_prior$m.s,
                 pRk_mean=0.75*smax_prior$m.r, ##prior for Rk (recruitment capacity) based on max observed spawners
                 pRk_sig=smax_prior$m.r)
@@ -101,7 +104,7 @@ dl_chm_cpd=list(N=nrow(ch20r),
                 end_y=N_s[,2],
                 start_t=L_i$tmin,
                 end_t=L_i$tmax,
-                pSmax_mean=0.5*smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
+                pSmax_mean=smax_prior$m.s, #prior for Smax (spawners that maximize recruitment) based on max observed spawners
                 pSmax_sig=smax_prior$m.s,
                 pRk_mean=0.75*smax_prior$m.r, #prior for Rk (recruitment capacity) based on max observed spawners
                 pRk_sig=smax_prior$m.r)
@@ -127,8 +130,8 @@ if(Sys.info()[7] == "mariakur") {
 } else {
   bh_chm_eca <- mbh$sample(data=dl_chm_eca,
                               chains = 6, 
-                              iter_warmup = 200,
-                              iter_sampling =500,
+                              iter_warmup = 500,
+                              iter_sampling = 1000,
                               refresh = 100,
                               adapt_delta = 0.999,
                               max_treedepth = 20)
@@ -161,8 +164,8 @@ if(Sys.info()[7] == "mariakur") {
 } else {
   bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
                               chains = 6, 
-                              iter_warmup = 200,
-                              iter_sampling =500,
+                              iter_warmup = 500,
+                              iter_sampling = 1000,
                               refresh = 100,
                               adapt_delta = 0.999,
                               max_treedepth = 20)
