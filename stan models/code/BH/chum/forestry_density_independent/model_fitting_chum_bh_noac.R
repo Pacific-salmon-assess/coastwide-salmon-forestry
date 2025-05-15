@@ -129,12 +129,13 @@ if(Sys.info()[7] == "mariakur") {
   
 } else {
   bh_chm_eca <- mbh$sample(data=dl_chm_eca,
-                              chains = 6, 
-                              iter_warmup = 500,
-                              iter_sampling = 1000,
-                              refresh = 100,
-                              adapt_delta = 0.999,
-                              max_treedepth = 20)
+                           chains = 6, 
+                           iter_warmup = 500,
+                           iter_sampling = 1000,
+                           thin = 2,
+                           refresh = 100,
+                           adapt_delta = 0.999,
+                           max_treedepth = 20)
   
   write.csv(bh_chm_eca$summary(),here("stan models","outs","summary","bh_chm_eca_noac.csv"))
   bh_chm_eca$save_object(here("stan models","outs","fits","bh_chm_eca_noac.RDS"))
@@ -149,12 +150,12 @@ print("cpd")
 if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
-                              chains = 1, 
-                              iter_warmup = 20,
-                              iter_sampling =50,
-                              refresh = 10,
-                              adapt_delta = 0.999,
-                              max_treedepth = 20)
+                           chains = 1, 
+                           iter_warmup = 20,
+                           iter_sampling =50,
+                           refresh = 10,
+                           adapt_delta = 0.999,
+                           max_treedepth = 20)
   write.csv(bh_chm_cpd$summary(),'./stan models/outs/summary/bh_chm_cpd_noac_trial.csv')
   bh_chm_cpd$save_object('./stan models/outs/fits/bh_chm_cpd_noac_trial.RDS')
   
@@ -163,12 +164,13 @@ if(Sys.info()[7] == "mariakur") {
   
 } else {
   bh_chm_cpd <- mbh$sample(data=dl_chm_cpd,
-                              chains = 6, 
-                              iter_warmup = 500,
-                              iter_sampling = 1000,
-                              refresh = 100,
-                              adapt_delta = 0.999,
-                              max_treedepth = 20)
+                           chains = 6, 
+                           iter_warmup = 500,
+                           iter_sampling = 1000,
+                           thin = 2,
+                           refresh = 100,
+                           adapt_delta = 0.999,
+                           max_treedepth = 20)
   
   write.csv(bh_chm_cpd$summary(),here("stan models","outs","summary","bh_chm_cpd_noac.csv"))
   bh_chm_cpd$save_object(here("stan models","outs","fits","bh_chm_cpd_noac.RDS"))
