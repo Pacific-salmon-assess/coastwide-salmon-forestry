@@ -152,6 +152,7 @@ if(Sys.info()[7] == "mariakur") {
                               chains = 6,
                               iter_warmup = 500,
                               iter_sampling =1000,
+                              thin = 2,
                               refresh = 100,
                               adapt_delta = 0.999,
                               max_treedepth = 20)
@@ -192,6 +193,7 @@ if(Sys.info()[7] == "mariakur") {
                               chains = 6, 
                               iter_warmup = 500,
                               iter_sampling = 1000,
+                              thin = 2,
                               refresh = 100,
                               adapt_delta = 0.999,
                               max_treedepth = 20)

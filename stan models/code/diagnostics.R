@@ -219,7 +219,7 @@ bh_chm_eca_npgo$summary() %>%
 
 
 # generic
-file <- 'bh_chm_cpd_noac.csv'
+file <- 'bh_chm_cpd_ocean_covariates.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
@@ -238,7 +238,7 @@ mcmc_trace(posterior[2001:2500,], pars = c('b_npgo'))
 mcmc_trace(posterior[2501:3000,], pars = c('b_npgo'))
 
 mcmc_trace(posterior[1:500,], pars = c('K.10.'))
-mcmc_trace(posterior[1:500,], pars = c('alpha_j.52.'))
+mcmc_trace(posterior[1:500,], pars = c('alpha_j.350.'))
 
 #plot all chains in one plot with different colors
 
@@ -246,7 +246,7 @@ summary <- read.csv(here('stan models','outs','summary',file))
 
 summary %>% 
   select(variable, rhat, mean) %>% 
-  # filter(startsWith(variable, "alpha")) %>% 
+  # filter(startsWith(variable, "alpha")) %>%
   # filter(startsWith(variable, "sigma")) %>%
   filter(rhat > 1.011) %>% 
   #decresing rhat values
