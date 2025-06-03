@@ -219,11 +219,11 @@ bh_chm_eca_npgo$summary() %>%
 
 
 # generic
-file <- 'bh_chm_cpd_ocean_covariates.csv'
+file <- 'ric_chm_cpd_ocean_covariates_logR_trial.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
-mcmc_trace(posterior[1:500,], pars = c('b_for'))
+mcmc_trace(posterior[1:50,], pars = c('b_for'))
 mcmc_trace(posterior[501:1000,], pars = c('b_for'))
 mcmc_trace(posterior[1001:1500,], pars = c('b_for'))
 mcmc_trace(posterior[1501:2000,], pars = c('b_for'))
@@ -245,7 +245,7 @@ mcmc_trace(posterior[1:500,], pars = c('alpha_j.350.'))
 summary <- read.csv(here('stan models','outs','summary',file))
 
 summary %>% 
-  select(variable, rhat, mean) %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>% 
   # filter(startsWith(variable, "alpha")) %>%
   # filter(startsWith(variable, "sigma")) %>%
   filter(rhat > 1.011) %>% 
