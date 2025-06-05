@@ -25,7 +25,7 @@ source(here('stan models','code','funcs.R'))
 # load Stan model sets####
 file_ric=file.path(here('stan models', 'code',
                         'Ricker', 'chum', 'forestry_density_independent',
-                        'ric_chm_static_npgo_sst.stan'))
+                        'ric_chm_static_npgo_sst_sigma.stan'))
 mric=cmdstanr::cmdstan_model(file_ric) #compile stan code to C++
 
 # load datasets####
@@ -131,19 +131,19 @@ if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_chm_eca_npgo_sst <- mric$sample(data=dl_chm_eca_npgo_sst,
                             chains = 1, 
-                            iter_warmup = 20,
+                            iter_warmup = 100,
                             iter_sampling =50,
                             refresh = 10,
                             adapt_delta = 0.999,
                             max_treedepth = 20)
-  write.csv(ric_chm_eca_npgo_sst$summary(),'./stan models/outs/summary/ric_chm_eca_ocean_covariates_trial.csv')
-  ric_chm_eca_npgo_sst$save_object('./stan models/outs/fits/ric_chm_eca_ocean_covariates_trial.RDS')
+  write.csv(ric_chm_eca_npgo_sst$summary(),'./stan models/outs/summary/ric_chm_eca_ocean_covariates_sigma_trial.csv')
+  ric_chm_eca_npgo_sst$save_object('./stan models/outs/fits/ric_chm_eca_ocean_covariates_sigma_trial.RDS')
   
   post_ric_chm_eca_npgo_sst=ric_chm_eca_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
-                                                           'alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_chm_eca_npgo_sst,here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_trial.csv'))
+                                                           'alpha_j','Smax'),format='draws_matrix')
+  write.csv(post_ric_chm_eca_npgo_sst,here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_sigma_trial.csv'))
   
 } else {
   ric_chm_eca_npgo_sst <- mric$sample(data=dl_chm_eca_npgo_sst,
@@ -154,14 +154,14 @@ if(Sys.info()[7] == "mariakur") {
                             adapt_delta = 0.999,
                             max_treedepth = 20)
   
-  write.csv(ric_chm_eca_npgo_sst$summary(),here("stan models","outs","summary","ric_chm_eca_ocean_covariates.csv"))
-  ric_chm_eca_npgo_sst$save_object(here("stan models","outs","fits","ric_chm_eca_ocean_covariates.RDS"))
+  write.csv(ric_chm_eca_npgo_sst$summary(),here("stan models","outs","summary","ric_chm_eca_ocean_covariates_sigma.csv"))
+  ric_chm_eca_npgo_sst$save_object(here("stan models","outs","fits","ric_chm_eca_ocean_covariates_sigma.RDS"))
   
   post_ric_chm_eca_npgo_sst=ric_chm_eca_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
-                                                           'alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_chm_eca_npgo_sst,here('stan models','outs','posterior','ric_chm_eca_ocean_covariates.csv'))
+                                                           'alpha_j','Smax'),format='draws_matrix')
+  write.csv(post_ric_chm_eca_npgo_sst,here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_sigma.csv'))
   
 }
 
@@ -178,14 +178,14 @@ if(Sys.info()[7] == "mariakur") {
                                   refresh = 10,
                                   adapt_delta = 0.999,
                                   max_treedepth = 20)
-  write.csv(ric_chm_cpd_npgo_sst$summary(),'./stan models/outs/summary/ric_chm_cpd_ocean_covariates_trial.csv')
-  ric_chm_cpd_npgo_sst$save_object('./stan models/outs/fits/ric_chm_cpd_ocean_covariates_trial.RDS')
+  write.csv(ric_chm_cpd_npgo_sst$summary(),'./stan models/outs/summary/ric_chm_cpd_ocean_covariates_sigma_trial.csv')
+  ric_chm_cpd_npgo_sst$save_object('./stan models/outs/fits/ric_chm_cpd_ocean_covariates_sigma_trial.RDS')
   
   post_ric_chm_cpd_npgo_sst=ric_chm_cpd_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
-                                                           'alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_trial.csv'))
+                                                           'alpha_j','Smax'),format='draws_matrix')
+  write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_sigma_trial.csv'))
   
 } else {
   ric_chm_cpd_npgo_sst <- mric$sample(data=dl_chm_cpd_npgo_sst,
@@ -196,14 +196,14 @@ if(Sys.info()[7] == "mariakur") {
                                   adapt_delta = 0.999,
                                   max_treedepth = 20)
   
-  write.csv(ric_chm_cpd_npgo_sst$summary(),here("stan models","outs","summary","ric_chm_cpd_ocean_covariates.csv"))
-  ric_chm_cpd_npgo_sst$save_object(here("stan models","outs","fits","ric_chm_cpd_ocean_covariates.RDS"))
+  write.csv(ric_chm_cpd_npgo_sst$summary(),here("stan models","outs","summary","ric_chm_cpd_ocean_covariates_sigma.csv"))
+  ric_chm_cpd_npgo_sst$save_object(here("stan models","outs","fits","ric_chm_cpd_ocean_covariates_sigma.RDS"))
   
   post_ric_chm_cpd_npgo_sst=ric_chm_cpd_npgo_sst$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                            'b_npgo','b_npgo_cu','b_npgo_rv',
                                                            'b_sst','b_sst_cu','b_sst_rv',
-                                                           'alpha_j','Smax','sigma'),format='draws_matrix')
-  write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates.csv'))
+                                                           'alpha_j','Smax'),format='draws_matrix')
+  write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_sigma.csv'))
   
 }
 

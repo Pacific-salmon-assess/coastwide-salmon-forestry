@@ -7,7 +7,8 @@ data{
   array[N] int J_i; //River index for each data point
   array[N] int ii; //index of brood years
   array[N] real R_S; //vector of productivity for all stocks - log(recruits per spawner)
-  array[N] real S; //vector of spawners
+  // array[N] real S; //vector of spawners
+  vector[N] S; //vector of spawners
   array[N] real forest_loss; //vector of watershed forest loss through time
   array[N] real npgo; //vector of NPGO values through time
   array[N] real sst; //vector of SST values through time
@@ -59,10 +60,13 @@ parameters{
   real<lower=0> mu_sigma; ///mean sigma among all stocks
   vector[C] z_sig_cu; //persistent CU-level differences in productivity
   vector[J] z_sig_rv; //persistent river-level differences in productivity
+  vector[N] z_sig_n; //persistent spawner-level differences in productivity
+  
   real<lower=0> sd_sigma; ///variance in sigma within CUs (pooled among CUs)
   real<lower=0> sd_sigma_cu; ///variance in sigma among CUs  
+  real s_effect; //effect of spawners on sigma
   
-  vector<lower = -1,upper=1>[J] rho; //autocorrelation parameter
+  vector<lower = -1,upper=1>[N] rho; //autocorrelation parameter
 }
 transformed parameters{
   
@@ -78,7 +82,7 @@ transformed parameters{
   vector<lower=0>[C] cu_sigma; ///CU-level sigma
   vector<lower = 0>[J] sigma; ///stock-level sigma
   vector<lower=0>[N] sigma_modified; //modified sigma function of spawners
-  vector<lower = 0>[J] sigmaAR; ///stock-level sigma
+  vector<lower = 0>[N] sigmaAR; ///stock-level sigma
   vector<lower=0>[J] b; //per capita density dependence term
   
   //productivity residuals through time
@@ -102,19 +106,21 @@ transformed parameters{
   cu_sigma = mu_sigma + sd_sigma_cu*z_sig_cu; //non-centered CU-varying estimate for sigma
   sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate for sigma
   
+  sigma_modified = sigma[J_i] + s_effect*S; // sigma that varies with spawners
+  
   //residual productivity deviations
   for(j in 1:J){ //for every stock
   b[j]=1/Smax[j];
   mu1[start_y[j]]=alpha_j[j]-b[j]*S[start_y[j]]+b_for_rv[j]*forest_loss[start_y[j]] + b_npgo_rv[j]*npgo[start_y[j]] + b_sst_rv[j]*sst[start_y[j]]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
   e_t[start_y[j]] = R_S[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
-  sigma_modified[start_y[j]] = sigma[j] + sigma_S*S[start_y[j]];
+  // sigma_modified[start_y[j]] = sigma[j] + s_effect*S[start_y[j]];
   
   for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
   mu2[t]  = alpha_j[j]-b[j]*S[t]+b_for_rv[j]*forest_loss[t]+ b_npgo_rv[j]*npgo[t]+b_sst_rv[j]*sst[t]+ rho[j]^(ii[t]-ii[t-1])*e_t[t-1]; //adjust expectation based on previous deviate - rho is raised to the power of the number of time steps (in years) between observations
   e_t[t] = R_S[t] - (mu2[t]-(rho[j]^(ii[t]-ii[t-1]))*e_t[t-1]);  //residual for stock j at time t
   }
   }
-  sigmaAR = sigma.*sqrt(1-rho^2); //correct stock sigma for autocorrelation (rho)	
+  sigmaAR = sigma_modified.*sqrt(1-rho[J_i]^2); //correct stock sigma for autocorrelation (rho)	
 }  
 model{
   //priors
@@ -164,11 +170,20 @@ model{
   rho ~ uniform(-1,1); //prior for autocorrelation
   
   //likelihood sampling:
+  // for(j in 1:J){
+  //   R_S[start_y[j]]~ normal(mu1[start_y[j]],sigma[j]); //initial fit for each stock
+  //   
+  //   R_S[(start_y[j]+1):end_y[j]] ~ normal(mu2[(start_y[j]+1):end_y[j]], sigmaAR[j]); //subsequent samples including autocorrelation
+  // }
+  
+  //likelihood sampling for all observation
   for(j in 1:J){
-    R_S[start_y[j]]~ normal(mu1[start_y[j]],sigma[j]); //initial fit for each stock
-    
-    R_S[(start_y[j]+1):end_y[j]] ~ normal(mu2[(start_y[j]+1):end_y[j]], sigmaAR[j]); //subsequent samples including autocorrelation
+    R_S[start_y[j]] ~ normal(mu1[start_y[j]], sigma_modified[start_y[j]]);
+    for(n in (start_y[j]+1):end_y[j]){
+      R_S[n] ~ normal(mu2[n],sigmaAR[n]);
+    }
   }
+  
 }
 generated quantities{
   vector[N] log_lik; //pointwise log likelihoods

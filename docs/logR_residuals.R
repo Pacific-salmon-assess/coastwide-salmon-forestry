@@ -161,4 +161,39 @@ ggplot(residual_logR_df_full_chum)+
 ggsave(here("figures", "residuals_logR_chum.png"),
        width = 8, height = 6, dpi = 300, units = "in")
 
+# look at the correlation between min S and median alpha from the posterior for each river
+
+
+alpha_minS_full <- data.frame()
+
+posterior_bh <- bh_chm_eca_ocean_covariates
+
+for(river in rivers){
+  
+  river_data <- df %>% filter(River_n == river)
+  
+  
+  posterior_rv_alpha_j <- posterior_bh %>% 
+    select(starts_with('alpha_j')) %>%
+    select(ends_with(paste0("[",river,"]")))
+  
+  alpha_minS <- data.frame(alpha = median(posterior_rv_alpha_j[,1]),
+                           min_spawners = min(river_data$Spawners))
+  
+  alpha_minS_full <- rbind(alpha_minS_full, alpha_minS)
+}
+
+ggplot(alpha_minS_full)+
+  geom_point(aes(x = log(min_spawners), y = alpha), color = 'cyan', size = 2, alpha = 0.3) +
+  # geom_smooth(aes(x = log(min_spawners), y = alpha), method = 'lm', color = 'black', se = FALSE) +
+  labs(title = "Minimum Spawners vs Median Alpha", x = "Minimum Spawners", y = "Median Alpha") +
+  theme_classic() +
+  theme(axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+  )
+
+
 
