@@ -9,6 +9,7 @@ data{
   array[N] real R_S; //vector of productivity for all stocks - log(recruits per spawner)
   // array[N] real S; //vector of spawners
   vector[N] S; //vector of spawners
+  vector[N] S_std; //scaled vector of spawners
   array[N] real forest_loss; //vector of watershed forest loss through time
   array[N] real npgo; //vector of NPGO values through time
   array[N] real sst; //vector of SST values through time
@@ -106,7 +107,7 @@ transformed parameters{
   cu_sigma = mu_sigma + sd_sigma_cu*z_sig_cu; //non-centered CU-varying estimate for sigma
   sigma = cu_sigma[C_i] + sd_sigma*z_sig_rv; //non-centered CU-varying estimate for sigma
   
-  sigma_modified = sigma[J_i] + s_effect*S; // sigma that varies with spawners
+  sigma_modified = sigma[J_i] + s_effect*S_std; // sigma that varies with spawners
   
   //residual productivity deviations
   for(j in 1:J){ //for every stock
@@ -162,6 +163,9 @@ model{
   
   //variance terms
   mu_sigma ~ normal(1,1);
+  
+  s_effect ~ normal(-1,0.5);
+  
   z_sig_cu ~ std_normal();
   z_sig_rv ~ std_normal();
   sd_sigma_cu ~normal(0,1);

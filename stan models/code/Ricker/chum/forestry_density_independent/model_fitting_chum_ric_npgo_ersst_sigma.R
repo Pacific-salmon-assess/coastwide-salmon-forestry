@@ -80,6 +80,13 @@ j_river=distinct(ch20r,River,BroodYear,.keep_all = T)
 #time points for each series
 L_i=ch20r%>%group_by(River)%>%summarize(l=n(),min=min(BroodYear),max=max(BroodYear),tmin=min(BroodYear)-1954+1,tmax=max(BroodYear)-1954+1)
 
+# for every river, standardize the spawners
+
+ch20r_std <- ch20r %>% 
+  group_by(River) %>% 
+  mutate(S_std = (Spawners - mean(Spawners)) / sd(Spawners)) %>% 
+  ungroup()
+
 #data list for fits
 dl_chm_eca_npgo_sst=list(N=nrow(ch20r),
                 L=max(ch20r$BroodYear)-min(ch20r$BroodYear)+1,
@@ -90,6 +97,7 @@ dl_chm_eca_npgo_sst=list(N=nrow(ch20r),
                 ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
                 R_S=ch20r$ln_RS,
                 S=ch20r$Spawners, 
+                S_std = ch20r_std$S_std, # spawners standardized for every river
                 forest_loss=ch20r$sqrt.ECA.std, #design matrix for standardized ECA
                 npgo=ch20r$npgo.std, #design matrix for standardized npgo
                 sst=ch20r$sst.std,
@@ -111,6 +119,7 @@ dl_chm_cpd_npgo_sst=list(N=nrow(ch20r),
                      ii=as.numeric(factor(ch20r$BroodYear)), #brood year index
                      R_S=ch20r$ln_RS,
                      S=ch20r$Spawners, 
+                     S_std = ch20r_std$S_std, # spawners standardized for every river
                      forest_loss=ch20r$sqrt.CPD.std, #design matrix for standardized ECA
                      npgo=ch20r$npgo.std, #design matrix for standardized npgo
                      sst=ch20r$sst.std,
