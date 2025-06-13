@@ -219,11 +219,11 @@ bh_chm_eca_npgo$summary() %>%
 
 
 # generic
-file <- 'ric_chm_cpd_ocean_covariates_logR_trial.csv'
+file <- 'ric_chm_cpd_ocean_covariates_logR.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
-mcmc_trace(posterior[1:50,], pars = c('b_for'))
+mcmc_trace(posterior[1:500,], pars = c('b_for'))
 mcmc_trace(posterior[501:1000,], pars = c('b_for'))
 mcmc_trace(posterior[1001:1500,], pars = c('b_for'))
 mcmc_trace(posterior[1501:2000,], pars = c('b_for'))

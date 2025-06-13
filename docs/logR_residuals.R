@@ -4,6 +4,7 @@
 library(here)
 library(ggplot2)
 library(tidyverse)
+library(latex2exp)
 
 
 
@@ -196,4 +197,108 @@ ggplot(alpha_minS_full)+
   )
 
 
+#plotting the residuals of eca model with logR 
+
+df <- ch20rsc %>% 
+  mutate(eca_level = case_when(
+    ECA_age_proxy_forested_only*100 < 12 ~ 'low',
+    ECA_age_proxy_forested_only*100 >= 12 & ECA_age_proxy_forested_only*100 < 24 ~ 'medium',
+    ECA_age_proxy_forested_only*100 >= 24 ~ 'high'
+  ))
+
+
+
+ric_chm_eca_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR.csv'),check.names=F)
+posterior <- ric_chm_eca_ocean_covariates_logR
+
+
+residual_logR_df_full_chum <- data.frame()
+
+rivers <- unique(df$River_n)
+
+
+
+
+for(river in rivers){
+  
+  river_data <- df %>% filter(River_n == river)
+  
+  posterior_rv_b_for <- posterior %>% 
+    select(starts_with('b_for_rv')) %>%
+    select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_b_npgo <- posterior %>% 
+    select(starts_with('b_npgo_rv')) %>%
+    select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_b_sst <- posterior %>% 
+    select(starts_with('b_sst_rv')) %>%
+    select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_alpha_j <- posterior %>% 
+    select(starts_with('alpha_j')) %>%
+    select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_S_max <- posterior %>% 
+    select(starts_with('Smax')) %>%
+    select(ends_with(paste0("[",river,"]")))
+  
+  
+  residual_logR_df <- data.frame(spawners = river_data$Spawners,
+                                 recruits = river_data$Recruits,
+                                 observed_log_R = log(river_data$Recruits),
+                                 predicted_log_R = apply(matrix(log(river_data$Spawners), 
+                                                                ncol=length(river_data$Spawners), 
+                                                                nrow = 3000, byrow = TRUE) + (matrix(posterior_rv_alpha_j[,1], 
+                                                                                                     ncol = length(river_data$Spawners), 
+                                                                                                     nrow = length(posterior_rv_alpha_j[,1])) - 
+                                                                                                as.matrix(1/posterior_rv_S_max)%*%river_data$Spawners + 
+                                                                                                as.matrix(posterior_rv_b_for)%*%river_data$sqrt.CPD.std +
+                                                                                                                                                            
+                                                                                                as.matrix(posterior_rv_b_npgo)%*%river_data$npgo.std + 
+                                                                                                                                                            
+                                                                                                as.matrix(posterior_rv_b_sst)%*%river_data$sst.std ), 2, median),
+                                 
+                                 eca = river_data$ECA_age_proxy_forested_only,
+                                 eca_level = river_data$eca_level,
+                                 sqrt.CPD.std = river_data$sqrt.ECA.std,
+                                 forestry_effect = apply(as.matrix(posterior_rv_b_for)%*%river_data$sqrt.ECA.std , 2, median),
+                                 CU_name = river_data$CU_name
+  )
+  
+  residual_logR_df$residuals <- residual_logR_df$observed_log_R - residual_logR_df$predicted_log_R
+  
+  residual_logR_df$partial_residuals <- residual_logR_df$residuals + residual_logR_df$forestry_effect
+  
+  residual_logR_df_full_chum <- rbind(residual_logR_df_full_chum, residual_logR_df)
+  
+  
+  
+}
+
+ggplot(residual_logR_df_full_chum)+
+  geom_point(aes(x = predicted_log_R, y = residuals, color = eca_level), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "Ricker model with ECA, NPGO, ERSST", x = TeX(r"(Predicted $\log (Recruits)$)"), y = "Residuals") +
+  scale_color_manual(name = "ECA level (%)",
+                     values = c('low' = '#35978f', 'medium' = 'gray', 'high' = '#bf812d'))+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+  )
+
+#save
+
+ggsave(here("figures", "residuals_logR_model_chum_eca.png"),
+       width = 8, height = 6, dpi = 300, units = "in")
 
