@@ -496,10 +496,10 @@ plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca"
 ```
 
 
-# Models with forestry effects on the density independent term:
+## Models with forestry effects on the density independent term:
 
 
-## Ricker:
+### Ricker:
 
 Model with static productivity, forestry:
 
@@ -515,6 +515,9 @@ Model with ocean covariates, forestry:
 $log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}Forestry_{t,r} + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \rho \epsilon_{t-1,r}$
 
 
+Model of log(Recruits) with ocean covariates, forestry:
+
+$log(R_{t,r}) = log(S_{t,r}) +\alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}Forestry_{t,r} + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \rho \epsilon_{t-1,r}$
 
 
 ```{r fig.width=10, fig.height=12}
@@ -549,7 +552,7 @@ ric_chm_cpd_ocean_covariates_logR=read.csv(here('stan models','outs','posterior'
 
 
 
-## Beverton-Holt (BH):
+### Beverton-Holt (BH):
 
 Model with static productivity, forestry:
 
@@ -600,10 +603,10 @@ bh_chm_cpd_ocean_covariates = read.csv(here('stan models','outs','posterior',
 
 
 
-## Spawner-Recruit fits
+### Spawner-Recruit fits
 
 
-```{r, spawner-recruit, fig.width = 10, fig.height = 8, results="asis"}
+```{r eval=FALSE, fig.height=8, include=FALSE, results="asis", spawner-recruit, fig.width=10}
 
 # function to plot recruit vs spawner for chum for each river
 # data in points
@@ -1016,7 +1019,7 @@ for(river in rivers){
 ```
 
 
-## Residuals
+### Residuals
 
 
 ```{r, residual-plots, fig.width = 12, fig.height = 8, results="asis"}
@@ -1320,7 +1323,7 @@ print((p_cu_ric_residuals_chum + p_bh_cu_residuals_chum)/(p_cu_partial_ric_resid
 
 
 
-## Residuals with log R
+### Residuals with log R
 
 
 
@@ -1477,7 +1480,7 @@ print((p_ric_residuals_chum_logR + p_bh_residuals_chum)/(p_ric_partial_residuals
 ```
 
 
-## Residuals as a function of forestry and spawners
+### Residuals as a function of forestry and spawners
 
 ```{r, residuals-forestry-spawners, fig.width = 8, fig.height = 6, results="asis"}
   
@@ -1554,3 +1557,863 @@ ggplot(residual_df_full_chum_logR)+
         )
 
 ```
+
+
+### Correlation of effects of covariates between BH and Ricker models
+
+```{r fig.width=10, fig.height=8}
+
+# make correlation plot between median effects from Ricker model and median effects from BH model
+
+cor_plot_bw_models <- function(posterior1 = ric_chm_cpd_ersst, posterior2 = bh_chm_cpd_ersst, effect = "cpd"){
+  
+  if(effect == "cpd"){
+    max_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_name, disturbedarea_prct_cs,area_km2) %>%
+  group_by(River) %>% 
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_name = first(CU_name),
+            forestry_max = max(disturbedarea_prct_cs, na.rm = TRUE),
+            forestry_level =max(disturbedarea_prct_cs, na.rm = TRUE),
+            area_km2 = mean(area_km2, na.rm = TRUE)
+            )
+    scale_color <- scale_color_gradient2(name = "Max CPD level\nin River (%)",
+                                         low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    scale_fill <- scale_fill_gradient2(name = "Max CPD level\nin River (%)",
+                                       low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    
+    max_cu_df <- max_df %>% 
+      group_by(CU, CU_name) %>% 
+      summarize(forestry_mean = mean(forestry_max, na.rm = TRUE),
+                area_km2_mean = mean(area_km2, na.rm = TRUE)) 
+    names_prefix = "b_for_rv"
+    
+  } else if(effect == "eca"){
+    max_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_name, ECA_age_proxy_forested_only,area_km2) %>%
+  group_by(River) %>%
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_name = first(CU_name),
+            area_km2 = mean(area_km2, na.rm = TRUE),
+            forestry_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(forestry_level = case_when(forestry_max < 12 ~ 'low',
+                               forestry_max >= 12 & forestry_max < 24 ~ 'medium',
+                               forestry_max >= 24 ~ 'high'))
+    
+    scale_color <- scale_color_manual(name = "Max ECA level\nin River (%)",
+                                     values = c('low' = '#35978f', 'medium' = 'gray', 'high' = '#bf812d'))
+    scale_fill <- scale_fill_manual(name = "Max ECA level\nin River (%)",
+                                     values = c('low' = '#35978f', 'medium' = 'gray', 'high' = '#bf812d'))
+    
+    max_cu_df <- max_df %>%
+      group_by(CU, CU_name) %>% 
+      summarize(forestry_mean = mean(forestry_max, na.rm = TRUE),
+                area_km2_mean = mean(area_km2, na.rm = TRUE))
+    
+    names_prefix = "b_for_rv"
+    
+  } else if(effect == "sst"){
+    max_df <- ch20rsc %>% 
+      select(River, River_n,CU, CU_name, spring_ersst, area_km2) %>% 
+      group_by(River) %>%
+      summarize(River_n = first(River_n),
+                River = first(River),
+                CU = first(CU),
+                CU_name = first(CU_name),
+                area_km2 = mean(area_km2, na.rm = TRUE),
+                sst_max = max(spring_ersst, na.rm = TRUE))
+    
+    scale_color <- scale_color_gradient2(name = "Max SST level\nin River (C)",
+                                         low = '#8CA8B3', mid = 'gray', high = "#C88485", midpoint = 12)
+    
+    scale_fill <- scale_fill_gradient2(name = "Max SST level\nin River (C)",
+                                       low = '#8CA8B3', mid = 'gray', high = "#C88485", midpoint = 12)
+      
+      max_cu_df <- max_df %>%
+        group_by(CU, CU_name) %>% 
+        summarize(sst_mean = mean(sst_max, na.rm = TRUE),
+                  area_km2_mean = mean(area_km2, na.rm = TRUE))
+      
+      names_prefix = "b_sst_rv"
+      
+      
+      
+  } else if(effect == "npgo"){
+    
+    max_df <- ch20rsc %>% 
+      select(River, River_n,CU, CU_name, npgo.std, area_km2) %>% 
+      group_by(River) %>%
+      summarize(River_n = first(River_n),
+                River = first(River),
+                CU = first(CU),
+                CU_name = first(CU_name),
+                area_km2 = mean(area_km2, na.rm = TRUE),
+                npgo_max = max(npgo.std, na.rm = TRUE))
+    
+    scale_color <- scale_color_gradient2(name = "Max NPGO level\nin River",
+                                         low = '#8CA8B3', mid = 'gray', high = "#8CB390", midpoint = 2)
+    
+    scale_fill <- scale_fill_gradient2(name = "Max NPGO level\nin River",
+                                       low = '#8CA8B3', mid = 'gray', high = "#8CB390", midpoint = 2)
+    
+    max_cu_df <- max_df %>%
+      group_by(CU, CU_name) %>% 
+      summarize(npgo_mean = mean(npgo_max, na.rm = TRUE),
+                area_km2_mean = mean(area_km2, na.rm = TRUE))
+    
+    names_prefix = "b_npgo_rv"
+    
+  } else {
+    stop("Effect must be one of 'cpd', 'eca', 'sst', or 'npgo'")
+    
+    
+    
+    
+  }
+  
+  
+  
+  
+  posterior_df1 <- posterior1 %>%
+    select(starts_with(names_prefix)) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = names_prefix,
+                 values_to = effect) %>%
+    group_by(River) %>%
+    summarize(ric_effect_median = median(!!sym(effect), na.rm = TRUE)) %>%
+    ungroup() %>% 
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) 
+
+  posterior_df2 <- posterior2 %>%
+    select(starts_with(names_prefix)) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = names_prefix,
+                 values_to = effect) %>%
+    group_by(River) %>%
+    summarize(bh_effect_median = median(!!sym(effect), na.rm = TRUE)) %>%
+    ungroup() %>% 
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River)
+  
+  posterior_df <- left_join(posterior_df1, posterior_df2, by = 'River_n') %>% 
+    left_join(max_df, by = 'River_n') %>% 
+    left_join(max_cu_df, by = c('CU' = 'CU', 'CU_name' = 'CU_name'))
+  
+  cor <- cor(posterior_df$ric_effect_median, posterior_df$bh_effect_median, use = "complete.obs")
+  
+  if(effect == "cpd"){
+    cpd_plot <- ggplot(posterior_df,aes(x = ric_effect_median,
+                   y = bh_effect_median, color = forestry_level)) +
+    geom_point(aes(size = area_km2), alpha = 0.5) +
+    annotate("text",x = 0.8*min(posterior_df$ric_effect_median), 
+             y = 0.9*max(posterior_df$bh_effect_median), label = paste("Correlation = ", round(cor,2)), 
+             size = 4) +
+    scale_color +
+    scale_fill +
+    # xlim(0,100) +
+    # ylim(-0.3,0.15) +
+    # ellipse around CU
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-4"), aes(label = CU_name),
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) + 
+    # geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-21"), aes(label = CU_name),
+    #                   label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    # geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-16"), aes(label = CU_name),
+    #                   label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    # geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-23"), aes(label = CU_name),
+    #                   label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-18"), aes(label = CU_name),
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    # scale_color_manual(values = c('CM-4' = 'red', 'CM-21' = 'blue')) +
+    labs(title = toupper(effect),
+         x = paste("Median effect of", effect, "in Ricker model"),
+         y = paste("Median effect of", effect, "in BH model")) +
+    theme_classic() +
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 14),
+          axis.title.y = element_text(size = 14),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12, angle = 90),
+          plot.title = element_text(size = 16, hjust = 0.5))
+  } else if(effect == "eca"){
+    eca_plot <- ggplot(posterior_df,aes(x = ric_effect_median,
+                   y = bh_effect_median, color = forestry_level)) +
+    geom_point(aes(size = area_km2), alpha = 0.5) +
+    annotate("text",x = 0.8*min(posterior_df$ric_effect_median), 
+             y = 0.9*max(posterior_df$bh_effect_median), label = paste("Correlation = ", round(cor,2)), 
+             size = 4) +
+    scale_color +
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-4"), aes(label = CU_name), color = "gray",
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-18"), aes(label = CU_name), color = "gray",
+                      label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    labs(title = toupper(effect),
+         x = paste("Median effect of", effect, "in Ricker model"),
+         y = paste("Median effect of", effect, "in BH model")) +
+    theme_classic() +
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 14),
+          axis.title.y = element_text(size = 14),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12, angle = 90),
+          plot.title = element_text(size = 16, hjust = 0.5))
+  } else if(effect == "sst"){
+    
+    sst_plot <- ggplot(posterior_df,aes(x = ric_effect_median,
+                   y = bh_effect_median, color = sst_max)) +
+    geom_point(aes(size = area_km2), alpha = 0.5) +
+    annotate("text",x = 0.7*min(posterior_df$ric_effect_median), 
+             y = 0.7*max(posterior_df$bh_effect_median), label = paste("Correlation = ", round(cor,2)), 
+             size = 4) +
+    scale_color +
+    # geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-4"), aes(label = CU_name), color = "gray",
+    #                   label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    # geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-18"), aes(label = CU_name), color = "gray",
+                      # label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    labs(title = toupper(effect),
+         x = paste("Median effect of", effect, "in Ricker model"),
+         y = paste("Median effect of", effect, "in BH model")) +
+    theme_classic() +
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 14),
+          axis.title.y = element_text(size = 14),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12, angle = 90),
+          plot.title = element_text(size = 16, hjust = 0.5))
+    
+  } else if(effect == "npgo"){
+    
+    npgo_plot <- ggplot(posterior_df,aes(x = ric_effect_median,
+                   y = bh_effect_median, color = npgo_max)) +
+    geom_point(aes(size = area_km2), alpha = 0.5) +
+    annotate("text",x = 0.1*min(posterior_df$ric_effect_median), 
+             y = 0.8*max(posterior_df$bh_effect_median), label = paste("Correlation = ", round(cor,2)), 
+             size = 4) +
+    scale_color +
+    # geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-4"), aes(label = CU_name), color = "gray",
+    #                   label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    # geom_mark_ellipse(data = posterior_df %>% filter(CU == "CM-18"), aes(label = CU_name), color = "gray",
+                      # label.buffer = unit(-5, 'mm'), label.fontsize = 8) +
+    labs(title = toupper(effect),
+         x = paste("Median effect of", effect, "in Ricker model"),
+         y = paste("Median effect of", effect, "in BH model")) +
+    theme_classic() +
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 14),
+          axis.title.y = element_text(size = 14),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12, angle = 90),
+          plot.title = element_text(size = 16, hjust = 0.5))
+    
+  } else {
+    stop("Effect must be one of 'cpd', 'eca', 'sst', or 'npgo'")
+    
+  }
+      
+      
+      
+      
+      
+    
+}
+  
+
+cpd_plot1 <- cor_plot_bw_models(posterior1 = ric_chm_cpd_ocean_covariates_logR, posterior2 = bh_chm_cpd_ocean_covariates, effect = "cpd")
+
+
+
+eca_plot1 <- cor_plot_bw_models(posterior1 = ric_chm_eca_ocean_covariates_logR, posterior2 = bh_chm_eca_ocean_covariates, effect = "eca")
+
+sst_plot1 <- cor_plot_bw_models(posterior1 = ric_chm_cpd_ocean_covariates_logR, posterior2 = bh_chm_cpd_ocean_covariates, effect = "sst")
+
+npgo_plot1 <- cor_plot_bw_models(posterior1 = ric_chm_cpd_ocean_covariates_logR, posterior2 = bh_chm_cpd_ocean_covariates, effect = "npgo")
+
+
+(cpd_plot1 + eca_plot1) / (sst_plot1 + npgo_plot1) + plot_layout(guides = "collect")
+
+
+
+
+
+```
+
+
+
+
+
+
+# Pink salmon
+
+```{r}
+
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"))
+
+#odd year pinks
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"))
+
+options(mc.cores=8)
+
+# Pink salmon - even/odd broodlines #####
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_o$River)
+pk10r_o=pk10r_o[order(factor(pk10r_o$River),pk10r_o$BroodYear),]
+rownames(pk10r_o)=seq(1:nrow(pk10r_o))
+
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_e$River)
+pk10r_e=pk10r_e[order(factor(pk10r_e$River),pk10r_e$BroodYear),]
+rownames(pk10r_e)=seq(1:nrow(pk10r_e))
+
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.ECA=sqrt(pk10r_o$ECA_age_proxy_forested_only)
+pk10r_o$sqrt.ECA.std=(pk10r_o$sqrt.ECA-mean(pk10r_o$sqrt.ECA))/sd(pk10r_o$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.CPD=sqrt(pk10r_o$disturbedarea_prct_cs)
+pk10r_o$sqrt.CPD.std=(pk10r_o$sqrt.CPD-mean(pk10r_o$sqrt.CPD))/sd(pk10r_o$sqrt.CPD)
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.ECA=sqrt(pk10r_e$ECA_age_proxy_forested_only)
+pk10r_e$sqrt.ECA.std=(pk10r_e$sqrt.ECA-mean(pk10r_e$sqrt.ECA))/sd(pk10r_e$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.CPD=sqrt(pk10r_e$disturbedarea_prct_cs)
+pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.CPD)
+
+
+#standardize npgo
+pk10r_o$npgo.std=(pk10r_o$npgo-mean(pk10r_o$npgo))/sd(pk10r_o$npgo)
+pk10r_e$npgo.std=(pk10r_e$npgo-mean(pk10r_e$npgo))/sd(pk10r_e$npgo)
+
+# pk10r_o$sst.std = (pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
+# pk10r_e$sst.std = (pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
+
+pk10r_o$sst.std = (pk10r_o$spring_ersst-mean(pk10r_o$spring_ersst))/sd(pk10r_o$spring_ersst)
+pk10r_e$sst.std = (pk10r_e$spring_ersst-mean(pk10r_e$spring_ersst))/sd(pk10r_e$spring_ersst)
+
+
+pk10r_o$escapement.t_1=pk10r_e$Spawners[match(paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear-1),paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear))]
+pk10r_e$escapement.t_1=pk10r_o$Spawners[match(paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear-1),paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear))]
+
+pk10r_o$Broodline='Odd'
+pk10r_e$Broodline='Even'
+
+L_o=pk10r_o%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_o$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_o$BroodYear))/2)
+L_e=pk10r_e%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_e$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_e$BroodYear))/2)
+L_o$River2=paste(L_o$River,'Odd',sep='_')
+L_e$River2=paste(L_e$River,'Even',sep='_')
+L_all=rbind(L_e,L_o)
+L_all=L_all[order(factor(L_all$River2)),]
+
+pk10r_o$ii=as.numeric(factor(pk10r_o$BroodYear))
+pk10r_e$ii=as.numeric(factor(pk10r_e$BroodYear))
+
+pk10r=rbind(pk10r_e,pk10r_o)
+pk10r$River2=paste(pk10r$River,pk10r$Broodline,sep='_')
+pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
+
+#extract max S for priors on capacity & eq. recruitment
+smax_prior=pk10r%>%group_by(River2) %>%summarize(m.s=max(Spawners),m.r=max(Recruits))
+
+#ragged start and end points for each SR series
+# N_s=rag_n(pk10r$River2)
+
+#cus by stock
+cu1=distinct(pk10r,CU,.keep_all = T)
+cu2=distinct(pk10r,River,.keep_all = T)
+cu3=distinct(pk10r,River2,.keep_all = T)
+
+pk10r$River_n <- as.numeric(factor(pk10r$River))
+pk10r$River_n2 <- as.numeric(factor(pk10r$River2))
+pk10r$CU_name <- pk10r$CU_NAME
+
+max_eca_pink_df <- pk10r %>% 
+  select(River2, River, River_n, CU, ECA_age_proxy_forested_only) %>%
+  group_by(River) %>%
+  summarize(River = first(River),
+            River_n = first(River_n),
+            CU = first(CU),
+            eca_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(eca_level = case_when(eca_max < 12 ~ 'low',
+                               eca_max >= 12 & eca_max < 24 ~ 'medium',
+                               eca_max >= 24 ~ 'high'))
+
+max_cpd_pink_df <- pk10r %>%
+  select(River2, River, River_n,  CU, disturbedarea_prct_cs) %>%
+  group_by(River) %>% 
+  summarize(River = first(River),
+            River_n = first(River_n),
+            CU = first(CU),
+            cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE))
+
+
+```
+
+
+
+## Models with forestry effects on the density independent term:
+
+
+### Ricker:
+
+Model with static productivity, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}Forestry_{t,r} + \epsilon_{t,r}$
+
+Model with time varying coastwide productivity, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}Forestry_{t,r} + \epsilon_{t,r}$
+
+
+Model with ocean covariates, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}Forestry_{t,r} + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} +\epsilon_{t,r}$
+
+
+<!-- Model of log(Recruits) with ocean covariates, forestry: -->
+
+<!-- $log(R_{t,r}) = log(S_{t,r}) +\alpha_r - \frac{S_{t,r}}{Smax_r} + \beta_{forestry,r}Forestry_{t,r} + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \rho \epsilon_{t-1,r}$ -->
+
+
+
+```{r fig.width=10, fig.height=9}
+
+ric_pk_eca = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_eca_noac.csv'),check.names=F)
+
+
+ric_pk_cpd = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_cpd_noac.csv'),check.names=F)
+
+
+ric_pk_eca_st = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_eca_st_noac.csv'),check.names=F)
+
+
+ric_pk_cpd_st = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_cpd_st_noac.csv'),check.names=F)
+
+# ric_pk_eca_npgo = read.csv(here('stan models',
+#                         'outs',
+#                         'posterior',
+#                         'ric_pk_eca_st_noac_npgo.csv'),check.names=F)
+# 
+# 
+# ric_pk_cpd_npgo = read.csv(here('stan models',
+#                         'outs',
+#                         'posterior',
+#                         'ric_pk_cpd_st_noac_npgo.csv'),check.names=F)
+# 
+# 
+
+
+ric_pk_eca_ersst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_eca_st_noac_npgo_ersst.csv'),check.names=F)
+
+
+
+
+ric_pk_cpd_ersst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_cpd_st_noac_npgo_ersst.csv'),check.names=F)
+
+(plot_forestry_effect(posterior = ric_pk_cpd_st, effect = "cpd", species = "pink", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_pk_eca_st, effect = "eca", species = "pink", model = "Ricker model with ECA", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_pk_cpd, effect = "cpd", species = "pink", model = "Ricker model with CPD,\ncoastwide productivity", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_pk_eca, effect = "eca", species = "pink", model = "Ricker model with ECA,\ncoastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_pk_eca_ersst, effect = "eca", species = "pink", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect")
+
+
+
+```
+
+Model with static productivity, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_r + \beta_{forestry,r}Forestry_{t,r} }}{R_{k,r}})S_{t,r}) + \beta_{forestry,r}Forestry_{t,r} + \epsilon_{t,r}$
+
+Model with time varying coast-wide productivity, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_t + \alpha_r - log(1+(\frac{e^{\alpha_t+\alpha_r + \beta_{forestry,r}Forestry_{t,r} }}{R_{k,r}})S_{t,r}) + \beta_{forestry,r}Forestry_{t,r} + \epsilon_{t,r}$
+
+
+Model with ocean covariates, forestry:
+
+$log(R_{t,r}/S_{t,r}) = \alpha_r - log(1+(\frac{e^{\alpha_t+\alpha_r + \beta_{forestry,r}Forestry_{t,r}+ \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} }}{R_{k,r}})S_{t,r}) + \beta_{forestry,r}Forestry_{t,r} + \beta_{npgo,r}NPGO_{t} + \beta_{sst,r}SST_{t,r} + \epsilon_{t,r}$
+
+### Beverton-Holt (BH):
+
+```{r fig.width=10, fig.height=9}
+
+bh_pk_eca=read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_eca_noac.csv'),check.names=F)
+
+bh_pk_cpd=read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_cpd_noac.csv'),check.names=F)
+
+bh_pk_eca_st=read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_eca_st_noac.csv'),check.names=F)
+
+bh_pk_cpd_st=read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_cpd_st_noac.csv'),check.names=F)
+
+
+bh_pk_cpd_ersst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_cpd_noac_w_npgo_ersst.csv'),check.names=F)
+
+
+bh_pk_eca_ersst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_eca_noac_w_npgo_ersst.csv'),check.names=F)
+
+
+(plot_forestry_effect(posterior = bh_pk_cpd_st, effect = "cpd", species = "pink", model = "BH model with CPD", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_eca_st, effect = "eca", species = "pink", model = "BH model with ECA", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_cpd, effect = "cpd", species = "pink", model = "BH model with CPD,\ncoastwide productivity", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_eca, effect = "eca", species = "pink", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = bh_pk_cpd_ersst, effect = "cpd", species = "pink", model = "BH model with NPGO, SST", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_eca_ersst, effect = "eca", species = "pink", model = "BH model with NPGO, SST", xlim = c(-0.5,0.5))) + plot_layout(guides = "collect")
+
+
+
+
+```
+
+
+
+### Residuals
+
+
+```{r, residual-plots-pink, fig.width = 12, fig.height = 8, results="asis"}
+  
+df_pk <- pk10r
+
+posterior_pk <- ric_pk_cpd_ersst
+
+posterior_pk_bh <- bh_pk_cpd_ersst
+
+
+
+rivers <- unique(df_pk$River_n2)
+
+# plotting residuals of ricker model vs predicted values of ricker model for all rivers combined
+
+residual_df_full_pink <- data.frame()
+
+residual_bh_df_full_pink <- data.frame()
+
+for(river2 in rivers){
+  
+  river_data <- df_pk %>% filter(River_n2 == river2)
+  
+  river <- river_data$River_n
+  
+  posterior_rv_b_for <- posterior_pk %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_b_npgo <- posterior_pk %>% 
+      select(starts_with('b_npgo_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_b_sst <- posterior_pk %>% 
+      select(starts_with('b_sst_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+  
+  posterior_rv_alpha_j <- posterior_pk %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river2,"]")))
+  
+  posterior_rv_S_max <- posterior_pk %>% 
+      select(starts_with('Smax')) %>%
+      select(ends_with(paste0("[",river2,"]")))
+  
+  
+  residual_df <- data.frame(spawners = river_data$Spawners,
+                              recruits = river_data$Recruits,
+                              observed_log_RS = river_data$ln_RS,
+                              predicted_log_RS = apply((matrix(posterior_rv_alpha_j[,1], ncol = length(river_data$Spawners), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%river_data$Spawners + as.matrix(posterior_rv_b_for)%*%river_data$sqrt.CPD.std +
+                                                          as.matrix(posterior_rv_b_npgo)%*%river_data$npgo.std + 
+                                                          as.matrix(posterior_rv_b_sst)%*%river_data$sst.std ), 2, median),
+                                                        
+                              cpd = river_data$disturbedarea_prct_cs,
+                            sqrt.CPD.std = river_data$sqrt.CPD.std,
+                            forestry_effect = apply(as.matrix(posterior_rv_b_for)%*%river_data$sqrt.CPD.std , 2, median),
+                            CU_name = river_data$CU_name
+    )
+    
+    residual_df$residuals <- residual_df$observed_log_RS - residual_df$predicted_log_RS
+    
+    residual_df$partial_residuals <- residual_df$residuals + residual_df$forestry_effect
+      
+    residual_df_full_pink <- rbind(residual_df_full_pink, residual_df)
+    
+    posterior_bh_rv_b_for <- posterior_pk_bh %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_b_npgo <- posterior_pk_bh %>% 
+      select(starts_with('b_npgo_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_b_sst <- posterior_pk_bh %>%
+      select(starts_with('b_sst_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_bh_rv_alpha_j <- posterior_pk_bh %>%
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river2,"]")))
+    
+    posterior_bh_rv_Rk <- posterior_pk_bh %>%
+      select(starts_with('Rk')) %>%
+      select(ends_with(paste0("[",river2,"]")))
+    
+    residual_bh_df <- data.frame(spawners = river_data$Spawners,
+                              recruits = river_data$Recruits,
+                              observed_log_RS = river_data$ln_RS,
+                              predicted_log_RS = apply((matrix(posterior_bh_rv_alpha_j[,1], ncol = length(river_data$Spawners), nrow = length(posterior_bh_rv_alpha_j[,1])) - log(1+as.matrix(exp(posterior_bh_rv_alpha_j[,1])/posterior_bh_rv_Rk)%*%river_data$Spawners) +
+                                                          as.matrix(posterior_bh_rv_b_for)%*%river_data$sqrt.CPD.std +
+                                                          as.matrix(posterior_bh_rv_b_npgo)%*%river_data$npgo.std + 
+                                                          as.matrix(posterior_bh_rv_b_sst)%*%river_data$sst.std), 2, median),
+                              cpd = river_data$disturbedarea_prct_cs,
+                              forestry_effect = apply(as.matrix(posterior_bh_rv_b_for)%*%river_data$sqrt.CPD.std, 2, median),
+                              sqrt.CPD.std = river_data$sqrt.CPD.std,
+                              CU_name = river_data$CU_name
+    )
+    
+    residual_bh_df$residuals <- residual_bh_df$observed_log_RS - residual_bh_df$predicted_log_RS
+    
+    residual_bh_df$partial_residuals <- residual_bh_df$residuals + residual_bh_df$forestry_effect
+    
+    residual_bh_df_full_pink <- rbind(residual_bh_df_full_pink, residual_bh_df)
+    
+}
+
+p_ric_residuals_pink <- ggplot(residual_df_full_pink)+
+  geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "Ricker model with CPD, NPGO, ERSST", x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+p_ric_partial_residuals_pink <- ggplot(residual_df_full_pink)+
+  geom_point(aes(x = sqrt.CPD.std, y = partial_residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  geom_smooth(aes(x = sqrt.CPD.std, y = partial_residuals), method = 'lm', se = TRUE, color = 'black') +
+  labs(title = "Ricker model with CPD, NPGO, ERSST", x = TeX(r"($standardized\ \sqrt{CPD}$)"), 
+       y = TeX(r"(Residuals + $\beta_{forestry, river} \times standardized\ \sqrt{CPD}$)")) +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+
+p_bh_residuals_pink <- ggplot(residual_bh_df_full_pink)+
+  geom_point(aes(x = predicted_log_RS, y = residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "BH model with CPD, NPGO, ERSST", x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+p_bh_partial_residuals_pink <- ggplot(residual_bh_df_full_pink)+
+  geom_point(aes(x = sqrt.CPD.std, y = partial_residuals, color = cpd), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  geom_smooth(aes(x = sqrt.CPD.std, y = partial_residuals), method = 'lm', se = TRUE, color = 'black') +
+  labs(title = "BH model with CPD, NPGO, ERSST", x = TeX(r"($standardized\ \sqrt{CPD}$)"), 
+       y = TeX(r"(Residuals + $\beta_{forestry, river} \times standardized\ \sqrt{CPD}$)")) +
+  scale_color_gradient2(name = 'CPD (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  ylim(-6, 6) +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )
+
+
+print((p_ric_residuals_pink + p_bh_residuals_pink)/(p_ric_partial_residuals_pink + p_bh_partial_residuals_pink) + plot_layout(guides = "collect"))
+    
+## color by CU
+
+p_cu_ric_residuals_pink <- ggplot(residual_df_full_pink)+
+  geom_point(aes(x = predicted_log_RS, y = residuals, color = CU_name), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "Ricker model with CPD, NPGO, ERSST", x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 100,
+                         lmin = 10, lmax = 95)+
+  ylim(-6, 6) +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 14),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, size = 2.5), ncol = 1))
+    
+p_cu_partial_ric_residuals_pink <- ggplot(residual_df_full_pink)+
+  geom_point(aes(x = sqrt.CPD.std, y = partial_residuals, color = CU_name), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  geom_smooth(aes(x = sqrt.CPD.std, y = partial_residuals), method = 'lm', se = TRUE, color = 'black') +
+  labs(title = "Ricker model with CPD, NPGO, ERSST", x = TeX(r"($standardized\ \sqrt{CPD}$)"), 
+       y = TeX(r"(Residuals + $\beta_{forestry, river} \times standardized\ \sqrt{CPD}$)")) +
+  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 100,
+                         lmin = 10, lmax = 95)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 14),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+    guides(color = guide_legend(override.aes = list(alpha = 1, size = 2.5), ncol = 1))
+  
+p_bh_cu_residuals_pink <- ggplot(residual_bh_df_full_pink)+
+  geom_point(aes(x = predicted_log_RS, y = residuals, color = CU_name), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "BH model with CPD, NPGO, ERSST", x = TeX(r"(Predicted $\log \left(\frac{Recruits}{Spawners}\right)$)"), y = "Residuals") +
+  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 100,
+                         lmin = 10, lmax = 95)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 14),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+    guides(color = guide_legend(override.aes = list(alpha = 1, size = 2.5), ncol = 1))
+
+p_bh_cu_partial_residuals_pink <- ggplot(residual_bh_df_full_pink)+
+  geom_point(aes(x = sqrt.CPD.std, y = partial_residuals, color = CU_name), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  geom_smooth(aes(x = sqrt.CPD.std, y = partial_residuals), method = 'lm', se = TRUE, color = 'black') +
+  labs(title = "BH model with CPD, NPGO, ERSST", x = TeX(r"($standardized\ \sqrt{CPD}$)"), 
+       y = TeX(r"(Residuals + $\beta_{forestry, river} \times standardized\ \sqrt{CPD}$)")) +
+  scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 100,
+                         lmin = 10, lmax = 95)+
+  ylim(-6, 6) +
+  theme_classic() +
+  
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 14),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+        )+
+    guides(color = guide_legend(override.aes = list(alpha = 1, size = 2.5), ncol = 1))
+
+print((p_cu_ric_residuals_pink + p_bh_cu_residuals_pink)/(p_cu_partial_ric_residuals_pink + p_bh_cu_partial_residuals_pink) + plot_layout(guides = "collect"))
+  
+
+
+```
+
+
+
+
+
+
+

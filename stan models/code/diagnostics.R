@@ -220,6 +220,7 @@ bh_chm_eca_npgo$summary() %>%
 
 # generic
 file <- 'ric_chm_cpd_ocean_covariates_logR.csv'
+file <- 'bh_chm_cpd_ocean_covariates.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 

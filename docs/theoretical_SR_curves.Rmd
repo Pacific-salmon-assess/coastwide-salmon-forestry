@@ -142,13 +142,22 @@ bh_presentation_1 <- df_long %>%
        x = "Spawners",
        y = "Recruits")+
   
-  annotate("text", x = 500, y = 200, label = TeX("$R = \\frac{S e^{\\alpha + \\beta_{forestry} Forestry}}{1+(\\frac{e^{\\alpha}}{R_{k}})S}$"), parse = TRUE, size = 5)+
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\frac{S e^{\\alpha + \\beta^{forestry} Forestry}}{1+(\\frac{e^{\\alpha}}{R_{k}})S}$"), parse = TRUE, size = 7)+
+  geom_text(aes(label = "High Forestry", x = 250, y= 450), color = '#bf812d',
+            size = 5) + 
+  geom_text(aes(label = "Low Forestry", x = 250, y= 1070), color = '#35978f', size = 5) + 
   theme_classic()+
   theme(legend.position = "none",
         axis.title = element_text(size = 20),
         axis.text = element_text(size = 12))
+bh_presentation_1
+
 
 ggsave(here("figures", "presentation_bh_w_forestry_low_alpha.png"),
+       plot = bh_presentation_1, 
+       width = 8, height = 6, dpi = 300)
+
+ggsave(here("figures", "june2025_presentation_bh_w_forestry.png"),
        plot = bh_presentation_1, 
        width = 8, height = 6, dpi = 300)
 
@@ -163,13 +172,22 @@ bh_presentation_linear <- df_long %>%
   labs(#title = "Beverton-Holt Spawner Recruit Curve",
        x = "Spawners",
        y = "ln (Recruits/Spawners)")+
-  annotate("text", x = 500, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - log(1+(\\frac{e^{\\alpha}}{R_{k}})S)+ \\beta_{forestry} Forestry $"), parse = TRUE, size = 5)+
+  annotate("text", x = 500, y = -1.5, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - log(1+(\\frac{e^{\\alpha}}{R_{k}})S)+ \\beta^{forestry} Forestry $"), parse = TRUE, size = 7)+
+  geom_text(aes(label = "High Forestry", x = 100, y= 0.5), color = '#bf812d',
+            size = 5) + 
+  geom_text(aes(label = "Low Forestry", x = 100, y= 5), color = '#35978f', size = 5) + 
   theme_classic()+
   theme(legend.position = "none",
         axis.title = element_text(size = 20),
         axis.text = element_text(size = 12))
 
+bh_presentation_linear
+
 ggsave(here("figures", "presentation_bh_linear_w_forestry_low_alpha.png"),
+       plot = bh_presentation_linear, 
+       width = 8, height = 6, dpi = 300)
+
+ggsave(here("figures", "june_2025_presentation_bh_linear_w_forestry.png"),
        plot = bh_presentation_linear, 
        width = 8, height = 6, dpi = 300)
 
@@ -391,13 +409,22 @@ presentation_ric_1 <- df_long_ricker %>%
        x = "Spawners",
        y = "Recruits")+
   
-  annotate("text", x =500, y = 200, label = TeX("$R = S e^{\\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$}"), parse = TRUE, size = 5)+
+  annotate("text", x =500, y = 200, label = TeX("$R = S e^{\\alpha - \\frac{S}{Smax} + \\beta^{forestry} Forestry$}"), parse = TRUE, size = 7)+
+  geom_text(aes(label = "High Forestry", x = 500, y= 450), color = '#bf812d',
+            size = 5) + 
+  geom_text(aes(label = "Low Forestry", x = 500, y= 1050), color = '#35978f', size = 5) + 
   theme_classic()+
   theme(legend.position = "none",
         axis.title = element_text(size = 20),
         axis.text = element_text(size = 12))
 
+presentation_ric_1
+
 ggsave(here("figures", "presentation_ricker_w_forestry.png"), 
+       plot = presentation_ric_1, 
+       width = 8, height = 6, dpi = 300)
+
+ggsave(here("figures", "presentation_june2025_ricker_w_forestry.png"), 
        plot = presentation_ric_1, 
        width = 8, height = 6, dpi = 300)
 
@@ -412,13 +439,20 @@ presentation_linear_ric_1 <- df_long_ricker %>%
   labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "ln (Recruits/Spawners)")+
-  annotate("text", x = 300, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 5)+
+  annotate("text", x = 350, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 7)+
+  geom_text(aes(label = "High Forestry", x = 100, y= 0), color = '#bf812d',
+            size = 5) + 
+  geom_text(aes(label = "Low Forestry", x = 100, y= 2), color = '#35978f', size = 5) + 
   theme_classic()+
   theme(legend.position = "none",
         axis.title = element_text(size = 20),
         axis.text = element_text(size = 12))
 
 ggsave(here("figures", "presentation_ricker_linear_w_forestry.png"),
+       plot = presentation_linear_ric_1, 
+       width = 8, height = 6, dpi = 300)
+
+ggsave(here("figures", "june2025_presentation_ricker_linear_w_forestry.png"),
        plot = presentation_linear_ric_1, 
        width = 8, height = 6, dpi = 300)
 

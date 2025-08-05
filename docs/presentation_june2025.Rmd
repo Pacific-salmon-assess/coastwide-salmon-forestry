@@ -1,0 +1,1559 @@
+---
+title: "Coastwide analysis of forestry impacts on BC Pacific Salmon"
+subtitle: "Presentation Figures"
+author: "Maria Kuruvilla"
+date: "June 2025"
+output:
+  powerpoint_presentation: default
+  word_document:
+    toc: true
+  pdf_document:
+    toc: true
+  html_document:
+    collapsed: false
+    fig_caption: true
+    highlight: espresso
+    number_sections: true
+    smooth_scroll: true
+    theme: sandstone
+    toc: true
+    toc_float: true
+---
+
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=FALSE)
+knitr::opts_chunk$set(fig.width = 11, fig.height = 5)
+options(max.print=23)
+library(cmdstanr)
+library(here);library(dplyr); library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(bayesplot)
+library(patchwork)
+library(hues)
+library(GGally)
+library(latex2exp)
+```
+
+
+
+
+# Chum salmon
+
+```{r}
+
+# Data wrangling
+
+ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed",
+                         "chum_SR_20_hat_yr_w_ocean_covariates.csv"))
+
+
+#two rivers with duplicated names:
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20rsc$River)
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20rsc$River)
+
+
+ch20rsc=ch20rsc[order(factor(ch20rsc$River),ch20rsc$BroodYear),]
+
+ch20rsc$River_n <- as.numeric(factor(ch20rsc$River))
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+ch20rsc$sqrt.ECA=sqrt(ch20rsc$ECA_age_proxy_forested_only)
+ch20rsc$sqrt.ECA.std=(ch20rsc$sqrt.ECA-mean(ch20rsc$sqrt.ECA))/sd(ch20rsc$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+ch20rsc$sqrt.CPD=sqrt(ch20rsc$disturbedarea_prct_cs)
+ch20rsc$sqrt.CPD.std=(ch20rsc$sqrt.CPD-mean(ch20rsc$sqrt.CPD))/sd(ch20rsc$sqrt.CPD)
+
+ch20rsc$npgo.std=(ch20rsc$npgo-mean(ch20rsc$npgo))/sd(ch20rsc$npgo)
+ch20rsc$sst.std=(ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+
+cu = distinct(ch20rsc,.keep_all = T)
+
+cu_n = as.numeric(factor(cu$CU))
+
+ch20rsc$CU_n <- cu_n
+
+# make CU_NAME values Title case instead of all caps
+ch20rsc$CU_name <- str_to_title(ch20rsc$CU_NAME)
+
+# glimpse(ch20rsc)
+
+max_eca_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_n, CU_name, ECA_age_proxy_forested_only) %>%
+  group_by(River) %>%
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_n = first(CU_n),
+            CU_name = first(CU_name),
+            eca_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(eca_level = case_when(eca_max < 12 ~ 'low',
+                               eca_max >= 12 & eca_max < 24 ~ 'medium',
+                               eca_max >= 24 ~ 'high'))
+
+max_cpd_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_n, CU_name, disturbedarea_prct_cs) %>%
+  group_by(River) %>% 
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_n = first(CU_n),
+            CU_name = first(CU_name),
+            cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE))
+
+
+
+```
+
+
+
+
+
+
+
+
+```{r fig.width = 10, fig.height = 8}
+
+#function to produce ggplot figure of global forestry effect and watershed level
+#posterior density of ECA and CPD effects
+
+#input - posterior samples of ECA and CPD effects
+#output - ggplot figure
+
+plot_forestry_effect <- function(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with NPGO", xlim = c(-2, 2), by_cu = FALSE, color_by_cu = FALSE, global_only = FALSE){
+  
+  if(effect == "eca"){
+    x_name = "Standardized coefficients of ECA"
+    y_name = "Posterior density\nof ECA effect"
+    color_var = "eca_level"
+    color_name = "Max ECA level\nin River (%)"
+    scale_color = scale_color_manual(name = "Max ECA level\nin River (%)",
+                                     values = c('low' = '#35978f', 'medium' = 'gray', 'high' = '#bf812d'))
+    
+    if(species == "chum"){
+      max_df = max_eca_df
+    } else if(species == "pink"){
+      max_df = max_eca_pink_df
+    }
+    
+  } else if(effect == "cpd"){
+    x_name = "Standardized coefficients of CPD"
+    y_name = "Posterior density\nof CPD effect"
+    color_var = "cpd_max"
+    color_name = "Max CPD\nin River (%)"
+    scale_color = scale_color_gradient2(name = 'Max CPD\nin River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    
+    if(species == "chum"){
+      max_df = max_cpd_df
+    } else if(species == "pink"){
+      max_df = max_cpd_pink_df
+    }
+  }
+  
+  if(color_by_cu){
+    color_var = "CU_name"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+  }
+       
+       
+       
+  if(by_cu){
+    posterior_df <- posterior %>%
+    select(starts_with('b_for_cu')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'CU', 
+                 names_prefix = 'b_for_cu',
+                 values_to = effect) %>%
+    mutate(CU_n = as.numeric(str_extract(CU, '\\d+'))) %>% 
+    select(-CU) %>%
+    left_join(ch20rsc %>% select(CU, CU_n, CU_name) %>% distinct(), by = 'CU_n') 
+    
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    color_var = "CU_name"
+    
+    #which CU has minimum and maximum median effect
+    min_cu <- posterior_df %>% 
+      group_by(CU_n, CU_name) %>% 
+      summarize(median_effect = median(!!sym(effect)),
+                CU_name = first(CU_name)) %>% 
+      ungroup() %>%
+      filter(median_effect == min(median_effect))
+    
+    max_cu <- posterior_df %>%
+      group_by(CU_n, CU_name) %>% 
+      summarize(median_effect = median(!!sym(effect)),
+                CU_name = first(CU_name)) %>% 
+      ungroup() %>%
+      filter(median_effect == max(median_effect))
+    
+    #color by CU and label the CU which has minimum and maximum median effect
+  plot1 <- ggplot() +
+    stat_density(data= posterior_df, aes(!!sym(effect), color = !!sym(color_var), group = CU_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.5, linewidth = 1.5) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, x = x_name, y = y_name) +
+    xlim(xlim[1], xlim[2]) +
+    scale_color +
+    geom_density(aes(posterior$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    geom_text(data = min_cu, aes(x = median_effect, y = 1, label = CU_name, color = !!sym(color_var)), size = 4)+
+    geom_text(data = max_cu, aes(x = median_effect, y = 1, label = CU_name, color = !!sym(color_var)), size = 4)+
+    #vline at the median value of the posterior
+    geom_vline(xintercept = median(posterior$b_for), color = 'black', linetype = 'dashed')+
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.8, "lines"),
+        #1 column for legend
+        legend.box = "vertical",
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5)
+        )+
+    guides(color = guide_legend(override.aes = list(alpha = 1), ncol =1))
+  
+  } else {
+    
+    
+    posterior_df <- posterior %>%
+    select(starts_with('b_for_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = effect) %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+    left_join(max_df, by = 'River_n')
+    
+    #color by river
+  plot1 <- ggplot() +
+    stat_density(data= posterior_df, aes(!!sym(effect), color = !!sym(color_var), group = River),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.1, linewidth = 1) + 
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, x = x_name, y = y_name) +
+    xlim(xlim[1], xlim[2]) +
+    scale_color +
+    geom_density(aes(posterior$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    #vline at the median value of the posterior
+    geom_vline(xintercept = median(posterior$b_for), color = 'black', linetype = 'dashed')+
+    theme_classic()+
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          legend.text = element_text(size = 7),
+          legend.spacing.y = unit(0.001, "cm"),
+          legend.key.width = unit(0.5, "cm"),
+          legend.key.height = unit(0.8, "lines"),
+          plot.title = element_text(size = 14, hjust = 0.5)
+          )+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.6), ncol = 1))
+    
+    if(global_only){
+      
+      
+      plot1 <- ggplot() +
+        geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+        labs(title = model, x = x_name, y = y_name) +
+        xlim(xlim[1], xlim[2]) +
+        scale_color +
+        geom_density(aes(posterior$b_for), color = 'black', 
+                     linewidth = 1.2, alpha = 0.1)+
+        geom_text(x = median(posterior$b_for), y = 1, 
+                  label = paste("Median:", round(median(posterior$b_for), 2)),
+                  color = 'black', size = 4, hjust = 0.5)+
+        #vline at the median value of the posterior
+        geom_vline(xintercept = median(posterior$b_for), color = 'black', linetype = 'dashed')+
+        theme_classic()+
+        theme(legend.position = c(0.8,0.5),
+              axis.title.x = element_text(size = 12),
+              axis.title.y = element_text(size = 12),
+              axis.text.x = element_text(size = 10),
+              axis.text.y = element_text(size = 10),
+              legend.text = element_text(size = 7),
+              legend.spacing.y = unit(0.001, "cm"),
+              legend.key.width = unit(0.5, "cm"),
+              legend.key.height = unit(0.8, "lines"),
+              plot.title = element_text(size = 14, hjust = 0.5)
+        )+
+        guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.6), ncol = 1))
+      
+    } else{
+      
+      
+      posterior_df <- posterior %>%
+        select(starts_with('b_for_rv')) %>%
+        pivot_longer(cols = everything(), 
+                     names_to = 'River', 
+                     names_prefix = 'b_for_rv',
+                     values_to = effect) %>%
+        mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+        select(-River) %>%
+        left_join(max_df, by = 'River_n')
+      
+      #color by river
+      plot1 <- ggplot() +
+        stat_density(data= posterior_df, aes(!!sym(effect), color = !!sym(color_var), group = River),
+                     geom = 'line', position = 'identity', 
+                     alpha = 0.1, linewidth = 1) +
+        geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+        labs(title = model, x = x_name, y = y_name) +
+        xlim(xlim[1], xlim[2]) +
+        scale_color +
+        geom_density(aes(posterior$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+        #vline at the median value of the posterior
+        geom_vline(xintercept = median(posterior$b_for), color = 'black', linetype = 'dashed')+
+        theme_classic()+
+        theme(legend.position = c(0.8,0.5),
+              axis.title.x = element_text(size = 12),
+              axis.title.y = element_text(size = 12),
+              axis.text.x = element_text(size = 10),
+              axis.text.y = element_text(size = 10),
+              legend.text = element_text(size = 7),
+              legend.spacing.y = unit(0.001, "cm"),
+              legend.key.width = unit(0.5, "cm"),
+              legend.key.height = unit(0.8, "lines"),
+              plot.title = element_text(size = 14, hjust = 0.5)
+        )+
+        guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.6), ncol = 1))
+      
+    }
+  
+  }
+  
+  
+  
+  
+  
+  return(plot1)
+}
+
+
+
+
+
+plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST"){
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  if(effect == "eca"){
+    forestry <- seq(0,1,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "cpd"){
+    forestry <- seq(0,100,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "sst"){
+    forestry <- seq(10,15,length.out=100)
+    b <- posterior %>% select(ends_with("b_sst"))
+    
+    forestry_sqrt_std = (forestry-mean(forestry))/sd(forestry)
+    
+  }
+  
+  
+  
+  no_forestry <- min(forestry_sqrt_std)
+  
+  # bh_chm_eca_sst=read.csv(here('stan models','outs','posterior',bh_chm_eca_sst),check.names=F)
+  
+  
+  
+  global_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                 (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+  
+  global_025 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.025), 
+                      row.names = c("q025"))
+  
+  global_975 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.975),
+                      row.names = c("q975"))
+  
+  global_df <- data.frame(forestry = forestry,
+                          productivity_median = global_prediction,
+                          q025 = global_025,
+                          q975 = global_975)
+  
+  full_productivity <- NULL
+  
+  # no_forestry <- min(eca_std_sqrt)
+  for (i in 1:length(unique(df$River_n))){
+    river <- unique(df$River_n)[i]
+    
+    river_data <- df %>% filter(River_n == river)
+    
+    if(effect == "eca"){
+      b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
+      forestry_sqrt_std_river <- seq(min(river_data$sqrt.ECA.std),max(river_data$sqrt.ECA.std),length.out=100)
+      
+      forestry_river <- seq(min(river_data$ECA_age_proxy_forested_only),max(river_data$ECA_age_proxy_forested_only),length.out=100)
+      
+      
+    } else if(effect == "cpd"){
+      b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
+      forestry_sqrt_std_river <- seq(min(river_data$sqrt.CPD.std),max(river_data$sqrt.CPD.std),length.out=100)
+      
+      forestry_river <- seq(min(river_data$disturbedarea_prct_cs),max(river_data$disturbedarea_prct_cs),length.out=100)
+      
+      
+    } else if(effect == "sst"){
+      b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+      
+      # use only spring_ersst
+      
+      forestry_sqrt_std_river <- seq(min(river_data$sst.std),max(river_data$sst.std),length.out=100)
+      
+      forestry_river <- seq(min(river_data$spring_ersst),max(river_data$spring_ersst),length.out=100)
+      
+    }
+    
+    
+
+    
+    
+    
+    
+    productivity <- (exp(as.matrix(b_rv[,1])%*%
+                           (forestry_sqrt_std-no_forestry)))*100 - 100
+    
+    productivity_median <- apply(productivity,2,median)
+    
+    productivity_median_df <- data.frame(River = unique(river_data$River),
+                                         productivity_median = productivity_median,
+                                         forestry = forestry_river) %>% 
+  filter(forestry >= min(forestry_river), forestry <= max(forestry_river))
+    
+    full_productivity <- rbind(full_productivity, productivity_median_df)
+    
+  }
+  
+  # b <- posterior %>% select(ends_with("b_for"))
+  
+  median_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+  
+  median_df <- data.frame(forestry = forestry,
+                          productivity_median = median_prediction)
+  
+  if(effect == "eca" || effect == "cpd"){
+    p1 <- ggplot(full_productivity) +
+    geom_line(aes(x = forestry, y = productivity_median, group = River,
+                  color = "watershed level\nforestry effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("watershed level\nforestry effect" = "darkgray", 
+                                     "global forestry effect" = "black")) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5) +
+    labs(title = model,
+      x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative percent disturbed (%)"),
+      y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          # legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  } else if(effect == "sst"){
+    p1 <- ggplot(full_productivity) +
+    geom_line(aes(x = forestry, y = productivity_median, group = River,
+                  color = "watershed level\nSST effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = productivity_median, color = "global SST effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("watershed level\nSST effect" = "darkgray", 
+                                     "global SST effect" = "black")) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
+    labs(title = model,
+      x = "Spring SST (°C)",
+      y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          # legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  }
+  
+  return(p1)
+  
+}
+  
+
+
+```
+
+
+
+
+```{r}
+
+ric_chm_eca_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR.csv'),check.names=F)
+ric_chm_cpd_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR.csv'),check.names=F)
+
+
+(plot_forestry_effect(posterior = ric_chm_cpd_ocean_covariates_logR, effect = "cpd", species = "chum", model = "Ricker model with CPD", xlim = c(-0.5,0.5))+ plot_forestry_effect(posterior = ric_chm_eca_ocean_covariates_logR, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-0.5,0.5)))# + plot_layout(guides = "collect")
+
+#save figure
+
+ggsave(here("figures","presentation_june2025_chum_ricker_forestry_results.png"), width = 11, height = 5)
+
+
+
+(plot_forestry_effect(posterior = ric_chm_cpd_ocean_covariates_logR, effect = "cpd", species = "chum", model = "Ricker model with CPD", xlim = c(-0.5,0.5), global_only = TRUE)+ plot_forestry_effect(posterior = ric_chm_eca_ocean_covariates_logR, effect = "eca", species = "chum", model = "Ricker model with ECA", xlim = c(-0.5,0.5), global_only = TRUE)) + plot_layout(guides = "collect")
+
+ggsave(here("figures","presentation_june2025_chum_ricker_forestry_results_global_only.png"), width = 11, height = 5)
+
+```
+
+```{r}
+plot_sst_effect <- function(posterior = bh_chm_eca_sst, effect = "sst", species = "chum", model = "BH model with NPGO", 
+                            color_by = "CU_name", xlim = c(-1, 1)) {
+  
+  if(species == "chum"){
+    df <- ch20rsc
+    posterior_rv <- posterior %>% 
+    dplyr::select(starts_with('b_sst_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_sst_rv',
+                 values_to = 'sst_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    dplyr::select(-River) %>%
+  left_join(df %>% dplyr::select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% 
+              distinct(), by = 'River_n')
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    posterior_rv <- posterior %>% 
+    dplyr::select(starts_with('b_sst_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_sst_rv',
+                 values_to = 'sst_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    dplyr::select(-River) %>%
+  left_join(df %>% dplyr::select(River_n, X_LONG, Y_LAT) %>% 
+              distinct(), by = 'River_n')
+  }
+  
+  
+  
+  if(color_by == "CU_name"){
+    color_var = "CU_name"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'Conservation Unit', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    
+    
+  } else if(color_by == "Y_LAT"){
+    color_var = "Y_LAT"
+    color_name = "Latitude"
+    scale_color = scale_color_viridis_c(name = 'Latitude', direction = -1)
+    
+    
+  } else if(color_by == "CU"){
+    
+    color_var = "CU"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'Conservation Unit', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    
+  } 
+  
+  if(species == "chum"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(sst_effect, color = !!sym(color_by), group = River_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.03, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+    #                      lmin = 10, lmax = 95) +
+    scale_color +
+    geom_vline(xintercept = median(posterior$b_sst), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.002, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        plot.title = element_text(size = 14, hjust = 0.5)
+        )+
+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  } else if(species == "pink"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(sst_effect, group = River_n),
+                 geom = 'line', position = 'identity', color = "gray",
+                 alpha = 0.03, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of SST', y = 'Posterior density\nof SST effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_sst), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+    #                      lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_sst), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.002, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        plot.title = element_text(size = 14, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  }
+  
+  return(p1)
+  
+}
+
+
+plot_npgo_effect <- function(posterior = bh_chm_eca_npgo, effect = "npgo", species = "chum", model = "BH model with NPGO", xlim = c(-0.5,0.5)) {
+  
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
+  posterior_rv <- posterior %>% 
+    select(starts_with('b_npgo_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_npgo_rv',
+                 values_to = 'npgo_effect') %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+  left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% distinct(), by = 'River_n')
+  
+  if(species == "chum"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(npgo_effect, color = CU_name, group = River_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.03, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of NPGO', y = 'Posterior density\nof NPGO effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    scale_color_iwanthue(name = 'Conservation Unit', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                         lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_npgo), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.002, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        plot.title = element_text(size = 14, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+    
+    
+  } else if(species == "pink"){
+    p1 <- ggplot()+
+    stat_density(data= posterior_rv, aes(npgo_effect, group = River_n),
+                 geom = 'line', position = 'identity', color ="gray",
+                 alpha = 0.03, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, 
+         x = 'Standardized coefficients of NPGO', y = 'Posterior density\nof NPGO effect') +
+    xlim(xlim[1], xlim[2]) +
+    geom_density(aes(posterior$b_npgo), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    # scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+    #                      lmin = 10, lmax = 95) +
+    geom_vline(xintercept = median(posterior$b_npgo), color = 'black', linetype = 'dashed') + 
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.002, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        plot.title = element_text(size = 14, hjust = 0.5)
+        )+
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 2), ncol = 1))
+  }
+  
+  
+  
+  return(p1)
+  
+}
+
+
+
+```
+
+
+```{r}
+
+(plot_sst_effect(posterior = ric_chm_cpd_ocean_covariates_logR, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.35,0.35),color_by = "CU_name")  +plot_npgo_effect(posterior = ric_chm_cpd_ocean_covariates_logR, effect = "cpd", species = "chum", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.35,0.35)))+ plot_layout(guides = "collect")
+
+ggsave(here("figures","presentation_june2025_chum_ricker_sst_npgo_results.png"), width = 11, height = 5)
+
+```
+
+
+```{r}
+
+bh_chm_eca_ocean_covariates=read.csv(here('stan models','outs','posterior','bh_chm_eca_ocean_covariates.csv'),check.names=F)
+bh_chm_cpd_ocean_covariates=read.csv(here('stan models','outs','posterior','bh_chm_cpd_ocean_covariates.csv'),check.names=F)
+
+
+(plot_forestry_effect(posterior = bh_chm_cpd_ocean_covariates, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-2,2))+ plot_forestry_effect(posterior = bh_chm_eca_ocean_covariates, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-2,2))) #+ plot_layout(guides = "collect")
+
+#save figure
+
+ggsave(here("figures","presentation_june2025_chum_bh_forestry_results.png"), width = 11, height = 5)
+
+
+(plot_forestry_effect(posterior = bh_chm_cpd_ocean_covariates, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-2,2), global_only = TRUE)+ plot_forestry_effect(posterior = bh_chm_eca_ocean_covariates, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-2,2), global_only = TRUE)) + plot_layout(guides = "collect")
+
+#save figure
+
+ggsave(here("figures","presentation_june2025_chum_bh_forestry_results_global_only.png"), width = 11, height = 5)
+
+
+```
+
+
+
+```{r}
+
+(plot_sst_effect(posterior = bh_chm_cpd_ocean_covariates, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-0.35,0.35),color_by = "CU_name")  +plot_npgo_effect(posterior = bh_chm_cpd_ocean_covariates, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-0.35,0.35)))+ plot_layout(guides = "collect")
+
+ggsave(here("figures","presentation_june2025_chum_bh_sst_npgo_results.png"), width = 11, height = 5)
+
+```
+
+
+
+```{r}
+
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"))
+
+#odd year pinks
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"))
+
+options(mc.cores=8)
+
+# Pink salmon - even/odd broodlines #####
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_o$River)
+pk10r_o=pk10r_o[order(factor(pk10r_o$River),pk10r_o$BroodYear),]
+rownames(pk10r_o)=seq(1:nrow(pk10r_o))
+
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY BAY CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_e$River)
+pk10r_e=pk10r_e[order(factor(pk10r_e$River),pk10r_e$BroodYear),]
+rownames(pk10r_e)=seq(1:nrow(pk10r_e))
+
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.ECA=sqrt(pk10r_o$ECA_age_proxy_forested_only)
+pk10r_o$sqrt.ECA.std=(pk10r_o$sqrt.ECA-mean(pk10r_o$sqrt.ECA))/sd(pk10r_o$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.CPD=sqrt(pk10r_o$disturbedarea_prct_cs)
+pk10r_o$sqrt.CPD.std=(pk10r_o$sqrt.CPD-mean(pk10r_o$sqrt.CPD))/sd(pk10r_o$sqrt.CPD)
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.ECA=sqrt(pk10r_e$ECA_age_proxy_forested_only)
+pk10r_e$sqrt.ECA.std=(pk10r_e$sqrt.ECA-mean(pk10r_e$sqrt.ECA))/sd(pk10r_e$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.CPD=sqrt(pk10r_e$disturbedarea_prct_cs)
+pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.CPD)
+
+
+#standardize npgo
+pk10r_o$npgo.std=(pk10r_o$npgo-mean(pk10r_o$npgo))/sd(pk10r_o$npgo)
+pk10r_e$npgo.std=(pk10r_e$npgo-mean(pk10r_e$npgo))/sd(pk10r_e$npgo)
+
+# pk10r_o$sst.std = (pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
+# pk10r_e$sst.std = (pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
+
+pk10r_o$sst.std = (pk10r_o$spring_ersst-mean(pk10r_o$spring_ersst))/sd(pk10r_o$spring_ersst)
+pk10r_e$sst.std = (pk10r_e$spring_ersst-mean(pk10r_e$spring_ersst))/sd(pk10r_e$spring_ersst)
+
+
+pk10r_o$escapement.t_1=pk10r_e$Spawners[match(paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear-1),paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear))]
+pk10r_e$escapement.t_1=pk10r_o$Spawners[match(paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear-1),paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear))]
+
+pk10r_o$Broodline='Odd'
+pk10r_e$Broodline='Even'
+
+L_o=pk10r_o%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_o$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_o$BroodYear))/2)
+L_e=pk10r_e%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_e$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_e$BroodYear))/2)
+L_o$River2=paste(L_o$River,'Odd',sep='_')
+L_e$River2=paste(L_e$River,'Even',sep='_')
+L_all=rbind(L_e,L_o)
+L_all=L_all[order(factor(L_all$River2)),]
+
+pk10r_o$ii=as.numeric(factor(pk10r_o$BroodYear))
+pk10r_e$ii=as.numeric(factor(pk10r_e$BroodYear))
+
+pk10r=rbind(pk10r_e,pk10r_o)
+pk10r$River2=paste(pk10r$River,pk10r$Broodline,sep='_')
+pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
+
+#extract max S for priors on capacity & eq. recruitment
+smax_prior=pk10r%>%group_by(River2) %>%summarize(m.s=max(Spawners),m.r=max(Recruits))
+
+#ragged start and end points for each SR series
+# N_s=rag_n(pk10r$River2)
+
+#cus by stock
+cu1=distinct(pk10r,CU,.keep_all = T)
+cu2=distinct(pk10r,River,.keep_all = T)
+cu3=distinct(pk10r,River2,.keep_all = T)
+
+pk10r$River_n <- as.numeric(factor(pk10r$River))
+pk10r$River_n2 <- as.numeric(factor(pk10r$River2))
+pk10r$CU_name <- pk10r$CU_NAME
+
+max_eca_pink_df <- pk10r %>% 
+  select(River2, River, River_n, CU, ECA_age_proxy_forested_only) %>%
+  group_by(River) %>%
+  summarize(River = first(River),
+            River_n = first(River_n),
+            CU = first(CU),
+            eca_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(eca_level = case_when(eca_max < 12 ~ 'low',
+                               eca_max >= 12 & eca_max < 24 ~ 'medium',
+                               eca_max >= 24 ~ 'high'))
+
+max_cpd_pink_df <- pk10r %>%
+  select(River2, River, River_n,  CU, disturbedarea_prct_cs) %>%
+  group_by(River) %>% 
+  summarize(River = first(River),
+            River_n = first(River_n),
+            CU = first(CU),
+            cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE))
+
+
+```
+
+
+
+```{r}
+ric_pk_eca_ersst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_eca_st_noac_npgo_ersst.csv'),check.names=F)
+
+
+
+
+ric_pk_cpd_ersst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'ric_pk_cpd_st_noac_npgo_ersst.csv'),check.names=F)
+
+
+
+bh_pk_cpd_ersst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_cpd_noac_w_npgo_ersst.csv'),check.names=F)
+
+
+bh_pk_eca_ersst = read.csv(here('stan models',
+                        'outs',
+                        'posterior',
+                        'bh_pk_eca_noac_w_npgo_ersst.csv'),check.names=F)
+
+
+(plot_forestry_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) +
+    plot_forestry_effect(posterior = ric_pk_eca_ersst, effect = "eca", species = "pink", model = "Ricker model with ECA", xlim = c(-0.5,0.5)))#+ plot_layout(guides = "collect")
+
+
+ggsave(here("figures","presentation_june2025_pink_ric_forestry_results.png"), width = 11, height = 5)
+
+
+
+(plot_forestry_effect(posterior = bh_pk_cpd_ersst, effect = "cpd", species = "pink", model = "BH model with CPD", xlim = c(-0.5,0.5)) + plot_forestry_effect(posterior = bh_pk_eca_ersst, effect = "eca", species = "pink", model = "BH model with ECA", xlim = c(-0.5,0.5))) #+ plot_layout(guides = "collect")
+
+ggsave(here("figures","presentation_june2025_pink_bh_forestry_results.png"), width = 11, height = 5)
+
+
+
+(plot_sst_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5),color_by = "CU_name")  + 
+    plot_npgo_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)))+ 
+  plot_layout(guides = "collect")
+
+
+
+
+
+```
+
+```{r}
+
+plot_productivity_decline <- function(posterior = bh_chm_eca_sst, effect = "eca", species = "chum", model = "BH model with NPGO, LH SST", by_river = FALSE){
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  if(effect == "eca"){
+    forestry <- seq(0,1,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "cpd"){
+    forestry <- seq(0,100,length.out=100)
+    b <- posterior %>% select(ends_with("b_for"))
+    forestry_sqrt <- sqrt(forestry)
+  
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+   
+  }else if(effect == "sst"){
+    forestry <- seq(10,15,length.out=100)
+    b <- posterior %>% select(ends_with("b_sst"))
+    
+    forestry_sqrt_std = (forestry-mean(forestry))/sd(forestry)
+    
+  }
+  
+  
+  
+  no_forestry <- min(forestry_sqrt_std)
+  
+  # bh_chm_eca_sst=read.csv(here('stan models','outs','posterior',bh_chm_eca_sst),check.names=F)
+  
+  
+  
+  global_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                 (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+  
+  global_025 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.025), 
+                      row.names = c("q025"))
+  
+  global_975 <- apply(exp(as.matrix(b[,1])%*%
+                          (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.975),
+                      row.names = c("q975"))
+  
+  global_df <- data.frame(forestry = forestry,
+                          productivity_median = global_prediction,
+                          q025 = global_025,
+                          q975 = global_975)
+  
+  full_productivity <- NULL
+  
+  if(by_river){
+    
+  # no_forestry <- min(eca_std_sqrt)
+    for (i in 1:length(unique(df$River_n))){
+      river <- unique(df$River_n)[i]
+      
+      river_data <- df %>% filter(River_n == river)
+      
+      if(effect == "eca"){
+        b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sqrt.ECA.std),max(river_data$sqrt.ECA.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$ECA_age_proxy_forested_only),max(river_data$ECA_age_proxy_forested_only),length.out=100)
+        
+        
+      } else if(effect == "cpd"){
+        b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sqrt.CPD.std),max(river_data$sqrt.CPD.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$disturbedarea_prct_cs),max(river_data$disturbedarea_prct_cs),length.out=100)
+        
+        
+      } else if(effect == "sst"){
+        b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+        
+        # use only spring_ersst
+        
+        forestry_sqrt_std_river <- seq(min(river_data$sst.std),max(river_data$sst.std),length.out=100)
+        
+        forestry_river <- seq(min(river_data$spring_ersst),max(river_data$spring_ersst),length.out=100)
+        
+      }
+      
+      
+  
+      
+      
+      
+      
+      productivity <- (exp(as.matrix(b_rv[,1])%*%
+                             (forestry_sqrt_std-no_forestry)))*100 - 100
+      
+      productivity_median <- apply(productivity,2,median)
+      
+      productivity_median_df <- data.frame(River = unique(river_data$River),
+                                           productivity_median = productivity_median,
+                                           forestry = forestry_river) %>% 
+    filter(forestry >= min(forestry_river), forestry <= max(forestry_river))
+      
+      full_productivity <- rbind(full_productivity, productivity_median_df)
+      
+    }
+    
+    # b <- posterior %>% select(ends_with("b_for"))
+    
+    median_prediction <- apply(exp(as.matrix(b[,1])%*%
+                                  (forestry_sqrt_std-no_forestry))*100 - 100,2,median)
+    
+    median_df <- data.frame(forestry = forestry,
+                            productivity_median = median_prediction)
+    
+    if(effect == "eca" || effect == "cpd"){
+      p1 <- ggplot(full_productivity) +
+      geom_line(aes(x = forestry, y = productivity_median, group = River,
+                    color = "watershed level\nforestry effect"),alpha=0.5) +
+      geom_line(data = global_df, 
+                aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
+      geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                  alpha = 0.5, fill = "gray") +
+      # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+      scale_color_manual("",values = c("watershed level\nforestry effect" = "darkgray", 
+                                       "global forestry effect" = "black")) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(title = model,
+        x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative percent disturbed (%)"),
+        y = "Median change\n in productivity (%)") +
+      theme_classic() +
+      theme(legend.position = c(0.8,0.8),
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(1, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_text(size = 10),
+            plot.title = element_text(size = 14, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    } else if(effect == "sst"){
+      p1 <- ggplot(full_productivity) +
+      geom_line(aes(x = forestry, y = productivity_median, group = River,
+                    color = "watershed level\nSST effect"),alpha=0.5) +
+      geom_line(data = global_df, 
+                aes(x = forestry, y = productivity_median, color = "global SST effect"), linewidth = 1) +
+      geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                  alpha = 0.5, fill = "gray") +
+      # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+      scale_color_manual("",values = c("watershed level\nSST effect" = "darkgray", 
+                                       "global SST effect" = "black")) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
+      labs(title = model,
+        x = "Spring SST (°C)",
+        y = "Median change\n in productivity (%)") +
+      theme_classic() +
+      theme(legend.position = c(0.8,0.8),
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(1, "cm"),
+            axis.title.x = element_text(size = 12),
+            axis.title.y = element_text(size = 12),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_text(size = 10),
+            plot.title = element_text(size = 14, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    }
+} else {
+  
+  if(effect == "eca" || effect == "cpd"){
+    p1 <- ggplot(full_productivity) +
+    # geom_line(aes(x = forestry, y = productivity_median, group = River,
+    #               color = "watershed level\nforestry effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("global forestry effect" = "black")) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5) +
+    labs(title = model,
+      x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative percent disturbed (%)"),
+      y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  } else if(effect == "sst"){
+    p1 <- ggplot(full_productivity) +
+    # geom_line(aes(x = forestry, y = productivity_median, group = River,
+    #               color = "watershed level\nSST effect"),alpha=0.5) +
+    geom_line(data = global_df, 
+              aes(x = forestry, y = productivity_median, color = "global SST effect"), linewidth = 1) +
+    geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+                alpha = 0.5, fill = "gray") +
+    # scale_fill_manual("",values  = c("95% credible interval" = "gray")) +
+    scale_color_manual("",values = c("global SST effect" = "black")) +
+                                      
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
+    labs(title = model,
+      x = "Spring SST (°C)",
+      y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(1, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  }
+}
+  
+  return(p1)
+  
+}
+
+((plot_productivity_decline(posterior = ric_chm_cpd_ocean_covariates_logR, effect = "cpd", species = "chum", model = "Ricker", by_river = FALSE) +
+    plot_productivity_decline(posterior = ric_chm_eca_ocean_covariates_logR, effect = "eca", species = "chum", model = "Ricker", by_river = FALSE))/(plot_productivity_decline(posterior = bh_chm_cpd_ocean_covariates, effect = "cpd", species = "chum", model = "BH", by_river = FALSE) +
+    plot_productivity_decline(posterior = bh_chm_eca_ocean_covariates, effect = "eca", species = "chum", model = "BH", by_river = FALSE)) + plot_layout(guides = "collect"))
+    
+    
+
+#save
+ggsave(here("figures","presentation_june2025_chum_productivity_decline.png"), width = 11, height = 8)
+
+
+```
+```{r}
+
+ricker_alpha <- function(St, alpha, beta, Smax, Forestry){
+  log_Rt_St = alpha - St/Smax + beta*Forestry
+  return(cbind(exp(log_Rt_St)*St, log_Rt_St))
+}
+
+
+St <- seq(0,1000,10)
+
+alpha <- 1.2
+
+beta <- -0.5
+
+Smax <- 500
+
+Forestry <- c(-1,0,1)
+
+df_ricker <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_ricker[[paste0("Rt_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])[,1]
+  df_ricker[[paste0("ln_Rt_St_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])[,2]
+}
+
+df_long_ricker <- df_ricker %>% 
+  pivot_longer(cols = starts_with("Rt_"), names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry)) %>% 
+  pivot_longer(cols = starts_with("ln_"), names_to = "Forestry2", values_to = "ln_Rt_St", names_prefix = "ln_Rt_St_") %>% 
+  mutate(Forestry2 = as.numeric(Forestry2))
+
+p4_ric_1 <- df_long_ricker %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1000)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x =500, y = 200, label = TeX("$R = S e^{\\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$}"), parse = TRUE, size = 4)+
+  
+  theme_classic()
+
+
+q4_ric_1 <- df_long_ricker %>%
+  as.data.frame() %>% 
+  select(ln_Rt_St, Forestry2, St) %>% 
+  distinct() %>% 
+  ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,2)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "log (Recruits/Spawners)")+
+  #annotate equation
+  annotate("text", x = 300, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
+  theme_classic()
+
+presentation_ric_1 <- df_long_ricker %>% 
+  # filter(Forestry == 0) %>%
+  as.data.frame() %>%
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  
+  annotate("text", x =500, y = 200, label = TeX("$R = S e^{\\alpha - \\frac{S}{Smax} + \\beta^{forestry} Forestry$}"), parse = TRUE, size = 7)+
+  geom_text(aes(label = "High Forestry", x = 500, y= 450), color = '#bf812d',
+            size = 5) + 
+  geom_text(aes(label = "Low Forestry", x = 500, y= 1050), color = '#35978f', size = 5) + 
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+presentation_ric_1
+
+ggsave(here("figures", "presentation_ricker_w_forestry.png"), 
+       plot = presentation_ric_1, 
+       width = 8, height = 6, dpi = 300)
+
+ggsave(here("figures", "presentation_june2025_ricker_w_forestry.png"), 
+       plot = presentation_ric_1, 
+       width = 8, height = 6, dpi = 300)
+
+presentation_ric_2 <- df_long_ricker %>% 
+  filter(Forestry == 0) %>%
+  as.data.frame() %>%
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  
+  annotate("text", x =500, y = 200, label = TeX("$R = S e^{\\alpha - \\frac{S}{Smax}}"), parse = TRUE, size = 7)+
+  # geom_text(aes(label = "High Forestry", x = 500, y= 450), color = '#bf812d',
+  #           size = 5) + 
+  # geom_text(aes(label = "Low Forestry", x = 500, y= 1050), color = '#35978f', size = 5) + 
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+presentation_ric_2
+
+ggsave(here("figures", "presentation_june2025_ricker.png"), 
+       plot = presentation_ric_2, 
+       width = 8, height = 6, dpi = 300)
+
+presentation_linear_ric_1 <- df_long_ricker %>% 
+  # filter(Forestry2 == 0) %>%
+  as.data.frame() %>%
+  ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,2)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "ln (Recruits/Spawners)")+
+  annotate("text", x = 350, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 7)+
+  geom_text(aes(label = "High Forestry", x = 100, y= 0), color = '#bf812d',
+            size = 5) + 
+  geom_text(aes(label = "Low Forestry", x = 100, y= 2), color = '#35978f', size = 5) + 
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+ggsave(here("figures", "presentation_ricker_linear_w_forestry.png"),
+       plot = presentation_linear_ric_1, 
+       width = 8, height = 6, dpi = 300)
+
+ggsave(here("figures", "june2025_presentation_ricker_linear_w_forestry.png"),
+       plot = presentation_linear_ric_1, 
+       width = 8, height = 6, dpi = 300)
+
+
+
+
+presentation_linear_ric_2 <- df_long_ricker %>% 
+  filter(Forestry2 == 0) %>%
+  as.data.frame() %>%
+  ggplot(aes(x=St, y=ln_Rt_St, group = Forestry2, color = Forestry2))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,2)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Ricker Spawner Recruit Curve",
+       x = "Spawners",
+       y = "ln (Recruits/Spawners)")+
+  annotate("text", x = 350, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} "), parse = TRUE, size = 7)+
+  # geom_text(aes(label = "High Forestry", x = 100, y= 0), color = '#bf812d',
+  #           size = 5) + 
+  # geom_text(aes(label = "Low Forestry", x = 100, y= 2), color = '#35978f', size = 5) + 
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+
+ggsave(here("figures", "june2025_presentation_ricker_linear.png"),
+       plot = presentation_linear_ric_2, 
+       width = 8, height = 6, dpi = 300)
+
+
+
+```
+
+
+```{r}
+
+bh_alpha <- function(St, alpha, beta, Rk, Forestry){
+  log_Rt_St = alpha - log(1+(exp(alpha)/Rk)*St) + beta*Forestry
+  return(exp(log_Rt_St)*St)
+}
+
+St <- seq(0,1000,10)
+
+alpha <- 5.4
+beta <- -0.5
+Rk <- 500*(alpha)/(alpha-1)
+Forestry <- c(-1,0,1)
+
+df <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df[[paste0("Rt_",Forestry[i])]] <- bh_alpha(St, alpha, beta, Rk, Forestry[i])
+}
+
+df_long <- df %>% 
+  pivot_longer(cols = -St, names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry))
+
+
+#plot Rt vs St
+
+p1_bh_rk <- df_long %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
+  #add 1 to 1 line
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed")+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  #annotate equation
+  annotate("text", x = 500, y = 200, label = TeX("$R = S e^{\\alpha - log(1+(\\frac{e^{\\alpha}}{R_{k}})*S) + \\beta_{forestry} Forestry}$"), parse = TRUE, size = 4)+
+  theme_classic()
+
+q1_bh_rk <- df_long %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=log(Rt/St), group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,6)+
+  #add 1 to 1 line
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed")+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "log (Recruits/Spawners)")+
+  #annotate equation
+  annotate("text", x = 500, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - log(1+(\\frac{e^{\\alpha}}{R_{k}})*S) + \\beta_{forestry} Forestry$"), parse = TRUE, size = 3)+
+  theme_classic()
+
+bh_presentation_2 <- df_long %>% 
+  filter(Forestry == 0) %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=Rt, group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(0, 1100)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "Recruits")+
+  
+  annotate("text", x = 500, y = 200, label = TeX("$R = \\frac{S e^{\\alpha }}{1+(\\frac{e^{\\alpha}}{R_{k}})S}$"), parse = TRUE, size = 7)+
+  # geom_text(aes(label = "High Forestry", x = 250, y= 450), color = '#bf812d',
+  #           size = 5) + 
+  # geom_text(aes(label = "Low Forestry", x = 250, y= 1070), color = '#35978f', size = 5) + 
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+bh_presentation_2
+
+
+ggsave(here("figures", "presentation_bh_w_forestry_low_alpha.png"),
+       plot = bh_presentation_1, 
+       width = 8, height = 6, dpi = 300)
+
+ggsave(here("figures", "june2025_presentation_bh_w_forestry.png"),
+       plot = bh_presentation_1, 
+       width = 8, height = 6, dpi = 300)
+
+ggsave(here("figures", "june2025_presentation_bh.png"),
+       plot = bh_presentation_2, 
+       width = 8, height = 6, dpi = 300)
+
+bh_presentation_linear2 <- df_long %>% 
+  filter(Forestry == 0) %>%
+  as.data.frame() %>% 
+  ggplot(aes(x=St, y=log(Rt/St), group = Forestry, color = Forestry))+
+  geom_line(size = 2, alpha = 0.5)+
+  ylim(-2,6)+
+  scale_color_gradient2(name = 'Forestry',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0) + 
+  labs(#title = "Beverton-Holt Spawner Recruit Curve",
+       x = "Spawners",
+       y = "ln (Recruits/Spawners)")+
+  annotate("text", x = 500, y = -1.5, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - log(1+(\\frac{e^{\\alpha}}{R_{k}})S)$"), parse = TRUE, size = 7)+
+  # geom_text(aes(label = "High Forestry", x = 100, y= 0.5), color = '#bf812d',
+  #           size = 5) + 
+  # geom_text(aes(label = "Low Forestry", x = 100, y= 5), color = '#35978f', size = 5) + 
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 12))
+
+bh_presentation_linear2
+
+
+ggsave(here("figures", "june_2025_presentation_bh_linear.png"),
+       plot = bh_presentation_linear2, 
+       width = 8, height = 6, dpi = 300)
+
+```
+
