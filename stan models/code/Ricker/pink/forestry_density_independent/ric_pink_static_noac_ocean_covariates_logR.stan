@@ -164,9 +164,9 @@ model{
   
   //likelihood sampling:
   for(j in 1:J){
-    R_S[start_y[j]]~ normal(mu1[start_y[j]],sigma[j]); //initial fit for each stock
+    logR[start_y[j]]~ normal(mu1[start_y[j]],sigma[j]); //initial fit for each stock
     
-    R_S[(start_y[j]+1):end_y[j]] ~ normal(mu2[(start_y[j]+1):end_y[j]], sigma[j]); //subsequent samples including autocorrelation
+    logR[(start_y[j]+1):end_y[j]] ~ normal(mu2[(start_y[j]+1):end_y[j]], sigma[j]); //subsequent samples including autocorrelation
   }
 }
 generated quantities{

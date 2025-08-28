@@ -258,6 +258,11 @@ summary %>%
   filter(startsWith(variable, "sigma_for")) %>% 
   View()
 
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "b_for")) %>% 
+  View()
+
 #very high rhat - cnanot use this posterior ric_chm_eca_npgo_ersst_cc.csv,ric_chm_cpd_npgo_ersst_cc_ad95.csv,ric_chm_eca_npgo_ersst_cc_ad95.csv
 #ric_chm_eca_npgo_sst_K has very high rhat and one chain was divergent
 
@@ -355,4 +360,11 @@ for (i in 1:length(pars_list_alpha)) {
              pars = c(pars_list_alpha[i], pars_list_b_for[i], pars_list_Rk[i]),
              off_diag_args = list(size = 0.75, alpha=0.2))
 }
+
+file <- 'ric_pk_eca_st_noac_ocean_covariates_logR.csv'
+
+posterior <- read.csv(here('stan models','outs','posterior',file))
+
+
+
 
