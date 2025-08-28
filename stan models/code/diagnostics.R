@@ -253,6 +253,11 @@ summary %>%
   #decresing rhat values
   arrange(-rhat)
 
+summary %>% 
+  select(variable, rhat, mean, median) %>% 
+  filter(startsWith(variable, "sigma_for")) %>% 
+  View()
+
 #very high rhat - cnanot use this posterior ric_chm_eca_npgo_ersst_cc.csv,ric_chm_cpd_npgo_ersst_cc_ad95.csv,ric_chm_eca_npgo_ersst_cc_ad95.csv
 #ric_chm_eca_npgo_sst_K has very high rhat and one chain was divergent
 
@@ -319,13 +324,35 @@ summary %>%
   theme_classic()+
   labs(x = "Mean z score deviations", y = "Count")
 
+#pairs plot
+
+file <- 'bh_chm_cpd_ocean_covariates.csv'
+
+posterior <- read.csv(here('stan models','outs','posterior',file))
 
 
+mcmc_pairs(posterior, pars = c("alpha_j.2.", "b_for_rv.2.", "Rk.2."),
+           off_diag_args = list(size = 0.75, alpha=0.2))
 
 
+#make a list of pars from "alpha_j.1." to "alpha_j.20."
 
+pars_list_alpha <- paste0("alpha_j.", 1:20, ".")
 
+pars_list_Rk <- paste0("Rk.", 1:20, ".")
 
+pars_list_b_for <- paste0("b_for_rv.", 1:20, ".")
 
+mcmc_pairs(posterior, 
+           pars = c(pars_list_alpha, pars_list_b_for, pars_list_Rk),
+           off_diag_args = list(size = 0.75, alpha=0.2))
 
+# loop thorugh list of pars
+
+for (i in 1:length(pars_list_alpha)) {
+  print(i)
+  mcmc_pairs(posterior, 
+             pars = c(pars_list_alpha[i], pars_list_b_for[i], pars_list_Rk[i]),
+             off_diag_args = list(size = 0.75, alpha=0.2))
+}
 
