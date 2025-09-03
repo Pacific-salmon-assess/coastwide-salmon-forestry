@@ -361,10 +361,18 @@ for (i in 1:length(pars_list_alpha)) {
              off_diag_args = list(size = 0.75, alpha=0.2))
 }
 
-file <- 'ric_pk_eca_st_noac_ocean_covariates_logR.csv'
+file <- 'ric_pk_cpd_st_noac_ocean_covariates_logR.csv'
 
 posterior <- read.csv(here('stan models','outs','posterior',file))
 
 
+# look for  River that starts with "WA"
 
+startsWith(ch20rsc$River, "WA")
 
+ch20rsc %>% 
+  # filter(startsWith(River, "WAKA")) %>%
+  filter(CU == "CM-8") %>% 
+  select(River) %>% 
+  unique() %>% 
+  View()

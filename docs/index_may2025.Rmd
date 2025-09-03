@@ -2026,18 +2026,18 @@ ric_pk_cpd_st = read.csv(here('stan models',
 # 
 
 
-ric_pk_eca_ersst = read.csv(here('stan models',
-                        'outs',
-                        'posterior',
-                        'ric_pk_eca_st_noac_npgo_ersst.csv'),check.names=F)
-
-
-
-
-ric_pk_cpd_ersst = read.csv(here('stan models',
-                        'outs',
-                        'posterior',
-                        'ric_pk_cpd_st_noac_npgo_ersst.csv'),check.names=F)
+# ric_pk_eca_ersst = read.csv(here('stan models',
+#                         'outs',
+#                         'posterior',
+#                         'ric_pk_eca_st_noac_npgo_ersst.csv'),check.names=F)
+# 
+# 
+# 
+# 
+# ric_pk_cpd_ersst = read.csv(here('stan models',
+#                         'outs',
+#                         'posterior',
+#                         'ric_pk_cpd_st_noac_npgo_ersst.csv'),check.names=F)
 
 ric_pk_eca_ocean_covariates = read.csv(here('stan models',
                         'outs',
@@ -2056,11 +2056,11 @@ ric_pk_cpd_ocean_covariates = read.csv(here('stan models',
 
 
 
-(plot_forestry_effect(posterior = ric_pk_cpd_st, effect = "cpd", species = "pink", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_pk_eca_st, effect = "eca", species = "pink", model = "Ricker model with ECA", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_pk_cpd, effect = "cpd", species = "pink", model = "Ricker model with CPD,\ncoastwide productivity", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_pk_eca, effect = "eca", species = "pink", model = "Ricker model with ECA,\ncoastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) +
-    plot_forestry_effect(posterior = ric_pk_eca_ersst, effect = "eca", species = "pink", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect")
-
+# (plot_forestry_effect(posterior = ric_pk_cpd_st, effect = "cpd", species = "pink", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) +
+#     plot_forestry_effect(posterior = ric_pk_eca_st, effect = "eca", species = "pink", model = "Ricker model with ECA", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_pk_cpd, effect = "cpd", species = "pink", model = "Ricker model with CPD,\ncoastwide productivity", xlim = c(-0.5,0.5)) +
+#     plot_forestry_effect(posterior = ric_pk_eca, effect = "eca", species = "pink", model = "Ricker model with ECA,\ncoastwide productivity", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_pk_cpd_ersst, effect = "cpd", species = "pink", model = "Ricker model with CPD, NPGO, SST", xlim = c(-0.5,0.5)) +
+#     plot_forestry_effect(posterior = ric_pk_eca_ersst, effect = "eca", species = "pink", model = "Ricker model with ECA, NPGO, SST", xlim = c(-0.5,0.5)))+ plot_layout(guides = "collect")
+# 
 
 (plot_forestry_effect(posterior = ric_pk_cpd_st, effect = "cpd", species = "pink", model = "Ricker model with CPD", xlim = c(-0.5,0.5)) +
     plot_forestry_effect(posterior = ric_pk_eca_st, effect = "eca", species = "pink", model = "Ricker model with ECA", xlim = c(-0.5,0.5)))/(plot_forestry_effect(posterior = ric_pk_cpd, effect = "cpd", species = "pink", model = "Ricker model with CPD,\ncoastwide productivity", xlim = c(-0.5,0.5)) +
