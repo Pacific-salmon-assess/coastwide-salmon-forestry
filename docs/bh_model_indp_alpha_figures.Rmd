@@ -1,0 +1,396 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+<!-- #goal - to compare the results of the bh model with independent alpha to 
+<!-- the results of the bh holt model with hierarchical effects on alpha nad to the ricker model with hierarchical effects on alpha
+<!-- and to compare the river level alpha values--> 
+
+---
+title: "Results of BH model with independent river growth rates"
+author: ''
+date: "May 2025"
+output:
+  
+  word_document:
+    toc: true
+  html_document:
+    collapsed: false
+    fig_caption: true
+    highlight: espresso
+    number_sections: true
+    smooth_scroll: true
+    theme: sandstone
+    toc: true
+    toc_float: true
+  pdf_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=FALSE)
+options(max.print=23)
+library(cmdstanr)
+library(here);library(dplyr); library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(bayesplot)
+library(patchwork)
+library(hues)
+library(GGally)
+library(latex2exp)
+library(ggforce)
+```
+
+
+
+```{r}
+
+# Data wrangling
+
+ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed",
+                         "chum_SR_20_hat_yr_w_ocean_covariates.csv"))
+
+
+#two rivers with duplicated names:
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20rsc$River)
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20rsc$River)
+
+
+ch20rsc=ch20rsc[order(factor(ch20rsc$River),ch20rsc$BroodYear),]
+
+ch20rsc$River_n <- as.numeric(factor(ch20rsc$River))
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+ch20rsc$sqrt.ECA=sqrt(ch20rsc$ECA_age_proxy_forested_only)
+ch20rsc$sqrt.ECA.std=(ch20rsc$sqrt.ECA-mean(ch20rsc$sqrt.ECA))/sd(ch20rsc$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+ch20rsc$sqrt.CPD=sqrt(ch20rsc$disturbedarea_prct_cs)
+ch20rsc$sqrt.CPD.std=(ch20rsc$sqrt.CPD-mean(ch20rsc$sqrt.CPD))/sd(ch20rsc$sqrt.CPD)
+
+ch20rsc$npgo.std=(ch20rsc$npgo-mean(ch20rsc$npgo))/sd(ch20rsc$npgo)
+ch20rsc$sst.std=(ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+
+cu = distinct(ch20rsc,.keep_all = T)
+
+cu_n = as.numeric(factor(cu$CU))
+
+ch20rsc$CU_n <- cu_n
+
+# make CU_NAME values Title case instead of all caps
+ch20rsc$CU_name <- str_to_title(ch20rsc$CU_NAME)
+
+# glimpse(ch20rsc)
+
+max_eca_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_n, CU_name, ECA_age_proxy_forested_only) %>%
+  group_by(River) %>%
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_n = first(CU_n),
+            CU_name = first(CU_name),
+            eca_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(eca_level = case_when(eca_max < 12 ~ 'low',
+                               eca_max >= 12 & eca_max < 24 ~ 'medium',
+                               eca_max >= 24 ~ 'high'))
+
+max_cpd_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_n, CU_name, disturbedarea_prct_cs) %>%
+  group_by(River) %>% 
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_n = first(CU_n),
+            CU_name = first(CU_name),
+            cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE))
+
+
+
+```
+
+
+
+
+```{r fig.width = 10, fig.height = 8}
+
+#function to produce ggplot figure of global forestry effect and watershed level
+#posterior density of ECA and CPD effects
+
+#input - posterior samples of ECA and CPD effects
+#output - ggplot figure
+
+plot_forestry_effect <- function(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with NPGO", xlim = c(-2, 2), by_cu = FALSE, color_by_cu = FALSE){
+  
+  if(effect == "eca"){
+    x_name = "Standardized coefficients of ECA"
+    y_name = "Posterior density\nof ECA effect"
+    color_var = "eca_level"
+    color_name = "Max ECA level\nin River (%)"
+    scale_color = scale_color_manual(name = "Max ECA level\nin River (%)",
+                                     values = c('low' = '#35978f', 'medium' = 'gray', 'high' = '#bf812d'))
+    
+    if(species == "chum"){
+      max_df = max_eca_df
+    } else if(species == "pink"){
+      max_df = max_eca_pink_df
+    }
+    
+  } else if(effect == "cpd"){
+    x_name = "Standardized coefficients of CPD"
+    y_name = "Posterior density\nof CPD effect"
+    color_var = "cpd_max"
+    color_name = "Max CPD\nin River (%)"
+    scale_color = scale_color_gradient2(name = 'Max CPD\nin River (%)',
+                                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)
+    
+    if(species == "chum"){
+      max_df = max_cpd_df
+    } else if(species == "pink"){
+      max_df = max_cpd_pink_df
+    }
+  }
+  
+  if(color_by_cu){
+    color_var = "CU_name"
+    color_name = "CU"
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+  }
+       
+       
+       
+  if(by_cu){
+    posterior_df <- posterior %>%
+    select(starts_with('b_for_cu')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'CU', 
+                 names_prefix = 'b_for_cu',
+                 values_to = effect) %>%
+    mutate(CU_n = as.numeric(str_extract(CU, '\\d+'))) %>% 
+    select(-CU) %>%
+    left_join(ch20rsc %>% select(CU, CU_n, CU_name) %>% distinct(), by = 'CU_n') 
+    
+    scale_color = scale_color_iwanthue(name = 'CU', hmin = 0, hmax = 360, cmin = 0, cmax = 80,
+                                       lmin = 10, lmax = 95)
+    color_var = "CU_name"
+    
+    #which CU has minimum and maximum median effect
+    min_cu <- posterior_df %>% 
+      group_by(CU_n, CU_name) %>% 
+      summarize(median_effect = median(!!sym(effect)),
+                CU_name = first(CU_name)) %>% 
+      ungroup() %>%
+      filter(median_effect == min(median_effect))
+    
+    max_cu <- posterior_df %>%
+      group_by(CU_n, CU_name) %>% 
+      summarize(median_effect = median(!!sym(effect)),
+                CU_name = first(CU_name)) %>% 
+      ungroup() %>%
+      filter(median_effect == max(median_effect))
+    
+    #color by CU and label the CU which has minimum and maximum median effect
+  plot1 <- ggplot() +
+    stat_density(data= posterior_df, aes(!!sym(effect), color = !!sym(color_var), group = CU_n),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.5, linewidth = 1.5) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, x = x_name, y = y_name) +
+    xlim(xlim[1], xlim[2]) +
+    scale_color +
+    geom_density(aes(posterior$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    geom_text(data = min_cu, aes(x = median_effect, y = 1, label = CU_name, color = !!sym(color_var)), size = 4)+
+    geom_text(data = max_cu, aes(x = median_effect, y = 1, label = CU_name, color = !!sym(color_var)), size = 4)+
+    #vline at the median value of the posterior
+    geom_vline(xintercept = median(posterior$b_for), color = 'black', linetype = 'dashed')+
+    theme_classic()+
+    theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.8, "lines"),
+        #1 column for legend
+        legend.box = "vertical",
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5)
+        )+
+    guides(color = guide_legend(override.aes = list(alpha = 1), ncol =1))
+  
+  } else {
+    posterior_df <- posterior %>%
+    select(starts_with('b_for_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = effect) %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>%
+    left_join(max_df, by = 'River_n')
+    
+    #color by river
+  plot1 <- ggplot() +
+    stat_density(data= posterior_df, aes(!!sym(effect), color = !!sym(color_var), group = River),
+                 geom = 'line', position = 'identity', 
+                 alpha = 0.1, linewidth = 1) +
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(title = model, x = x_name, y = y_name) +
+    xlim(xlim[1], xlim[2]) +
+    scale_color +
+    geom_density(aes(posterior$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    #vline at the median value of the posterior
+    geom_vline(xintercept = median(posterior$b_for), color = 'black', linetype = 'dashed')+
+    theme_classic()+
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          legend.text = element_text(size = 7),
+          legend.spacing.y = unit(0.001, "cm"),
+          legend.key.width = unit(0.5, "cm"),
+          legend.key.height = unit(0.8, "lines"),
+          plot.title = element_text(size = 14, hjust = 0.5)
+          )+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.6), ncol = 1))
+  }
+  
+  
+  
+  
+  
+  return(plot1)
+}
+
+```
+
+
+
+
+```{r fig.width = 10, fig.height=9}
+
+ric_chm_eca_st=read.csv(here('stan models','outs','posterior','ric_chm_eca_static_nov24.csv'),check.names=F)
+ric_chm_cpd_st=read.csv(here('stan models','outs','posterior','ric_chm_cpd_static_nov24.csv'),check.names=F)
+
+#need to rerun with new dataset
+bh_chm_eca_st = read.csv(here('stan models','outs','posterior','bh_chm_eca_static_nov24.csv'),check.names=F)
+bh_chm_cpd_st = read.csv(here('stan models','outs','posterior','bh_chm_cpd_static_nov24.csv'),check.names=F)
+
+bh_chm_eca_indp_alpha = read.csv(here('stan models','outs','posterior',
+                           'bh_chm_eca_indp_alpha.csv'),check.names=F)
+bh_chm_cpd_indp_alpha = read.csv(here('stan models','outs','posterior',
+                           'bh_chm_cpd_indp_alpha.csv'),check.names=F)
+
+
+
+(plot_forestry_effect(posterior = bh_chm_cpd_indp_alpha, effect = "cpd", species = "chum", model = "BH model with CPD, independent alpha", xlim = c(-1.3,1.3)) + 
+  plot_forestry_effect(posterior = bh_chm_eca_indp_alpha, effect = "eca", species = "chum", model = "BH model with ECA, independent alpha", xlim = c(-1.3,1.3))) / 
+  (plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model with CPD, hierarchical alpha", xlim = c(-1.3,1.3)) + 
+     plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model with ECA, hierarchical alpha", xlim = c(-1.3,1.3)))/
+  (plot_forestry_effect(posterior = ric_chm_cpd_st, effect = "cpd", species = "chum", model = "Ricker model with CPD, hierarchical alpha", xlim = c(-1.3,1.3)) + 
+     plot_forestry_effect(posterior = ric_chm_eca_st, effect = "eca", species = "chum", model = "Ricker model with ECA, hierarchical alpha", xlim = c(-1.3,1.3)))
+ 
+ 
+ 
+ 
+```
+
+
+```{r include=FALSE}
+# compare median river level alphas with forest plot, 
+# bh model with independent alphas in "cadetblue" color
+# bh with hierarchical alphas in "coral" color
+
+bh_chm_cpd_indp_alpha_rv = bh_chm_cpd_indp_alpha %>%
+  select(starts_with('alpha')) %>%
+  pivot_longer(cols = everything(), 
+               names_to = 'River', 
+               names_prefix = 'alpha',
+               values_to = 'alpha_independent') %>%
+  mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+  select(-River) %>%
+  left_join(ch20rsc %>% select(River, River_n, CU, CU_n, CU_name) %>% distinct(), by = 'River_n') %>% 
+  group_by(River_n, River, CU, CU_n, CU_name) %>%
+  summarize(median_alpha_independent = median(alpha_independent),
+            lower_alpha_independent = quantile(alpha_independent, 0.025),
+            upper_alpha_independent = quantile(alpha_independent, 0.975)) %>%
+  ungroup()
+
+bh_chm_cpd_alpha_rv <- bh_chm_cpd_st %>%
+  select(starts_with('alpha_j')) %>%
+  pivot_longer(cols = everything(), 
+               names_to = 'River', 
+               names_prefix = 'alpha_j',
+               values_to = 'alpha_hierarchical') %>%
+  mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+  select(-River) %>%
+  left_join(ch20rsc %>% select(River, River_n, CU, CU_n, CU_name) %>% distinct(), by = 'River_n') %>% 
+  group_by(River_n, River, CU, CU_n, CU_name) %>%
+  summarize(median_alpha_hierarchical = median(alpha_hierarchical),
+            lower_alpha_hierarchical = quantile(alpha_hierarchical, 0.025),
+            upper_alpha_hierarchical = quantile(alpha_hierarchical, 0.975)) %>%
+  ungroup() %>%
+  left_join(bh_chm_cpd_indp_alpha_rv, by = c('River_n', 'River', 'CU', 'CU_n', 'CU_name'))
+
+ric_chm_cpd_alpha_rv = ric_chm_cpd_st %>%
+  select(starts_with('alpha_j')) %>%
+  pivot_longer(cols = everything(), 
+               names_to = 'River', 
+               names_prefix = 'alpha_j',
+               values_to = 'alpha_hierarchical_ricker') %>%
+  mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+  select(-River) %>%
+  left_join(ch20rsc %>% select(River, River_n, CU, CU_n, CU_name) %>% distinct(), by = 'River_n') %>% 
+  group_by(River_n, River, CU, CU_n, CU_name) %>%
+  summarize(median_alpha_hierarchical_ricker = median(alpha_hierarchical_ricker),
+            lower_alpha_hierarchical_ricker = quantile(alpha_hierarchical_ricker, 0.025),
+            upper_alpha_hierarchical_ricker = quantile(alpha_hierarchical_ricker, 0.975)) %>%
+  ungroup() %>% 
+  left_join(bh_chm_cpd_alpha_rv, by = c('River_n', 'River', 'CU', 'CU_n', 'CU_name'))
+
+
+
+```
+
+
+
+```{r fig.height = 15, fig.width = 10}
+#forest plot with 374 rows 
+
+ggplot(ric_chm_cpd_alpha_rv , aes(x = reorder(River, median_alpha_independent), y = median_alpha_independent)) +
+  geom_point(aes(y = median_alpha_independent, color = 'independent alpha'), size = 2, alpha = 0.7) +
+  geom_errorbar(aes(ymin = lower_alpha_independent, ymax = upper_alpha_independent ,color = 'independent alpha'), width = 0.2, alpha = 0.7) +
+  geom_point(aes(y = median_alpha_hierarchical ,color = 'hierarchical alpha'), size = 2, alpha = 0.7) +
+  geom_errorbar(aes(ymin = lower_alpha_hierarchical, ymax = upper_alpha_hierarchical ,color = 'hierarchical alpha'), width = 0.2, alpha = 0.7) +
+  geom_point(aes(y = median_alpha_hierarchical_ricker ,color = 'hierarchical alpha - ricker'), size = 2, alpha = 0.7) +
+  geom_errorbar(aes(ymin = lower_alpha_hierarchical_ricker, ymax = upper_alpha_hierarchical_ricker ,color = 'hierarchical alpha - ricker'), width = 0.2, alpha = 0.7) +
+  coord_flip() +
+  scale_color_manual(name = 'Model type', values = c('independent alpha' = 'cadetblue', 'hierarchical alpha' = 'coral', 'hierarchical alpha - ricker' = 'darkgoldenrod')) +
+  labs(title = 'River-level alpha estimates from BH, Ricker models with CPD',
+       x = 'River',
+       y = 'River-level alpha estimates') +
+  theme_classic() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 18),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
+  # geom_hline(yintercept = median(bh_chm_cpd_st$alpha), linetype = 'dashed', color = 'coral') +
+  # geom_hline(yintercept = median(bh_chm_cpd_indp_alpha$alpha), linetype = 'dashed', color = 'cadetblue') +
+  # annotate("text", x = 370, y = median(bh_chm_cpd_st$alpha) + 0.05, label = "Hierarchical alpha median", color = 'coral', size = 3) +
+  # annotate("text", x = 370, y = median(bh_chm_cpd_indp_alpha$alpha) - 0.05, label = "Independent alpha median", color = 'cadetblue', size = 3)
+
+
+
+
+
+
+```
+

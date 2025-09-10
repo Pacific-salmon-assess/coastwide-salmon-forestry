@@ -600,6 +600,39 @@ bh_chm_cpd_ocean_covariates = read.csv(here('stan models','outs','posterior',
 ```
 
 
+```{r fig.height=9, fig.width=10, include=FALSE}
+
+#need to re run with longer chains
+bh_chm_eca = read.csv(here('stan models','outs','posterior',
+                           'bh_chm_eca_noac.csv'),check.names=F)
+bh_chm_cpd = read.csv(here('stan models','outs','posterior',
+                           'bh_chm_cpd_noac.csv'),check.names=F)
+
+#need to rerun with new dataset
+bh_chm_eca_st = read.csv(here('stan models','outs','posterior',
+                           'bh_chm_eca_indp_alpha.csv'),check.names=F)
+bh_chm_cpd_st = read.csv(here('stan models','outs','posterior',
+                           'bh_chm_cpd_indp_alpha.csv'),check.names=F)
+
+#need t rerun with longer chains
+bh_chm_eca_ocean_covariates = read.csv(here('stan models','outs','posterior',
+                                 'bh_chm_eca_ocean_covariates.csv'),check.names=F)
+bh_chm_cpd_ocean_covariates = read.csv(here('stan models','outs','posterior',
+                                 'bh_chm_cpd_ocean_covariates.csv'),check.names=F)
+
+((plot_forestry_effect(posterior = bh_chm_cpd_st, effect = "cpd", species = "chum", model = "BH model with CPD", xlim = c(-2,2)) +
+    plot_forestry_effect(posterior = bh_chm_eca_st, effect = "eca", species = "chum", model = "BH model with ECA", xlim = c(-2,2)))/(plot_forestry_effect(posterior = bh_chm_cpd, effect = "cpd", species = "chum", model = "BH model with CPD,\ncoastwide productivity", xlim = c(-2,2)) +
+    plot_forestry_effect(posterior = bh_chm_eca, effect = "eca", species = "chum", model = "BH model with ECA,\ncoastwide productivity", xlim = c(-2,2)))/(plot_forestry_effect(posterior = bh_chm_cpd_ocean_covariates, effect = "cpd", species = "chum", model = "BH model with CPD, NPGO, SST", xlim = c(-2,2)) +
+    plot_forestry_effect(posterior = bh_chm_eca_ocean_covariates, effect = "eca", species = "chum", model = "BH model with ECA, NPGO, SST", xlim = c(-2,2))) + plot_layout(guides = "collect"))
+
+
+
+
+```
+
+
+
+
 
 
 
