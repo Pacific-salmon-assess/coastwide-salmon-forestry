@@ -1,0 +1,628 @@
+---
+title: "Forestry Impacts on BC Pacific Salmon"
+subtitle: "Musgamagw Dzawada’enuxw territory watersheds"
+author: ''
+date: "Sep 2025"
+output:
+  html_document:
+    collapsed: false
+    fig_caption: true
+    highlight: espresso
+    number_sections: true
+    smooth_scroll: true
+    theme: sandstone
+    toc: true
+    toc_float: true
+  pdf_document:
+    toc: true
+  word_document:
+    toc: false
+---
+
+
+<!-- # Make a document with figures from just the MD territory watersheds -->
+
+<!-- Have time series of spawners and time series of recruits, time series of ECA and CPD -->
+
+<!-- # The posterior distribution of effect of forestry, effect of NPGO, effect of SST. -->
+
+<!-- # the  productivity change with NPGO, SST, and forestry -->
+
+<!-- # The SR Fits -->
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=FALSE)
+options(max.print=23)
+library(here);library(dplyr); library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(bayesplot)
+library(patchwork)
+library(bcmaps)
+library(hues)
+library(GGally)
+library(latex2exp)
+```
+
+
+# Map of MD territory watersheds
+
+```{r map, out.width = "100%", fig.align = "center"}
+
+
+knitr::include_graphics(here("figures","md_territory_watersheds_cpd.png"))
+
+```
+
+
+```{r}
+
+# Data wrangling
+
+ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed",
+                         "chum_SR_20_hat_yr_w_ocean_covariates.csv"))
+
+
+#two rivers with duplicated names:
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',ch20rsc$River)
+ch20rsc$River=ifelse(ch20rsc$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',ch20rsc$River)
+
+
+ch20rsc=ch20rsc[order(factor(ch20rsc$River),ch20rsc$BroodYear),]
+
+ch20rsc$River_n <- as.numeric(factor(ch20rsc$River))
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+ch20rsc$sqrt.ECA=sqrt(ch20rsc$ECA_age_proxy_forested_only)
+ch20rsc$sqrt.ECA.std=(ch20rsc$sqrt.ECA-mean(ch20rsc$sqrt.ECA))/sd(ch20rsc$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+ch20rsc$sqrt.CPD=sqrt(ch20rsc$disturbedarea_prct_cs)
+ch20rsc$sqrt.CPD.std=(ch20rsc$sqrt.CPD-mean(ch20rsc$sqrt.CPD))/sd(ch20rsc$sqrt.CPD)
+
+ch20rsc$npgo.std=(ch20rsc$npgo-mean(ch20rsc$npgo))/sd(ch20rsc$npgo)
+ch20rsc$sst.std=(ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+
+cu = distinct(ch20rsc,.keep_all = T)
+
+cu_n = as.numeric(factor(cu$CU))
+
+ch20rsc$CU_n <- cu_n
+
+# make CU_NAME values Title case instead of all caps
+ch20rsc$CU_name <- str_to_title(ch20rsc$CU_NAME)
+
+# glimpse(ch20rsc)
+
+max_eca_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_n, CU_name, ECA_age_proxy_forested_only) %>%
+  group_by(River) %>%
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_n = first(CU_n),
+            CU_name = first(CU_name),
+            eca_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(eca_level = case_when(eca_max < 12 ~ 'low',
+                               eca_max >= 12 & eca_max < 24 ~ 'medium',
+                               eca_max >= 24 ~ 'high'))
+
+max_cpd_df <- ch20rsc %>% 
+  select(River, River_n,CU, CU_n, CU_name, disturbedarea_prct_cs) %>%
+  group_by(River) %>% 
+  summarize(River_n = first(River_n),
+            River = first(River),
+            CU = first(CU),
+            CU_n = first(CU_n),
+            CU_name = first(CU_name),
+            cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE))
+
+ric_chm_eca_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR.csv'),check.names=F)
+ric_chm_cpd_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR.csv'),check.names=F)
+
+md_watersheds <- ch20rsc %>% 
+  select(River, CU) %>% 
+  filter(CU == "CM-8") %>% 
+  unique()
+
+```
+
+
+
+```{r}
+
+
+plot_both_forestry_effects_river_together <- function(posterior1 = ric_chm_cpd_ersst,
+                                                posterior2 = ric_chm_eca_ersst,
+                                                river,
+                                                effect1 = "cpd",
+                                                effect2 = "eca",
+                                                species = "chum", 
+                                                model1 = "CPD",
+                                                model2 = "ECA",
+                                                xlim = c(-2, 2)){
+  
+  
+ 
+       
+  posterior_df <- posterior1 %>%
+    select(starts_with('b_for_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) 
+  
+  posterior_df2 <- posterior2 %>% 
+    select(starts_with('b_for_rv')) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River)
+  
+  
+  posterior_df_river1 <- posterior_df %>% filter(River_n == river) %>% 
+    mutate(model = model1)
+  
+  posterior_df_river2 <- posterior_df2 %>% filter(River_n == river) %>% 
+    mutate(model = model2)
+  
+  posterior_df_river <- posterior_df_river1 %>% 
+    bind_rows(posterior_df_river2)
+  
+  #color by river
+  plot1 <- ggplot() +
+    stat_density(data= posterior_df_river, aes(forestry,#!!sym(forestry), 
+      
+                                               group = model, 
+                                               color = model,
+                                               fill = model),
+                 geom = 'area', position = 'identity', 
+                 alpha = 0.4, linewidth = 0.8) +
+    
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    labs(x = "Standardized coefficients", y = "Posterior density") +
+    xlim(xlim[1], xlim[2]) +
+    scale_color_manual(name = "Model",
+                       values = c("ECA" = '#7F6A93', 
+                                  "CPD" = '#A2C5AC')) +
+    scale_fill_manual(name = "Model",
+                       values = c("ECA" = '#7F6A93', 
+                                  "CPD" = '#A2C5AC')) +
+    # scale_color +
+    # geom_density(aes(posterior$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    #vline at the median value of the posterior
+    theme_classic()+
+    theme(legend.position = 'right',
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5)
+          )
+  
+  
+  
+  return(plot1)
+}
+
+
+
+plot_productivity_change_river_together <- function(posterior1 = ric_chm_cpd_ocean_covariates_logR,
+                                                posterior2 = ric_chm_eca_ocean_covariates_logR,
+                                                river = "CARNATION CREEK",  
+                                                effect1 = "cpd",
+                                                effect2 = "eca",
+                                                species = "chum", 
+                                                model1 = "CPD",
+                                                model2 = "ECA"){
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    river_data <- ch20rsc %>% filter(River == river)
+    river <- river_data$River_n[1]
+    # df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    river_data <- pk10r %>% filter(River == river)
+    river <- river_data$River_n2[1]
+    # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  posterior_df <- posterior1 %>%
+    select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  posterior_df2 <- posterior2 %>% 
+    select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  
+  # posterior_df_river1 <- posterior_df %>% filter(River == river) %>% 
+  #   mutate(model = model1)
+  # 
+  # posterior_df_river2 <- posterior_df2 %>% filter(River == river) %>% 
+  #   mutate(model = model2)
+  # 
+  # posterior_df_river <- posterior_df_river1 %>% 
+  #   bind_rows(posterior_df_river2)
+  
+  eca <- seq(0,1,length.out=100)
+  
+  eca_sqrt <- sqrt(eca)
+  
+  eca_sqrt_std <- (eca_sqrt-mean(eca_sqrt))/sd(eca_sqrt)
+  
+  cpd <- seq(0,100,length.out=100)
+  
+  cpd_sqrt <- sqrt(cpd)
+  
+  cpd_sqrt_std <- (cpd_sqrt-mean(cpd_sqrt))/sd(cpd_sqrt)
+  
+  
+
+
+  no_eca <- min(eca_sqrt_std)
+  
+  no_cpd <- min(cpd_sqrt_std)
+  
+  
+  
+  # need to change b_rv to posterior 1 and posterior 2 and then make figure
+  
+  productivity_cpd <- (exp(as.matrix(posterior_df[,1])%*%
+                         (cpd_sqrt_std-no_cpd)))*100 - 100
+  
+  productivity_eca <- (exp(as.matrix(posterior_df2[,1])%*%
+                         (eca_sqrt_std-no_eca)))*100 - 100
+  
+  # productivity_cpd_median <- apply(productivity_cpd,2,median)
+  # 
+  # productivity_eca_median <- apply(productivity_eca,2,median)
+  # 
+  # productivity_025 <- apply(productivity,2,quantile,c(0.025), 
+  #                           row.names = c("q025"))
+  # 
+  # productivity_975 <- apply(productivity,2,quantile,c(0.975),
+  #                           row.names = c("q975"))
+  # 
+  productivity_cpd_df <- data.frame(productivity_cpd_median = apply(productivity_cpd,2,median),
+                                    productivity_cpd_025 = apply(productivity_cpd,2,quantile,c(0.025), 
+                                                                 row.names = c("q025")),
+                                    productivity_cpd_975 = apply(productivity_cpd,2,quantile,c(0.975),
+                                                                 row.names = c("q975")),
+                                    productivity_cpd_100 = apply(productivity_cpd,2,quantile,c(0.1),
+                                                                 row.names = c("q100")),
+                                    productivity_cpd_900 = apply(productivity_cpd,2,quantile,c(0.9),
+                                                                 row.names = c("q900")),
+                                    
+                                    cpd_sqrt_std = cpd_sqrt_std,
+                                    cpd = cpd,
+                                    max_cpd = max(river_data$disturbedarea_prct_cs),
+                                    max_sqrt_cpd = max(river_data$sqrt.CPD),
+                                    model = "CPD"
+                                       )
+  
+  productivity_eca_df <- data.frame(productivity_eca_median = apply(productivity_eca,2,median),
+                                    productivity_eca_025 = apply(productivity_eca,2,quantile,c(0.025), 
+                                                                 row.names = c("q025")),
+                                    productivity_eca_975 = apply(productivity_eca,2,quantile,c(0.975),
+                                                                 row.names = c("q975")),
+                                    productivity_eca_100 = apply(productivity_eca,2,quantile,c(0.1),
+                                                                 row.names = c("q100")),
+                                    productivity_eca_900 = apply(productivity_eca,2,quantile,c(0.9),
+                                                                 row.names = c("q900")),
+                                    eca_sqrt_std = eca_sqrt_std,
+                                    eca = eca,
+                                    max_eca = max(river_data$ECA_age_proxy_forested_only),
+                                    max_sqrt_eca = max(river_data$sqrt.ECA),
+                                    model = "ECA"
+  )
+  
+  
+  plot1 <- ggplot(productivity_cpd_df) +
+    geom_line(aes(x = cpd, y = productivity_cpd_median, group = 1,
+                  color = "median"),alpha=0.9, linewidth = 0.8) +
+    geom_ribbon(aes(x = cpd, ymin = productivity_cpd_025, ymax = productivity_cpd_975, fill = "95% credible interval"),
+                alpha = 0.2) +
+    geom_ribbon(aes(x = cpd, ymin = productivity_cpd_100, ymax = productivity_cpd_900, fill = "80% credible interval"),
+                alpha = 0.4) +
+    
+    geom_segment(aes(x = unique(productivity_cpd_df$max_cpd), 
+                     xend = unique(productivity_cpd_df$max_cpd), 
+                     y = -100, 
+                     yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                     color = "gray"), 
+                 linetype = "dashed", linewidth = 0.8) +
+    # add horizontal line 
+    geom_segment(aes(x = 0, 
+                     xend = unique(productivity_cpd_df$max_cpd), 
+                     y = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))], 
+                     yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                     color = "gray"), 
+                 linetype = "dashed", linewidth = 0.8) +
+    annotate("text",x = unique(productivity_cpd_df$max_cpd), 
+                  y = productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                  label = paste0("Max CPD: ",round(unique(productivity_cpd_df$max_cpd),1),"%\n",
+                                 "Median change: ",round(productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],1),"%"),
+              vjust = -0.5, color = "black", size = 3, hjust = 0
+              ) +
+    
+    scale_color_manual(name = "Model",
+                       values = c("ECA model" = '#7F6A93', 
+                                  "median" = '#A2C5AC')) +
+    scale_fill_manual(name = "Model",
+                      values = c("ECA 95% credible interval" = '#7F6A93', 
+                                 "ECA 80% credible interval" = '#7F6A93',
+                                 "95% credible interval" = '#A2C5AC', 
+                                 "80% credible interval" = '#A2C5AC')) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5) +
+    labs(x = "CPD",
+         y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(0.5, "cm"),
+          legend.spacing.y = unit(0.1, "cm"),
+          legend.key.height = unit(0.5, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  
+  plot2 <- ggplot(productivity_eca_df)+
+    geom_line(aes(x = eca, y = productivity_eca_median, group = 1,
+                  color = "median"),alpha=0.9, linewidth = 0.8) +
+    geom_ribbon(aes(x = eca, ymin = productivity_eca_025, ymax = productivity_eca_975, fill = "95% credible interval"),
+                alpha = 0.2) +
+    geom_ribbon(aes(x = eca, ymin = productivity_eca_100, ymax = productivity_eca_900, fill = "80% credible interval"),
+                alpha = 0.4) +
+    #add vertical line at max eca - max height should be value of productivity eca median
+    geom_segment(aes(x = unique(productivity_eca_df$max_eca), 
+                     xend = unique(productivity_eca_df$max_eca), 
+                     y = -100, 
+                     yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                     color = "gray"), 
+                 linetype = "dashed", linewidth = 0.8) +
+    # add horizontal line 
+    geom_segment(aes(x = 0, 
+                     xend = unique(productivity_eca_df$max_eca), 
+                     y = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))], 
+                     yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                     color = "gray"), 
+                 linetype = "dashed", linewidth = 0.8) +
+    annotate("text",x = unique(productivity_eca_df$max_eca), 
+                  y = productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                  label = paste0("Max ECA: ",round(unique(productivity_eca_df$max_eca),2),"\n",
+                                 "Median change: ",round(productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],1),"%"),
+              vjust = -0.5, color = "black", size = 3, hjust = 0
+              ) +
+    
+    
+    scale_color_manual(name = "Model",
+                       values = c("median" = '#7F6A93', 
+                                  "CPD model" = '#A2C5AC')) +
+    scale_fill_manual(name = "Model",
+                      values = c("95% credible interval" = '#7F6A93', 
+                                 "80% credible interval" = '#7F6A93',
+                                 "CPD model 95% credible interval" = '#A2C5AC', 
+                                 "CPD model 80% credible interval" = '#A2C5AC')) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5) +
+    labs(x = "ECA",
+         y = "Median change\n in productivity (%)") +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.8),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(0.5, "cm"),
+          legend.spacing.y = unit(0.1, "cm"),
+          legend.key.height = unit(0.5, "cm"),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 14, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  
+    return(plot1+plot2)
+    
+}
+
+
+
+plot_predicted_recruits <- function(posterior1 = ric_chm_cpd_ocean_covariates_logR,
+                                    posterior2 = ric_chm_eca_ocean_covariates_logR,
+                                    river = "CARNATION CREEK",  
+                                    effect1 = "cpd",
+                                    effect2 = "eca",
+                                    species = "chum", 
+                                    model1 = "CPD",
+                                    model2 = "ECA"){
+  if(species == "chum"){
+    df <- ch20rsc 
+    river_data <- ch20rsc %>% filter(River == river)
+    river <- river_data$River_n[1]
+    # df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    river_data <- pk10r %>% filter(River == river)
+    river <- river_data$River_n2[1]
+    # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  posterior_df <- posterior1 %>%
+    select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  posterior_df2 <- posterior2 %>% 
+    select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  #make a time series of log Recruits with credible intervals using the spawner time series and forestry time series for each year
+  
+  
+}
+
+```
+
+
+## River-level estimates
+
+
+```{r echo=FALSE, fig.height=4, fig.width=8, results="asis"}
+
+for(river in md_watersheds$River){
+  
+  river_data <- ch20rsc %>% filter(River == river)
+  cat('\n')
+  cat("### ", river_data$River[1], "\n")
+  cat('\n')
+  
+  #time series of Spawners, Recruits, ECA, CPD
+  spawner_plot <- ggplot(river_data,aes(x = BroodYear, y = log(Spawners))) + 
+    geom_line(size = 0.8, alpha = 0.7, color = "gray20") +
+    geom_point(size = 2, alpha = 0.7, color = "gray20") +
+    labs(y = "log(Spawners)", x = "Brood Year") +
+    theme_classic() +
+    theme(axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10))
+  
+  recruit_plot <- ggplot(river_data,aes(x = BroodYear, y = log(Recruits))) + 
+    geom_line(size = 0.8, alpha = 0.7, color = "gray20") +
+    geom_point(size = 2, alpha = 0.7, color = "gray20") +
+    labs(y = "log(Recruits)", x = "Brood Year") +
+    theme_classic() +
+    theme(axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10))
+  
+  ln_RS_plot <- ggplot(river_data,aes(x = BroodYear, y = ln_RS)) + 
+    geom_line(size = 0.8, alpha = 0.7, color = "gray20") +
+    geom_point(size = 2, alpha = 0.7, color = "gray20") +
+    labs(y ="log(Recruits/Spawners)", x = "Brood Year") +
+    theme_classic() +
+    theme(axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10))
+  
+  eca_plot <- ggplot(river_data,aes(x = BroodYear, y = ECA_age_proxy_forested_only)) + 
+    geom_line(size = 0.8, alpha = 0.7, color = '#7F6A93') +
+    geom_point(size = 2, alpha = 0.7, color = '#7F6A93') +
+    labs(y = "ECA", x = "Brood Year") +
+    theme_classic() +
+    theme(axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10))
+  cpd_plot <- ggplot(river_data,aes(x = BroodYear, y = disturbedarea_prct_cs)) + 
+    geom_line(size = 0.8, alpha = 0.7, color = '#A2C5AC') +
+    geom_point(size = 2, alpha = 0.7, color = '#A2C5AC') +
+    labs(y = "CPD", x = "Brood Year") +
+    theme_classic() +
+    theme(axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10))
+  
+  print(spawner_plot /recruit_plot / ln_RS_plot)
+  
+  print(eca_plot / cpd_plot)
+  
+  print(plot_both_forestry_effects_river_together(posterior1 = ric_chm_cpd_ocean_covariates_logR, 
+                                                  posterior2 = ric_chm_eca_ocean_covariates_logR,
+                                                  river = river_data$River_n[1],
+                                                  effect1 = "cpd",
+                                                  effect2 = "eca",
+                                                  species = "chum", 
+                                                  model1 = "CPD", 
+                                                  model2 = "ECA",
+                                                  xlim = c(-1, 1)))
+  
+  
+  print(plot_productivity_change_river_together(posterior1 = ric_chm_cpd_ocean_covariates_logR, 
+                                                posterior2 = ric_chm_eca_ocean_covariates_logR,
+                                                river, 
+                                                effect1 = "cpd",
+                                                effect2 = "eca",
+                                                species = "chum", 
+                                                model1 = "CPD", 
+                                                model2 = "ECA") + plot_layout(axis_titles = 'collect'))
+  cat('\n')
+}
+
+
+
+
+```
+
+
+
+
+

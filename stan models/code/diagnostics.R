@@ -385,3 +385,50 @@ ch20rsc %>%
   select(River) %>% 
   unique() %>% 
   View()
+
+
+# plot the alpha0 posterior
+
+
+file <- 'bh_chm_cpd_ocean_covariates.csv'
+
+posterior <- read.csv(here('stan models','outs','posterior',file))
+
+summary_bh <- read.csv(here('stan models','outs','summary',file))
+
+
+bh <- summary_bh %>% 
+  select(variable, rhat, mean, median, q5, q95) %>% 
+  filter(startsWith(variable, "alpha0")) %>% 
+  ggplot() +
+  geom_pointrange(aes(x = variable, y = mean, ymin = q5, ymax = q95), color = "salmon") +
+  ylim(1,7)+
+  theme_classic()+
+  labs(x = "", y = "Estimate of alpha", title = "Beverton-Holt model")
+
+
+file <- 'ric_chm_cpd_ocean_covariates_logR.csv'
+
+posterior <- read.csv(here('stan models','outs','posterior',file))
+
+summary <- read.csv(here('stan models','outs','summary',file))
+
+
+ric <- summary %>% 
+  select(variable, rhat, mean, median, q5, q95) %>% 
+  filter(startsWith(variable, "alpha0")) %>% 
+  ggplot() +
+  geom_pointrange(aes(x = variable, y = mean, ymin = q5, ymax = q95), color = "salmon") +
+  ylim(1,7)+
+  theme_classic()+
+  labs(x = "", y = "Estimate of alpha", title = "Ricker model")
+
+ric
+
+ric+bh + plot_layout(axes = "collect")
+
+#ggsave
+
+ggsave(here('figures','alpha0_estimates_bh_ric.png'),
+       width = 8, height = 4, dpi = 300)
+
