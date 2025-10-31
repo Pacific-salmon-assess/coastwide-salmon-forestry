@@ -76,12 +76,223 @@ library(latex2exp)
 
 # Map of MD territory watersheds
 
-```{r map, out.width = "100%", fig.align = "center"}
 
 
-knitr::include_graphics(here("figures","md_territory_watersheds_cpd.png"))
+```{r include=FALSE}
+# Load the sf package
+library(sf)
+# Path to the GDB file
+gdb_path <- here("origional-ecofish-data-models","Data","Spatial","mdfg_results.gdb")
+
+
+# List all layers in the GDB
+layers <- st_layers(gdb_path)
+
+# print(layers)
+# Forestry history (not a spatial dataset)
+coast_forestry_timeseries <- st_read(gdb_path, layer = "CPD_ECA_salmon_watersheds_coastwide")
+
+# Coastal salmon watersheds (spatial dataset)
+coast_watersheds <- st_read(gdb_path, layer = "salmon_watersheds_coastwide")
+
+mdfg_watersheds <- st_read(gdb_path, layer = "salmon_watersheds_MDFG")
+
+mdfg_forestry_timeseries <- st_read(gdb_path, layer = "CPD_ECA_salmon_watersheds_MDFG")
+
+# IF needed, you can join the datasets use the outlet feature id ("outlet_lfid" vector) and watershed group code ("wgc" vector)
+# unique(coast_forestry_timeseries$outlet_lfid)
+# 
+# unique(coast_watersheds$outlet_lfid)
+# unique(coast_watersheds$wgc)
+# unique(mdfg_watersheds$wgc)
+
+coast_forestry_timeseries_geom <- left_join(x = coast_forestry_timeseries, 
+                                            coast_watersheds %>% 
+                                              select(outlet_lfid,geom,wgc,NUSEDS_watershed) %>% distinct(), 
+                                            by = c("outlet_lfid", "wgc"))
+
+# glimpse(coast_watersheds %>% select(geom,wgc,NUSEDS_watershed) %>% distinct())
+# glimpse(coast_forestry_timeseries)
+# glimpse(coast_forestry_timeseries_geom)
+
+#check which row has KINGCOME RIVER as NUSEDS_watershed
+
+
+mdfg_forestry_timeseries_geom <- left_join(x = mdfg_forestry_timeseries, 
+                                            mdfg_watersheds %>% 
+                                              select(outlet_lfid,geom,wgc,NUSEDS_watershed) %>% distinct(), 
+                                            by = c("outlet_lfid", "wgc"))
+# 
+# glimpse(mdfg_forestry_timeseries_geom)
+
 
 ```
+
+```{r include=FALSE}
+
+# Required packages ----
+list.of.packages <- c("tidyverse", "extrafont", "giscoR", "ggplot2", "sf", "rmapshaper", "rnaturalearth", "patchwork", "here",
+                      "bcmaps","ggsflabel") 
+
+# What packages need to be installed?
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])] 
+
+## Install missing packages
+if (length(new.packages)) {
+  install.packages(new.packages, dependencies = TRUE, repos = c("http://cran.rstudio.com/", "http://R-Forge.R-project.org"))
+}
+
+## Loading libraries
+invisible(lapply(list.of.packages, library, character.only = TRUE))
+
+# Load population sheds ----
+world <- ne_countries(scale='medium',returnclass = 'sf')
+Canada <- subset(world, admin == "Canada")
+USA <- subset(world, admin == "United States of America")
+
+
+# rivers <- lookup %>% select(River_n) %>%  filter(!is.na(River_n)) %>% pull(River_n) %>% unique()
+# pop_sheds <- st_read(dsn = "data/processed/Max_ECA_sheds_Nov_2024.gpkg")  # Note that there are 1746 polygons, but only 1745 have VRI information in 2022.
+
+
+#take pop sheds from mdfg_forestry_timeseries_geom
+
+pop_sheds2 <- mdfg_forestry_timeseries_geom %>% 
+  select(outlet_lfid, CPD_fmlb , NUSEDS_watershed, geom,year) %>% 
+  group_by(NUSEDS_watershed) %>% 
+  filter(year == max(year)) %>% 
+  rename(River = NUSEDS_watershed, CPD = CPD_fmlb) %>% 
+  filter(!is.na(CPD)) %>% 
+  st_as_sf()
+
+b <- st_bbox(pop_sheds2) 
+bbox <- st_as_sfc(b)
+
+
+#transform X_LONG and Y_LAT to 
+
+# Watershed by region plot for forest  appendix ----
+# Custom extent
+
+bc_boundary <- bc_bound() %>% st_transform(4326)
+
+# Globe Inset
+wld <- gisco_get_countries(resolution = "20")
+ortho_crs <-'+proj=ortho +lat_0=55 +lon_0=-126 +x_0=0 +y_0=0 +R=6371000 +units=m +no_defs +type=crs'
+
+ocean <- st_point(x = c(0,0)) %>%
+  st_buffer(dist = 6371000) %>% # radio Tierra
+  st_sfc(crs = ortho_crs)
+
+world <-   st_intersection(wld, st_transform(ocean, 4326)) %>%
+  st_transform(crs = ortho_crs)
+
+world_line <- ms_innerlines(world)
+
+wld_map <- ggplot(world) +
+  geom_sf(data = ocean, fill = "#deebf7", linewidth = .2) +
+  geom_sf(fill = "grey50", 
+          colour = NA,
+          show.legend = F) +
+  geom_sf(data = world_line, linewidth = .05, colour = "white") +
+  geom_sf(data = bbox, col = "red", fill = NA, linewidth = 0.2) +
+  scale_fill_manual(values = c("grey50", "red")) + 
+  theme_void()
+
+# wld_map
+canada <- ggplot(Canada) +
+  # geom_sf(data = ocean, fill = "#deebf7", linewidth = .2) +
+  geom_sf(fill = "grey50", 
+          colour = NA,
+          show.legend = F) +
+  # geom_sf(data = world_line, linewidth = .05, colour = "white") +
+  geom_sf(data = bbox, col = "darkred", fill = NA, linewidth = 1) +
+  scale_fill_manual(values = c("grey50", "red")) + 
+  theme_void()
+# canada
+
+md_territory <- sf::st_read(here("origional-ecofish-data-models","Data", 
+                                 "Spatial",
+                                 "MTTT_Update.shp"), quiet = TRUE)
+b <- st_bbox(pop_sheds2) 
+bbox <- st_as_sfc(b)
+
+
+```
+
+
+```{r fig.height=12, fig.width=10}
+ggplot() +
+  geom_sf(data = bc_boundary, fill = "gray90", color = alpha("slategray",0.1), linewidth = 0.5) +
+  # geom_sf(data = Canada, fill = "grey90", color = NA) +
+  # geom_sf(data = USA, fill = "grey90", color = NA) +
+  # Regional colors layer
+  geom_sf(data = pop_sheds2, 
+          aes(fill = CPD), color = "gray90", linewidth = 0.2)  +
+  geom_sf(data = md_territory, fill = "transparent", color = "darkred", linewidth = 0.8) +
+  #label watersheds with River
+  #arrow to the watershed
+  geom_sf_label_repel(data = pop_sheds2, aes(label = River),
+                size = 3, color = "black", alpha = 0.7, 
+                # family = "ArcherPro Book",
+                hjust = 0.5, label.padding = unit(0.15, "lines"),
+                min.segment.length = 0,
+                xlim = c(st_bbox(md_territory)$xmax,NA))+
+                # nudge_x = 70000, nudge_y = -20000) +
+  # 
+  # # Plot Window
+  coord_sf(crs = st_crs(pop_sheds2),
+           xlim = c(b["xmin"]-100000, b["xmax"]+100000 ) ,
+           ylim = c(b["ymin"]-150000 , b["ymax"]+100000)) +
+
+  # scale_color_manual("MD territory", values = "darkred") +
+  scale_fill_gradient2(name = 'CPD', guide = guide_colorbar(ticks = FALSE, barheight = 5),
+                       low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 0.5) +
+  # scale_color_gradient2(name = 'CPD',
+  #                       low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50) +
+  
+  theme(panel.grid.major = element_line(colour = "aliceblue", linetype = "dashed", 
+                                        size = 0.5), 
+        panel.background = element_rect(fill = "aliceblue"), 
+        panel.border = element_rect(fill = NA, color = NA),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        base_family = "ArcherPro Book",
+        legend.position = c(0.95, 0.5),
+        # legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.font = "ArcherPro Book",
+        legend.key.size = unit(0.8, "cm"),
+        legend.key.spacing.y = unit(0.5, "cm"),
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "cm"),
+        legend.background = element_rect(fill = "transparent", size = 0.5)
+  ) +
+  labs(x = "", y = "", color = "", fill = "") +
+  # Spatial annotation
+  ggspatial::annotation_scale(
+    location = "bl",
+    bar_cols = c("black", "white"),
+    text_family = "ArcherPro Book"
+  ) +
+  ggspatial::annotation_north_arrow(
+    location = "tr", which_north = "true",
+    # pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"),
+    style = ggspatial::north_arrow_nautical(
+      fill = c("black", "white"),
+      line_col = "black",
+      text_family = "ArcherPro Book"
+    )
+  ) 
+  # inset_element(wld_map, left = 0.05, bottom = 0.1, right = 0.3, top = 0.35, align_to = "plot")
+  # inset_element(bc, left = 0.0, bottom = 0.0, right = 0.45, top = 0.45, align_to = "plot")
+# 
+
+```
+
+
+
+
 
 
 ```{r}
@@ -501,7 +712,7 @@ plot_predicted_recruits <- function(posterior1 = ric_chm_cpd_ocean_covariates_lo
     # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
   }
   
-  posterior_df <- posterior1 %>%
+  posterior_df_b_for <- posterior1 %>%
     select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
     pivot_longer(cols = everything(), 
                  names_to = 'River', 
@@ -511,7 +722,27 @@ plot_predicted_recruits <- function(posterior1 = ric_chm_cpd_ocean_covariates_lo
     select(-River) %>% 
     mutate(River = river)
   
-  posterior_df2 <- posterior2 %>% 
+  posterior_df_alpha <- posterior1 %>%
+    select(starts_with(paste0('alpha_j[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'alpha_j',
+                 values_to = "alpha_j") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  posterior_df_Smax <- posterior1 %>%
+    select(starts_with(paste0('Smax[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'Smax',
+                 values_to = "Smax") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  posterior_df2_b_for <- posterior2 %>% 
     select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
     pivot_longer(cols = everything(), 
                  names_to = 'River', 
@@ -522,6 +753,13 @@ plot_predicted_recruits <- function(posterior1 = ric_chm_cpd_ocean_covariates_lo
     mutate(River = river)
   
   #make a time series of log Recruits with credible intervals using the spawner time series and forestry time series for each year
+  
+  predicted_recruits <- data.frame(BroodYear = rep(river_data$BroodYear, each = nrow(posterior_df_b_for)),
+                                    Spawners = rep(river_data$Spawners, each = nrow(posterior_df_b_for)),
+                                    forestry = rep(river_data$sqrt.CPD.std, each = nrow(posterior_df_b_for)),
+                                    alpha_j = rep(posterior_df_alpha$alpha_j, times = nrow(river_data)),
+                                    Smax = rep(posterior_df_Smax$Smax, times = nrow(river_data))
+                                    )
   
   
 }
@@ -542,15 +780,15 @@ for(river in md_watersheds$River){
   cat('\n')
   
   #time series of Spawners, Recruits, ECA, CPD
-  spawner_plot <- ggplot(river_data,aes(x = BroodYear, y = log(Spawners))) + 
-    geom_line(size = 0.8, alpha = 0.7, color = "gray20") +
-    geom_point(size = 2, alpha = 0.7, color = "gray20") +
-    labs(y = "log(Spawners)", x = "Brood Year") +
-    theme_classic() +
-    theme(axis.title.x = element_text(size = 12),
-          axis.title.y = element_text(size = 12),
-          axis.text.x = element_text(size = 10),
-          axis.text.y = element_text(size = 10))
+  # spawner_plot <- ggplot(river_data,aes(x = BroodYear, y = log(Spawners))) + 
+  #   geom_line(size = 0.8, alpha = 0.7, color = "gray20") +
+  #   geom_point(size = 2, alpha = 0.7, color = "gray20") +
+  #   labs(y = "log(Spawners)", x = "Brood Year") +
+  #   theme_classic() +
+  #   theme(axis.title.x = element_text(size = 12),
+  #         axis.title.y = element_text(size = 12),
+  #         axis.text.x = element_text(size = 10),
+  #         axis.text.y = element_text(size = 10))
   
   recruit_plot <- ggplot(river_data,aes(x = BroodYear, y = log(Recruits))) + 
     geom_line(size = 0.8, alpha = 0.7, color = "gray20") +
@@ -591,7 +829,7 @@ for(river in md_watersheds$River){
           axis.text.x = element_text(size = 10),
           axis.text.y = element_text(size = 10))
   
-  print(spawner_plot /recruit_plot / ln_RS_plot)
+  print(recruit_plot / ln_RS_plot)
   
   print(eca_plot / cpd_plot)
   
@@ -621,8 +859,3 @@ for(river in md_watersheds$River){
 
 
 ```
-
-
-
-
-
