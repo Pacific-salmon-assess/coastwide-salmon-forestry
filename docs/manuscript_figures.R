@@ -335,17 +335,19 @@ plot_forestry_effect_manuscript <- function(posterior = ch_chm_eca,
       #color by river
       plot1 <- ggplot() +
         stat_density(data= posterior_df, aes(!!sym(effect), 
-                                             group = River), 
-                     color = '#ADcCA5',
+                                             group = River, 
+                     color = 'River'),
                      geom = 'line', position = 'identity', 
                      alpha = 0.05, linewidth = 1) +
         geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
         labs(title = model, x = x_name, y = y_name) +
         xlim(xlim[1], xlim[2]) +
         # scale_color +
-        geom_density(aes(posterior$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+        stat_density(aes(posterior$b_for, color = 'Coastwide'), geom = 'line', position = 'identity', 
+                     linewidth = 1.2, alpha = 1)+
         #vline at the median value of the posterior
         geom_vline(xintercept = median(posterior$b_for), color = 'black', linetype = 'dashed')+
+        scale_color_manual(values = c('River' = '#ADcCA5', 'Coastwide' = 'black'))+
         theme_classic()+
         theme(legend.position = c(0.8,0.5),
               axis.title.x = element_text(size = 8),
@@ -591,15 +593,26 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         # geom_line(aes(x = forestry, y = productivity_median, group = River,
         #               color = "watershed level\nforestry effect"),alpha=0.5) +
         geom_line(data = global_df, 
-                  aes(x = forestry, y = productivity_median, color = "global forestry effect"), linewidth = 1) +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
-                    alpha = 0.25, fill = "#ADcCA5") +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q250, ymax = q750),
-                    alpha = 0.65, fill = "#ADcCA5") +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q100, ymax = q900),
-                    alpha = 0.45, fill = "#ADcCA5") +
+                  aes(x = forestry, y = productivity_median, color = "Median coastwide\nchange"), linewidth = 1) +
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975,
+                                          alpha = "95% credible\ninterval",
+                                          fill = "95% credible\ninterval"))+
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = q250, ymax = q750,
+                    alpha = "50% credible\ninterval",
+                    fill = "50% credible\ninterval"))+
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = q100, ymax = q900,
+                    alpha = "80% credible\ninterval",
+                    fill = "80% credible\ninterval"))+
         # scale_fill_manual("",values  = c("95% credicle interval" = "gray")) +
-        scale_color_manual("",values = c("global forestry effect" = "#6F7c67")) +
+        scale_color_manual("",values = c("Median coastwide\nchange" = "#6F7c67")) +
+        scale_fill_manual("",values  = c("95% credible\ninterval" =  "#ADcCA5",
+                                        "50% credible\ninterval" = "#ADcCA5",
+                                        "80% credible\ninterval" = "#ADcCA5"
+                                         )) +
+        scale_alpha_manual("",values  = c("95% credible\ninterval" = 0.25,
+                                        "50% credible\ninterval" = 0.65,
+                                        "80% credible\ninterval" = 0.45
+        )) +
         ylim(-100,50) +
         scale_x_continuous(n.breaks = 5) +
         labs(title = model,
@@ -608,14 +621,16 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         theme_classic() +
         theme(legend.position = "none",
               legend.title = element_blank(),
-              legend.key.size = unit(0.5, "cm"),
+              legend.key.size = unit(0.2, "cm"),
               legend.key.width = unit(1, "cm"),
               axis.title.x = element_text(size = 8),
               axis.title.y = element_text(size = 8),
               axis.text.x = element_text(size = 8),
               axis.text.y = element_text(size = 8),
               plot.title = element_text(size = 10, hjust = 0.5))+
-        guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+        guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)),
+               
+               )
     } else if(effect == "sst"){
       p1 <- ggplot(full_productivity) +
         # geom_line(aes(x = forestry, y = productivity_median, group = River,
@@ -817,19 +832,29 @@ plot_npgo_effect_manuscript <- function(posterior = ch_chm_eca_npgo,
   
   if(species == "chum"){
     df <- ch20rsc
+    posterior_rv <- posterior %>% 
+      select(starts_with('b_npgo_rv')) %>%
+      pivot_longer(cols = everything(), 
+                   names_to = 'River', 
+                   names_prefix = 'b_npgo_rv',
+                   values_to = 'npgo_effect') %>%
+      mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+      select(-River) %>%
+      left_join(df %>% select(River_n, CU_name, X_LONG, Y_LAT) %>% distinct(), by = 'River_n')
   } else if(species == "pink"){
     df <- pk10r
+    posterior_rv <- posterior %>% 
+      select(starts_with('b_npgo_rv')) %>%
+      pivot_longer(cols = everything(), 
+                   names_to = 'River', 
+                   names_prefix = 'b_npgo_rv',
+                   values_to = 'npgo_effect') %>%
+      mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+      select(-River) %>%
+      left_join(df %>% select(River_n, X_LONG, Y_LAT) %>% distinct(), by = 'River_n')
   }
   
-  posterior_rv <- posterior %>% 
-    select(starts_with('b_npgo_rv')) %>%
-    pivot_longer(cols = everything(), 
-                 names_to = 'River', 
-                 names_prefix = 'b_npgo_rv',
-                 values_to = 'npgo_effect') %>%
-    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
-    select(-River) %>%
-    left_join(df %>% select(River_n, CU, CU_name, X_LONG, Y_LAT) %>% distinct(), by = 'River_n')
+  
   
   if(species == "chum"){
     p1 <- ggplot()+
@@ -1243,6 +1268,12 @@ ggsave(here("figures","manuscript_oct2025_chum_pink_ricker_only.png"), plot = pl
 
 # forest plot of the predicted decline by CU and watershed
 
+#new plot for manuscript without plot numbers, with decline in recruitment, with same y axis for % change
+
+
+
+
+
 
 plot_productivity_decline_manuscript(ric_chm_cpd_ocean_covariates_logR, 
                           effect = "cpd", species = "chum",
@@ -1395,6 +1426,7 @@ ggsave(here("figures","manuscript_sep2025_chum_ricker_cpd_productivity_decline_b
 
 
 #make same figure as above but with cu level estimates, instead of river level estimates - using b_for_cu, instead of b_for_rv
+library(bayestestR)
 
 productivity_decline_cu_df <- function(posterior, effect, species){
   
@@ -1456,6 +1488,8 @@ productivity_decline_cu_df <- function(posterior, effect, species){
                                          productivity_75 = apply(productivity,2,quantile, probs = 0.75),
                                          productivity_025 = apply(productivity,2,quantile, probs = 0.025),
                                          productivity_975 = apply(productivity,2,quantile, probs = 0.975),
+                                         productivity_025_hdi = apply(productivity,2, hdi, ci = 0.95)[[1]]$CI_low,
+                                         productivity_975_hdi = apply(productivity,2, hdi, ci = 0.95)[[1]]$CI_high,
                                          forestry = cpd_cu$mean,
                                          CU_n = unique(cu_data$CU_n))
     
@@ -1789,6 +1823,37 @@ manuscript_ric3 <- manuscript_ric_1 + manuscript_linear_ric_1 + manuscript_logR_
 ggsave(here("figures", "manuscript_oct2025_ricker_all3_w_forestry.png"),
        plot = manuscript_ric3, 
        width = 12, height = 4, dpi = 300)
+
+#make theoretical prediction of estimate change in recruitment (percent) for various level of forestry
+
+# calculate
+
+df_ricker_change_recruits <- df_ricker %>% 
+  select("St", "Rt_1", "Rt_-1") %>%
+  rename_with(~str_replace_all(., "-1", "low_forestry")) %>%
+  rename_with(~str_replace_all(., "1", "high_forestry")) %>%
+  mutate(recruits_change = (Rt_high_forestry - Rt_low_forestry)*100/Rt_low_forestry) %>% View()
+
+
+St <- seq(0,1000,10)
+
+alpha <- 1.2
+
+beta <- -0.5
+
+Smax <- 500
+
+Forestry <- seq(-2, 2,100)#c(-1,0,1)
+
+df_ricker <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_ricker[[paste0("Rt_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])[,1]
+  df_ricker[[paste0("ln_Rt_St_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])[,2]
+}
+
+
+
 
 # make df for manuscript with productivity declines at different values --------
 
@@ -2342,25 +2407,33 @@ ggsave(here("figures","manuscript_oct2025_chum_ricker_cpd_productivity_decline_b
 
 # have map figure bc_region_productivity and forest plot with CU as inset
 
-cu_forest_plot <- ric_chm_cpd_productivity_decline_cu %>% 
+cu_forest_plot_compare <- ric_chm_cpd_productivity_decline_cu %>% 
   arrange(desc(productivity_50)) %>%
   mutate(CU2 = factor(CU, levels = CU)) %>% 
   ggplot(aes(x = CU, y = productivity_50)) +
   geom_point(aes(y = productivity_50, x = CU2), color = '#516479',fill = "white", size = 3, alpha = 0.5) +
-  geom_errorbar(aes(ymin = productivity_025, ymax = productivity_975 ), color = '#516479', width = 0, alpha = 0.5, size = 1) +
+  geom_errorbar(aes(ymin = productivity_025, ymax = productivity_975, color = "95% ETI CI"), width = 0, alpha = 0.5, size = 1) +
+  geom_errorbar(aes(ymin = productivity_025_hdi, ymax = productivity_975_hdi, color = "95% HDI CI"), width = 0, alpha = 0.5, size = 1) +
   geom_errorbar(aes(ymin = productivity_25, ymax = productivity_75 ), color = '#516479', width = 0, alpha = 0.7, size = 2) +
+  scale_color_manual(name = 'Interval type', values = c('95% ETI CI' = '#516479', 
+                                                        '50% ETI CI' = '#516479', 
+                                                        '95% HDI CI' = 'hotpink'))+
   #add estimated median decline to the right of each error bar
   geom_text(aes(label = paste(round(productivity_50,1),"%")), 
             hjust = -0.25, 
             vjust = -0.35,
             size = 3, color = "gray20") +
+  #add dashed v line
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+  #label the 95%credible interval using annotate
+  
   coord_flip() +
   # scale_color_manual(name = 'Model type', values = c('independent alpha' = 'cadetblue', 'hierarchical alpha' = 'coral', 'hierarchical alpha - ricker' = 'darkgoldenrod')) +
   labs(#title = 'Estimated percent change in CU-level productivity',
     x = 'Conservation Unit',
-    y = 'Productivity change (%)') +
+    y = 'Change in recruitment (%)') +
   theme_classic() +
-  theme(legend.position = "none",
+  theme(legend.position = c(0.8,0.9),
         # axis.text.y = element_blank(),
         # axis.ticks.y = element_blank(),
         axis.text.y = element_text(size = 8),
@@ -2371,12 +2444,64 @@ cu_forest_plot <- ric_chm_cpd_productivity_decline_cu %>%
         plot.background = element_rect(fill='transparent', color=NA),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        legend.background = element_rect(fill='transparent'),
-        legend.box.background = element_rect(fill='transparent'))+
+        legend.background = element_rect(fill='transparent', color = "transparent"),
+        legend.box.background = element_rect(fill='transparent', color = 'transparent'))+
+  #increase xlim
+  scale_x_discrete(expand = expansion(mult = 0.05))
+
+cu_forest_plot_compare
+
+ggsave(here("figures","manuscript_oct2025_chum_ricker_cpd_productivity_decline_by_cu_forest_plot_compare_intervals.png"),
+       cu_forest_plot_compare, width = 4, height = 6, bg = "white")
+
+
+cu_forest_plot <- ric_chm_cpd_productivity_decline_cu %>% 
+  arrange(desc(productivity_50)) %>%
+  mutate(CU2 = factor(CU, levels = CU)) %>% 
+  ggplot(aes(x = CU, y = productivity_50)) +
+  geom_point(aes(y = productivity_50, x = CU2), color = '#516479',fill = "white", size = 3, alpha = 0.5) +
+  geom_errorbar(aes(ymin = productivity_025, ymax = productivity_975, color = "95% confidence\ninterval"), width = 0, alpha = 0.5, size = 1) +
+  # geom_errorbar(aes(ymin = productivity_025_hdi, ymax = productivity_975_hdi, color = "95% HDI CI"), width = 0, alpha = 0.5, size = 1) +
+  geom_errorbar(aes(ymin = productivity_25, ymax = productivity_75,color = '50% confidence\ninterval' ), width = 0, alpha = 0.7, size = 2) +
+  scale_color_manual(name = '', values = c('95% confidence\ninterval' = '#516479', 
+                                                        '50% confidence\ninterval' = '#516479', 
+                                                        '95% HDI CI' = 'hotpink'))+
+  #add estimated median decline to the right of each error bar
+  geom_text(aes(label = paste(round(productivity_50,1),"%")), 
+            hjust = -0.25, 
+            vjust = -0.35,
+            size = 3, color = "gray20") +
+  #add dashed v line
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+  #label the 95%credible interval using annotate
+  
+  coord_flip() +
+  # scale_color_manual(name = 'Model type', values = c('independent alpha' = 'cadetblue', 'hierarchical alpha' = 'coral', 'hierarchical alpha - ricker' = 'darkgoldenrod')) +
+  labs(#title = 'Estimated percent change in CU-level productivity',
+    x = 'Conservation Unit',
+    y = 'Change in recruitment (%)') +
+  theme_classic() +
+  theme(legend.position = c(0.8,0.9),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        axis.text.y = element_text(size = 8),
+        plot.title = element_text(hjust = 0.5, size = 18),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        panel.background = element_rect(fill='transparent'),
+        plot.background = element_rect(fill='transparent', color=NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.background = element_rect(fill='transparent', color = "transparent"),
+        legend.box.background = element_rect(fill='transparent', color = 'transparent'))+
   #increase xlim
   scale_x_discrete(expand = expansion(mult = 0.05))
 
 cu_forest_plot
+
+ggsave(here("figures","manuscript_nov2025_chum_ricker_cpd_productivity_decline_by_cu_forest_plot.png"),
+       cu_forest_plot, width = 5, height = 6, bg = "white")
+
 
 
 bc_region_productivity2 <- ggplot() +
@@ -2645,5 +2770,633 @@ manuscript_productivity_change_table_rounded <- manuscript_productivity_change_t
 write.csv(manuscript_productivity_change_table_rounded, here("tables","manuscript_productivity_change_table_by_cu_oct_2025_subset.csv"), row.names = FALSE)
 
 
+
+
+
+#new plot for manuscript without plot numbers, with decline in recruitment, with same y axis for % change
+
+
+
+plot_chum_A <- plot_forestry_effect_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
+                                                effect = "cpd", species = "chum", 
+                                                model = "Cumulative disturbance", xlim = c(-0.5, 0.5))+
+  theme(legend.position = c(0.9,0.9),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 6))
+#add legend for credible intervals for one figure
+plot_chum_B <- plot_forestry_effect_manuscript(posterior = ric_chm_eca_ocean_covariates_logR, 
+                                                effect = "eca", species = "chum", 
+                                                model = "Equivalent clearcut area", xlim = c(-0.5, 0.5))+
+  theme(legend.position = "none")
+
+plot_chum_C <- plot_sst_effect_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
+                                           effect = "sst", species = "chum", 
+                                           model = "Sea-surface temperature", 
+                                           xlim = c(-0.5, 0.5))+
+  theme(legend.position = "none")
+
+plot_chum_D <- plot_npgo_effect_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
+                                            effect = "npgo", species = "chum", 
+                                            model = "North Pacific Gyre Oscillation", 
+                                            xlim = c(-0.5, 0.5))+
+  theme(legend.position = "none")
+
+
+plot_chum_E <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
+                                                     effect = "cpd", model = "Cumulative disturbance")+
+  ylim(c(-75,75))+
+  labs(y = "Median change in recruitment (%)")+
+  theme(legend.position = c(0.95,0.99),
+        legend.direction = "vertical",
+        legend.key.size = unit(0.001, "cm"),
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.3, "cm"),
+        legend.spacing = unit(0.00, "cm"),
+        legend.justification = c("right", "top"),
+        legend.box.background = element_rect(color = "transparent", fill = "transparent"),
+        legend.box.margin = margin(0,0,0,0),
+        #make it horizontal
+        legend.box = "horizontal",
+        legend.text = element_text(size = 7))#+
+# guides(fill=guide_legend(nrow=1, byrow=TRUE))
+
+plot_chum_F <- plot_productivity_decline_manuscript(posterior = ric_chm_eca_ocean_covariates_logR,
+                                                     effect = "eca", model = "Equivalent clearcut area")+
+  ylim(c(-75,75))+
+  labs(y = "Median change in recruitment (%)")
+
+
+plot_chum_G <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR,
+                                                     effect = "sst", model = "Sea-surface temperature")+
+  ylim(c(-75,75))+
+  labs(y = "Median change in recruitment (%)")
+
+plot_chum_H <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR,
+                                                     effect = "npgo", model = "North Pacific Gyre Oscillation")+
+  ylim(c(-75,75))+
+  labs(y = "Median change in recruitment (%)")
+
+
+
+# plot_chum <- (plot_chum_a1 / plot_chum_a2 / plot_chum_a3 / plot_chum_a4)+ plot_layout(axes = 'collect') | 
+#   ((plot_chum_c1  + plot_chum_c2 ) + plot_layout(axes = 'collect'))/(
+#     (plot_chum_c3  + plot_chum_c4 ) + plot_layout(axes = 'collect')) 
+
+plot_chum <- (plot_chum_A / plot_chum_B / plot_chum_C / plot_chum_D)+ plot_layout(axes = 'collect') | 
+  ((plot_chum_E  + plot_chum_F ) + plot_layout(axes = 'collect'))/(
+    (plot_chum_G  + plot_chum_H ) + plot_layout(axes = 'collect'))
+
+plot_chum
+
+
+plot_chum2 <- (plot_chum_A / plot_chum_B / plot_chum_C / plot_chum_D)+ plot_layout(axes = 'collect') | 
+  ((plot_chum_E  / plot_chum_F ) + plot_layout(axes = 'collect'))
+# plot_chum[[1]] <- plot_chum[[1]] + plot_layout(tag_level = 'new') 
+# 
+# 
+# plot_chum + plot_annotation(tag_levels = c('a', '1'), title = "Chum salmon")& 
+#   theme(plot.tag = element_text(size = 8))
+
+
+plot_chum_w_title <- (plot_chum + plot_annotation(tag_levels = "A",
+                                                  title = "Chum salmon")& 
+                        theme(plot.tag = element_text(size = 8)))
+
+
+# Pink 
+
+plot_pink_I <- plot_forestry_effect_manuscript(posterior = ric_pk_cpd_ersst, 
+                                                effect = "cpd", species = "pink", 
+                                                # model = "Ricker model with CPD", xlim = c(-1, 1))
+                                                model = "Cumulative disturbance", xlim = c(-0.5, 0.5))+
+  theme(legend.position = "none")
+
+plot_pink_J <- plot_forestry_effect_manuscript(posterior = ric_pk_eca_ersst,
+                                                effect = "eca", species = "pink", 
+                                                # model = "Ricker model with ECA", xlim = c(-1, 1))
+                                                model = "Equivalent clearcut area", xlim = c(-0.5, 0.5))+
+  theme(legend.position = "none")
+
+plot_pink_K <- plot_sst_effect_manuscript(posterior = ric_pk_cpd_ersst,
+                                           effect = "sst", species = "pink", 
+                                           # model = "Ricker model with CPD", 
+                                           model = "Sea-surface temperature",
+                                           # xlim = c(-1, 1))
+                                           xlim = c(-0.5, 0.5))
+
+plot_pink_L <- plot_npgo_effect_manuscript(posterior = ric_pk_cpd_ersst,
+                                            effect = "npgo", species = "pink", 
+                                            # model = "Ricker model with CPD",
+                                            model = "North Pacific Gyre Oscillation",
+                                            # xlim = c(-1, 1))
+                                            xlim = c(-0.5, 0.5))
+
+
+plot_pink_M <- plot_productivity_decline_manuscript(posterior = ric_pk_cpd_ersst,  
+                                                     species = "pink",
+                                                     effect = "cpd", 
+                                                     # model = "Ricker model with CPD")
+                                                     model = "Cumulative disturbance")+
+  ylim(c(-75,75))+
+  labs(y = "Median change in recruitment (%)")
+
+plot_pink_N <- plot_productivity_decline_manuscript(posterior = ric_pk_eca_ersst,
+                                                     species = "pink",
+                                                     effect = "eca", 
+                                                     # model = "Ricker model with ECA")
+                                                     model = "Equivalent clearcut area")+
+  ylim(c(-75,75))+
+  labs(y = "Median change in recruitment (%)")
+
+plot_pink_O <- plot_productivity_decline_manuscript(posterior = ric_pk_cpd_ersst,
+                                                     species = "pink",
+                                                     effect = "sst", 
+                                                     # model = "Ricker model with CPD")
+                                                     model = "Sea-surface temperature")+
+  ylim(c(-75,75))+
+  labs(y = "Median change in recruitment (%)")
+
+plot_pink_P <- plot_productivity_decline_manuscript(posterior = ric_pk_cpd_ersst,
+                                                     species = "pink",
+                                                     effect = "npgo", 
+                                                     # model = "Ricker model with CPD")
+                                                     model = "North Pacific Gyre Oscillation")+
+  ylim(c(-75,75))+
+  labs(y = "Median change in recruitment (%)")
+
+
+
+
+
+
+# plot_pink <- (plot_pink_a1 / plot_pink_a2 / plot_pink_a3 / plot_pink_a4)+ plot_layout(axes = 'collect') |
+#   ((plot_pink_c1  + plot_pink_c2 ) + plot_layout(axes = 'collect'))/(
+#     (plot_pink_c3  + plot_pink_c4 ) + plot_layout(axes = 'collect'))
+
+plot_pink <- (plot_pink_I / plot_pink_J / plot_pink_K / plot_pink_L)+ plot_layout(axes = 'collect') |
+  ((plot_pink_M  + plot_pink_N ) + plot_layout(axes = 'collect'))/(
+    (plot_pink_O  + plot_pink_P ) + plot_layout(axes = 'collect'))
+
+
+plot_pink2 <- (plot_pink_I / plot_pink_J / plot_pink_K / plot_pink_L)+ plot_layout(axes = 'collect') |
+  ((plot_pink_M  / plot_pink_N ) + plot_layout(axes = 'collect'))
+
+plot_pink_chum_w_title2 <- ((wrap_elements(panel = plot_chum + plot_annotation(tag_levels = "A", 
+                                                                              title = "Chum salmon")& 
+                                            theme(plot.tag = element_text(size = 8)))) / (wrap_elements(panel = plot_pink+  
+                                                                                                          plot_annotation(tag_levels = list(c('I','J','K','L','M','N','O','P')), 
+                                                                                                                          title = "Pink salmon")& 
+                                                                                                          theme(plot.tag = element_text(size = 8))))) 
+plot_pink_chum_w_title2
+
+
+
+ggsave(here("figures","manuscript_nov2025_chum_pink_ricker_only_w_CI.png"), plot = plot_pink_chum_w_title2, width = 10, height = 12)
+
+plot_pink_chum_w_title3 <- ((wrap_elements(panel = plot_chum2
+                                           
+                                           + plot_annotation(tag_levels = "A", 
+                                                                               title = "Chum salmon")& 
+                                             theme(plot.tag = element_text(size = 8)))) / (wrap_elements(panel = plot_pink2+  
+                                                                                                           plot_annotation(tag_levels = list(c('I','J','K','L','M','N','O','P')), 
+                                                                                                                           title = "Pink salmon")& 
+                                                                                                           theme(plot.tag = element_text(size = 8))))) 
+plot_pink_chum_w_title3
+
+#figure of posterior distribution of ratio of effect sizes
+
+posterior1 <- ric_chm_cpd_ocean_covariates_logR
+
+ratio_forestry_sst_npgo <-  posterior1 %>% 
+  select("b_for","b_sst","b_npgo") %>% 
+  mutate(ratio_for_sst = b_for/b_sst,
+         ratio_for_npgo = b_for/b_npgo)
+
+#plot distribution of ratio
+ggplot(ratio_forestry_sst_npgo, aes(x = ratio_for_sst)) +
+  geom_density(fill = "cadetblue", alpha = 0.5) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "gray40") +
+  xlim(-20,20)+
+  labs(title = "Posterior distribution of ratio of forestry to SST effect sizes",
+       x = "Ratio of forestry to SST effect sizes",
+       y = "Density") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+
+
+#plot distribution of ratio
+ggplot(ratio_forestry_sst_npgo, aes(x = ratio_for_npgo)) +
+  geom_density(fill = "cadetblue", alpha = 0.5) +
+  geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  xlim(-20,20)+
+  labs(title = "Posterior distribution of ratio of forestry to NPGO effect sizes",
+       x = "Ratio of forestry to NPGO effect sizes",
+       y = "Density") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+
+
+# calculate ratios of effects for each CU and plot distributions for all CUS
+
+ratio_forestry_sst_npgo_cu <-  posterior1 %>% 
+  select(starts_with(c("b_for_cu","b_sst_cu","b_npgo_cu"))) %>% 
+  mutate(mcmc_number = as.numeric(rownames(.))) %>%
+  pivot_longer(-mcmc_number, names_to = "parameter", values_to = "value") %>%
+  # pivot_longer(everything(), names_to = "parameter", values_to = "value") %>%
+  mutate(effect = case_when(str_detect(parameter, "b_for_cu") ~ "forestry",
+                            str_detect(parameter, "b_sst_cu") ~ "sst",
+                            str_detect(parameter, "b_npgo_cu") ~ "npgo"),
+         CU_n = str_extract(parameter, "\\[(.*?)\\]") %>% str_remove_all("\\[|\\]")) %>%
+  select(-c("parameter")) %>% 
+  pivot_wider(names_from = effect, values_from = value) %>%
+  mutate(ratio_for_sst = forestry/sst,
+         ratio_for_npgo = forestry/npgo)
+
+
+#plot density plots of ratio for each CU
+sst_ratio <- ggplot() +
+  stat_density(data = ratio_forestry_sst_npgo_cu, aes(x = ratio_for_sst, group = CU_n),
+               color = "#C9AE9F", geom = 'line', position = 'identity', 
+               alpha = 0.2, linewidth = 1.5)+
+  # geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  geom_vline(xintercept = 1, color = 'slategray', linewidth = 0.8) +
+  
+  geom_vline(xintercept = median(ratio_forestry_sst_npgo$ratio_for_sst), color = 'black', linetype = 'dashed') + 
+  #also include overall ratio as black bold line
+  geom_density(data = ratio_forestry_sst_npgo, aes(x = ratio_for_sst), 
+               color = "black", size = 1.5)+
+  xlim(-10,10)+
+  labs(title = "",
+       x = "Ratio of cumulative disturbance to SST effect sizes",
+       y = "Posterior density") +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.8, "lines"),
+        #1 column for legend
+        legend.cox = "vertical",
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        # plot.title = element_text(size = 10, hjust = 0.5)
+        plot.title = element_text(size = 12, hjust = 0, vjust = -0.1))
+
+#ggsave
+ggsave(here("figures","manuscript_oct2025_chum_ricker_ratio_forestry_sst_effect_sizes_by_cu.png"),
+       width = 6, height = 4, bg = "white")
+
+
+
+#plot density plots of ratio for each CU
+npgo_ratio <- ggplot() +
+  stat_density(data = ratio_forestry_sst_npgo_cu, aes(x = ratio_for_npgo, group = CU_n),
+               color = "#A9B7CC", geom = 'line', position = 'identity', 
+               alpha = 0.2, linewidth = 1.5)+
+  # geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  geom_vline(xintercept = -1, color = 'slategray', linewidth = 0.8) +
+  
+  geom_vline(xintercept = median(ratio_forestry_sst_npgo$ratio_for_npgo), color = 'black', linetype = 'dashed') + 
+  #also include overall ratio as black bold line
+  geom_density(data = ratio_forestry_sst_npgo, aes(x = ratio_for_npgo), 
+               color = "black", size = 1.5)+
+  xlim(-10,10)+
+  labs(title = "",
+       x = "Ratio of cumulative disturbance to NPGO effect sizes",
+       y = "Posterior density") +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.8, "lines"),
+        #1 column for legend
+        legend.cox = "vertical",
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        # plot.title = element_text(size = 10, hjust = 0.5)
+        plot.title = element_text(size = 12, hjust = 0, vjust = -0.1))
+
+#ggsave
+
+ggsave(here("figures","manuscript_oct2025_chum_ricker_ratio_forestry_npgo_effect_sizes_by_cu.png"),
+       width = 6, height = 4, bg = "white")
+
+
+
+
+sst_ratio + npgo_ratio
+
+ggsave(here("figures","manuscript_oct2025_chum_ricker_ratio_forestry_sst_npgo_effect_sizes_by_cu.png"),
+       width = 8, height = 4, bg = "white")
+
+
+#do same for pink
+
+posterior_pink <- ric_pk_cpd_ersst
+
+ratio_forestry_sst_npgo_pk <- posterior_pink %>% 
+  select("b_for","b_sst","b_npgo") %>% 
+  mutate(ratio_for_sst = b_for/b_sst,
+         ratio_for_npgo = b_for/b_npgo)
+
+# calculate ratios of effects for each CU and plot distributions for all CUS
+
+ratio_forestry_sst_npgo_cu_pk <-  posterior_pink %>% 
+  select(starts_with(c("b_for_cu","b_sst_cu","b_npgo_cu"))) %>% 
+  mutate(mcmc_number = as.numeric(rownames(.))) %>%
+  pivot_longer(-mcmc_number, names_to = "parameter", values_to = "value") %>%
+  # pivot_longer(everything(), names_to = "parameter", values_to = "value") %>%
+  mutate(effect = case_when(str_detect(parameter, "b_for_cu") ~ "forestry",
+                            str_detect(parameter, "b_sst_cu") ~ "sst",
+                            str_detect(parameter, "b_npgo_cu") ~ "npgo"),
+         CU_n = str_extract(parameter, "\\[(.*?)\\]") %>% str_remove_all("\\[|\\]")) %>%
+  select(-c("parameter")) %>% 
+  pivot_wider(names_from = effect, values_from = value) %>%
+  mutate(ratio_for_sst = forestry/sst,
+         ratio_for_npgo = forestry/npgo)
+
+
+#plot density plots of ratio for each CU
+sst_ratio_pk <- ggplot() +
+  stat_density(data = ratio_forestry_sst_npgo_cu_pk, aes(x = ratio_for_sst, group = CU_n),
+               color = "#C9AE9F", geom = 'line', position = 'identity', 
+               alpha = 0.2, linewidth = 1.5)+
+  # geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  geom_vline(xintercept = 1, color = 'slategray', linewidth = 0.8) +
+  
+  geom_vline(xintercept = median(ratio_forestry_sst_npgo_pk$ratio_for_sst), color = 'black', linetype = 'dashed') + 
+  #also include overall ratio as black bold line
+  geom_density(data = ratio_forestry_sst_npgo_pk, aes(x = ratio_for_sst), 
+               color = "black", size = 1.5)+
+  xlim(-10,10)+
+  labs(title = "",
+       x = "Ratio of cumulative disturbance to SST effect sizes",
+       y = "Posterior density") +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.8, "lines"),
+        #1 column for legend
+        legend.cox = "vertical",
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        # plot.title = element_text(size = 10, hjust = 0.5)
+        plot.title = element_text(size = 12, hjust = 0, vjust = -0.1))
+
+
+
+#plot density plots of ratio for each CU
+npgo_ratio_pk <- ggplot() +
+  stat_density(data = ratio_forestry_sst_npgo_cu_pk, aes(x = ratio_for_npgo, group = CU_n),
+               color = "#A9B7CC", geom = 'line', position = 'identity', 
+               alpha = 0.2, linewidth = 1.5)+
+  # geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  geom_vline(xintercept = -1, color = 'slategray', linewidth = 0.8) +
+  
+  geom_vline(xintercept = median(ratio_forestry_sst_npgo_pk$ratio_for_npgo), color = 'black', linetype = 'dashed') + 
+  #also include overall ratio as black bold line
+  geom_density(data = ratio_forestry_sst_npgo_pk, aes(x = ratio_for_npgo), 
+               color = "black", size = 1.5)+
+  xlim(-10,10)+
+  labs(title = "",
+       x = "Ratio of cumulative disturbance to NPGO effect sizes",
+       y = "Posterior density") +
+  theme_classic() +
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.8, "lines"),
+        #1 column for legend
+        legend.cox = "vertical",
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        # plot.title = element_text(size = 10, hjust = 0.5)
+        plot.title = element_text(size = 12, hjust = 0, vjust = -0.1))
+
+sst_ratio_pk+npgo_ratio_pk
+
+#ggsave
+ggsave(here("figures","manuscript_oct2025_pink_ricker_ratio_forestry_sst_npgo_effect_sizes_by_cu.png"),
+       width = 8, height = 4, bg = "white")
+
+# make a table of medians of  ratios of forestry effect to sst effect 
+# and forestry effect to sst effect by CU
+
+table_ratio_chum <- ratio_forestry_sst_npgo_cu %>% 
+  select(-mcmc_number) %>% 
+  mutate(CU_n = as.numeric(CU_n)) %>% 
+  group_by(CU_n) %>% 
+  summarise(median_ratio_for_sst = median(ratio_for_sst),
+            median_ratio_for_npgo = median(ratio_for_npgo)
+            # median_forestry = median(forestry),
+            # median_sst = median(sst),
+            # median_npgo = median(npgo)
+            ) %>% 
+  left_join(ch20rsc %>% select(CU_n, CU_name) %>% distinct(), by = "CU_n") %>% 
+  #round all values to two decimal places
+  mutate(across(where(is.numeric), ~ round(., 2))) %>% 
+  select(-CU_n, CU_name, median_ratio_for_sst, median_ratio_for_npgo)
+  
+
+#save the table
+write.csv(table_ratio_chum, here("tables",
+                                 "manuscript_nov2025_chum_ricker_ratio_forestry_sst_npgo_effect_sizes_by_cu.csv"), row.names = FALSE)
+
+
+# calculate ratios of effects for each CU and plot distributions for all CUS
+
+ratio_forestry_sst_npgo_river <-  posterior1 %>% 
+  select(starts_with(c("b_for_rv","b_sst_rv","b_npgo_rv"))) %>% 
+  mutate(mcmc_number = as.numeric(rownames(.))) %>%
+  pivot_longer(-mcmc_number, names_to = "parameter", values_to = "value") %>%
+  # pivot_longer(everything(), names_to = "parameter", values_to = "value") %>%
+  mutate(effect = case_when(str_detect(parameter, "b_for_rv") ~ "forestry",
+                            str_detect(parameter, "b_sst_rv") ~ "sst",
+                            str_detect(parameter, "b_npgo_rv") ~ "npgo"),
+         River_n = str_extract(parameter, "\\[(.*?)\\]") %>% str_remove_all("\\[|\\]")) %>%
+  select(-c("parameter")) %>% 
+  pivot_wider(names_from = effect, values_from = value) %>%
+  mutate(ratio_for_sst = forestry/sst,
+         ratio_for_npgo = forestry/npgo)
+
+
+#plot density plots of ratio for each River
+sst_ratio_river <- ggplot() +
+  stat_density(data = ratio_forestry_sst_npgo_river, aes(x = ratio_for_sst, group = River_n,
+               color = "River"), geom = 'line', position = 'identity', 
+               alpha = 0.03, linewidth = 1)+
+  # geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  # geom_vline(xintercept = 1, color = 'slategray', linewidth = 0.8) +
+  
+  geom_vline(xintercept = median(ratio_forestry_sst_npgo$ratio_for_sst), color = "black", linetype = 'dashed') + 
+  #also include overall ratio as black bold line
+  stat_density(data = ratio_forestry_sst_npgo, aes(x = ratio_for_sst, 
+               color = "Coastwide"), geom = 'line', position = 'identity', 
+               linewidth = 1.2, alpha =1)+
+  scale_color_manual(name = "",values = c("River" = "#C9AE9F", "Coastwide" = "black"))+
+  xlim(-10,10)+
+  labs(title = "",
+       x = "Ratio of effect of cumulative disturbance to SST",
+       y = "Posterior density") +
+  theme_classic()+
+  theme(legend.position = c(0.9,0.9),
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.002, "cm"),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        # plot.title = element_text(size = 10, hjust = 0.5)
+        plot.title = element_text(size = 10, hjust = 0, vjust = -0.1)
+  )+
+  
+  guides(color = guide_legend(override.aes = list(alpha = 0.9, linewidth = 1), ncol = 1))
+
+
+npgo_ratio_river <- ggplot() +
+  stat_density(data = ratio_forestry_sst_npgo_river, aes(x = ratio_for_npgo, group = River_n,
+               color = "River"), geom = 'line', position = 'identity', 
+               alpha = 0.03, linewidth = 1)+
+  # geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  # geom_vline(xintercept = -1, color = 'slategray', linewidth = 0.8) +
+  
+  geom_vline(xintercept = median(ratio_forestry_sst_npgo$ratio_for_npgo), color = "black", linetype = 'dashed') + 
+  #also include overall ratio as black bold line
+  stat_density(data = ratio_forestry_sst_npgo, aes(x = ratio_for_npgo, 
+               color = "Coastwide"), geom = 'line', position = 'identity', 
+               linewidth = 1.2, alpha =1)+
+  scale_color_manual(name = "",values = c("River" = "#A9B7CC", "Coastwide" = "black"))+
+  xlim(-10,10)+
+  labs(title = "",
+       x = "Ratio of effect of cumulative disturbance to NPGO",
+       y = "Posterior density") +
+  theme_classic()+
+  theme(legend.position = c(0.9,0.9),
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.002, "cm"),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        # plot.title = element_text(size = 10, hjust = 0.5)
+        plot.title = element_text(size = 10, hjust = 0, vjust = -0.1)
+  )+
+  
+  guides(color = guide_legend(override.aes = list(alpha = 0.9, linewidth = 1), ncol = 1))
+
+sst_ratio_river + npgo_ratio_river
+
+#save
+
+ggsave(here("figures","manuscript_nov2025_chum_ricker_ratio_forestry_sst_npgo_effect_sizes_by_river.png"),
+       width = 8, height = 4, bg = "white")
+
+ratio_forestry_sst_npgo_river_pink <-  posterior_pink %>% 
+  select(starts_with(c("b_for_rv","b_sst_rv","b_npgo_rv"))) %>% 
+  mutate(mcmc_number = as.numeric(rownames(.))) %>%
+  pivot_longer(-mcmc_number, names_to = "parameter", values_to = "value") %>%
+  # pivot_longer(everything(), names_to = "parameter", values_to = "value") %>%
+  mutate(effect = case_when(str_detect(parameter, "b_for_rv") ~ "forestry",
+                            str_detect(parameter, "b_sst_rv") ~ "sst",
+                            str_detect(parameter, "b_npgo_rv") ~ "npgo"),
+         River_n = str_extract(parameter, "\\[(.*?)\\]") %>% str_remove_all("\\[|\\]")) %>%
+  select(-c("parameter")) %>% 
+  pivot_wider(names_from = effect, values_from = value) %>%
+  mutate(ratio_for_sst = forestry/sst,
+         ratio_for_npgo = forestry/npgo)
+
+#plot density plots of ratio for each River
+
+sst_ratio_river_pk <- ggplot() +
+  stat_density(data = ratio_forestry_sst_npgo_river_pink, aes(x = ratio_for_sst, group = River_n,
+               color = "River"), geom = 'line', position = 'identity', 
+               alpha = 0.03, linewidth = 1)+
+  # geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  # geom_vline(xintercept = 1, color = 'slategray', linewidth = 0.8) +
+  
+  geom_vline(xintercept = median(ratio_forestry_sst_npgo_pk$ratio_for_sst, color = "Coastwide"), linetype = 'dashed') + 
+  #also include overall ratio as black bold line
+  stat_density(data = ratio_forestry_sst_npgo_pk, aes(x = ratio_for_sst, 
+               color = "Coastwide"), geom = 'line', position = 'identity', 
+               linewidth = 1.2, alpha =1)+
+  scale_color_manual(name = "",values = c("River" = "#C9AE9F", "Coastwide" = "black"))+
+  xlim(-10,10)+
+  labs(title = "",
+       x = "Ratio of effect of cumulative disturbance to SST",
+       y = "Posterior density") +
+  theme_classic()+
+  theme(legend.position = c(0.9,0.9),
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.002, "cm"),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        # plot.title = element_text(size = 10, hjust = 0.5)
+        plot.title = element_text(size = 10, hjust = 0, vjust = -0.1)
+  )+
+  
+  guides(color = guide_legend(override.aes = list(alpha = 0.9, linewidth = 1), ncol = 1))
+
+npgo_ratio_river_pk <- ggplot() +
+  stat_density(data = ratio_forestry_sst_npgo_river_pink, aes(x = ratio_for_npgo, group = River_n,
+               color = "River"), geom = 'line', position = 'identity', 
+               alpha = 0.03, linewidth = 1)+
+  # geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +
+  # geom_vline(xintercept = -1, color = 'slategray', linewidth = 0.8) +
+  
+  geom_vline(xintercept = median(ratio_forestry_sst_npgo_pk$ratio_for_npgo, color = "Coastwide"), linetype = 'dashed') + 
+  #also include overall ratio as black bold line
+  stat_density(data = ratio_forestry_sst_npgo_pk, aes(x = ratio_for_npgo, 
+               color = "Coastwide"), geom = 'line', position = 'identity', 
+               linewidth = 1.2, alpha =1)+
+  scale_color_manual(name = "",values = c("River" = "#A9B7CC", "Coastwide" = "black"))+
+  xlim(-10,10)+
+  labs(title = "",
+       x = "Ratio of effect of cumulative disturbance to NPGO",
+       y = "Posterior density") +
+  theme_classic()+
+  theme(legend.position = c(0.9,0.9),
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.002, "cm"),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        # plot.title = element_text(size = 10, hjust = 0.5)
+        plot.title = element_text(size = 10, hjust = 0, vjust = -0.1)
+  )+
+  
+  guides(color = guide_legend(override.aes = list(alpha = 0.9, linewidth = 1), ncol = 1))
+
+sst_ratio_river_pk + npgo_ratio_river_pk
+
+#save
+ggsave(here("figures","manuscript_nov2025_pink_ricker_ratio_forestry_sst_npgo_effect_sizes_by_river.png"),
+       width = 8, height = 4, bg = "white")
 
 

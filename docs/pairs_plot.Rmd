@@ -1,0 +1,124 @@
+
+---
+title: "Pairs plot"
+author: ''
+date: "Nov 2025"
+output:
+  
+  word_document:
+    toc: true
+  html_document:
+    collapsed: false
+    fig_caption: true
+    highlight: espresso
+    number_sections: true
+    smooth_scroll: true
+    theme: sandstone
+    toc: true
+    toc_float: true
+  pdf_document:
+    toc: true
+---
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+    font-size: 15px;
+  color: Black;
+}
+</style>
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache=FALSE)
+options(max.print=23)
+library(cmdstanr)
+library(here);library(dplyr); library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(bayesplot)
+library(patchwork)
+library(hues)
+library(GGally)
+library(latex2exp)
+library(ggforce)
+```
+
+
+
+
+```{r}
+
+#read dataframe and read posterior
+
+posterior <- read.csv(here("stan models","outs","posterior","ric_chm_cpd_ocean_covariates_logR.csv"))
+ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed",
+                         "chum_SR_20_hat_yr_w_ocean_covariates.csv"))
+
+
+```
+
+
+
+```{r}
+# for each cu make mcmc_pairs plot of b_for_cu.1., b_sst_cu.1., b_cpgo_cu.1
+
+num_cu <- length(unique(ch20rsc$CU_name))
+
+for(i in 1:num_cu){
+  cu_name <- unique(ch20rsc$CU_name)[i]
+  
+  b_for_name <- paste0("b_for_cu.", i, ".")
+  b_sst_name <- paste0("b_sst_cu.", i, ".")
+  b_npgo_name <- paste0("b_npgo_cu.", i, ".")
+  
+  posterior_cu <- posterior %>%
+    select(all_of(c(b_for_name, b_sst_name, b_npgo_name)))
+  
+  colnames(posterior_cu) <- c("b_for", "b_sst", "b_npgo")
+  
+  print(mcmc_pairs(
+    posterior_cu,
+    pars = c("b_for", "b_sst", "b_npgo"),
+    off_diag_args = list(size = 1, alpha = 0.1),
+    grid_args = list(top = cu_name)
+  ))
+}
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

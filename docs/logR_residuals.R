@@ -302,3 +302,83 @@ ggplot(residual_logR_df_full_chum)+
 ggsave(here("figures", "residuals_logR_model_chum_eca.png"),
        width = 8, height = 6, dpi = 300, units = "in")
 
+
+#update nov 2025 - plot resiudlas with autocorrelation
+library(tidyverse)
+library(here)
+posterior_new <- read.csv(here('..','..','..','OneDrive - University of Victoria',
+                               'Documents','coastwide_salmon_forestry_analysis','model_outs_too_big','ric_chm_cpd_ocean_covariates_logR_new.csv'),check.names=F)
+
+posterior_new <- read.csv("~/coastwide_forestry_salmon_analysis/model_outs_too_big/ric_chm_cpd_ocean_covariates_logR_new.csv")
+
+glimpse(posterior_new)
+
+#calculate difference between mu2 and ln_RS from observed data
+
+# posterior_new %>% 
+#   select(starts_with("mu2")) %>% 
+#   # mutate(residuals = apply(.,1,
+#   #                          function(observed,predicted) predicted - observed, 
+#   #                          observed = ch20rsc$ln_RS))
+#   mutate(median_mu2 = apply(., 1, median)) %>%
+#   select(starts_with("median"))
+
+n_rows <- nrow(ch20rsc)
+
+#make df
+
+residual_df <- data.frame(observed = ch20rsc$ln_RS, residual = NA)
+
+for(i in 1:n_rows){
+  #subtract mu2 from observed
+  mu_col <- posterior_new %>% 
+    select(paste0("mu2",".",i,"."))
+  residual <- mu_col - ch20rsc$ln_RS[i]
+  
+  residual_df$residual[i] <- median(residual[,1])
+  
+}
+
+
+residual_df <- data.frame(observed = log(ch20rsc$Recruits), forestry = ch20rsc$disturbedarea_prct_cs) %>% 
+  mutate(predicted = posterior_new %>% 
+           select(starts_with("mu2")) %>%
+           apply(., 2, median),
+         residual = observed - predicted)
+
+#plot residuals as a function of fitted
+
+ggplot(residual_df)+
+  geom_point(aes(x = predicted, y = residual, color = forestry), alpha = 0.2, size = 2) +
+  geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
+  labs(title = "", x = TeX(r"(Predicted $\log (Recruits)$)"), y = "Residuals") +
+  ylim(-6, 6) +
+  theme_classic() +
+  scale_color_gradient2(name = 'CPD (%)',
+                        low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 50)+
+  theme(legend.position = "right",
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(1, "lines"),
+        legend.text = element_text(size = 7),
+        legend.spacing.y = unit(0.001, "cm"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5)
+  )
+
+# save
+
+ggsave(here("figures", "residuals_w_autocorrelation_logR_chum.png"),
+       width = 6, height = 4, dpi = 300, units = "in")
+
+
+
+
+
+
+
+
+
+
