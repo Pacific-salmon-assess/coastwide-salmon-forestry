@@ -1,2 +1,6 @@
 stan[[:space:]]models/outs/posterior/ric_chm_eca_ocean_covariates_logR_long_chain_trial.csv filter=lfs diff=lfs merge=lfs -text
 stan[[:space:]]models/outs/posterior/ric_chm_eca_ocean_covariates_logR_long_chain_trial_mu2.csv filter=lfs diff=lfs merge=lfs -text
+stan[[:space:]]models/outs/posterior/ric_chm_eca_ocean_covariates_logR_long_chain.csv filter=lfs diff=lfs merge=lfs -text
+stan[[:space:]]models/outs/posterior/ric_chm_eca_ocean_covariates_logR_long_chain_mu2.csv filter=lfs diff=lfs merge=lfs -text
+stan[[:space:]]models/outs/posterior/ric_chm_cpd_ocean_covariates_logR_long_chain.csv filter=lfs diff=lfs merge=lfs -text
+stan[[:space:]]models/outs/posterior/ric_chm_cpd_ocean_covariates_logR_long_chain_mu2.csv filter=lfs diff=lfs merge=lfs -text
