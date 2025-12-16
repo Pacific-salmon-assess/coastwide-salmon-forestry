@@ -379,7 +379,7 @@ plot_forestry_effect_manuscript <- function(posterior = ch_chm_eca,
 plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst, 
                                                  effect = "eca", species = "chum", 
                                                  model = "BH model with NPGO, LH SST", 
-                                                 by_river = FALSE){
+                                                 by_river = FALSE, hd = FALSE){
   
   
   if(species == "chum"){
@@ -454,6 +454,41 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
                             (forestry_sqrt_std-no_forestry))*100 - 100,2,quantile,c(0.1),
                       row.names = c("q100"))
   
+  # calculate high density credible intervals
+  
+  hd_df <- apply(exp(as.matrix(b[,1])%*%
+                               (forestry_sqrt_std-no_forestry))*100 - 100,2,hdi, 
+                                  ci = c(0.5,0.8,0.95))
+  
+  # extract hd intervals from hd_df
+  
+  for(i in 1:100){
+    hd_50_lower <- hd_df[[i]]$CI_low[1]
+    hd_50_upper <- hd_df[[i]]$CI_high[1]
+    
+    hd_80_lower <- hd_df[[i]]$CI_low[2]
+    hd_80_upper <- hd_df[[i]]$CI_high[2]
+    
+    hd_95_lower <- hd_df[[i]]$CI_low[3]
+    hd_95_upper <- hd_df[[i]]$CI_high[3]
+    
+    if(i == 1){
+      hd_intervals <- data.frame(hd_50_lower = hd_50_lower,
+                                 hd_50_upper = hd_50_upper,
+                                 hd_80_lower = hd_80_lower,
+                                 hd_80_upper = hd_80_upper,
+                                 hd_95_lower = hd_95_lower,
+                                 hd_95_upper = hd_95_upper)
+    } else {
+      hd_intervals <- rbind(hd_intervals, data.frame(hd_50_lower = hd_50_lower,
+                                                     hd_50_upper = hd_50_upper,
+                                                     hd_80_lower = hd_80_lower,
+                                                     hd_80_upper = hd_80_upper,
+                                                     hd_95_lower = hd_95_lower,
+                                                     hd_95_upper = hd_95_upper))
+    }
+  }
+  
   
   
   
@@ -466,9 +501,28 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
                           q750 = global_750,
                           q250 = global_250,
                           q900 = global_900,
-                          q100 = global_100)
+                          q100 = global_100) %>% 
+    cbind(hd_intervals)
   
   full_productivity <- NULL
+  
+  if(hd == TRUE){
+    ymin_95 = "hd_95_lower"
+    ymax_95 = "hd_95_upper"
+    ymin_80 = "hd_80_lower"
+    ymax_80 = "hd_80_upper"
+    ymin_50 = "hd_50_lower"
+    ymax_50 = "hd_50_upper"
+    
+  } else{
+    ymin_95 = "q025"
+    ymax_95 = "q975"
+    ymin_80 = "q100"
+    ymax_80 = "q900"
+    ymin_50 = "q250"
+    ymax_50 = "q750"
+    
+  }
   
   if(by_river){
     
@@ -551,7 +605,7 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         scale_x_continuous(n.breaks = 5) +
         labs(title = model,
              x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative disturbance (%)"),
-             y = "Median change\n in productivity (%)") +
+             y = "Median change\n in recruitment (%)") +
         theme_classic() +
         theme(legend.position = c(0.8,0.8),
               legend.title = element_blank(),
@@ -578,7 +632,7 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
         labs(title = model,
              x = "Spring SST (°C)",
-             y = "Median change\n in productivity (%)") +
+             y = "Median change\n in recruitment (%)") +
         theme_classic() +
         theme(legend.position = c(0.8,0.8),
               legend.title = element_blank(),
@@ -599,13 +653,13 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         #               color = "watershed level\nforestry effect"),alpha=0.5) +
         geom_line(data = global_df, 
                   aes(x = forestry, y = productivity_median, color = "Median coastwide\nchange"), linewidth = 1) +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975,
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = !!sym(ymin_95), ymax = !!sym(ymax_95),
                                           alpha = "95% credible\ninterval",
                                           fill = "95% credible\ninterval"))+
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q250, ymax = q750,
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = !!sym(ymin_50), ymax = !!sym(ymax_50),
                                           alpha = "50% credible\ninterval",
                                           fill = "50% credible\ninterval"))+
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q100, ymax = q900,
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = !!sym(ymin_80), ymax = !!sym(ymax_80),
                                           alpha = "80% credible\ninterval",
                                           fill = "80% credible\ninterval"))+
         # scale_fill_manual("",values  = c("95% credicle interval" = "gray")) +
@@ -622,7 +676,7 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         scale_x_continuous(n.breaks = 5) +
         labs(title = model,
              x = ifelse(effect == "eca", "Equivalent clearcut area", "Cumulative disturbance (%)"),
-             y = "Median change\n in productivity (%)") +
+             y = "Median change\n in recruitment (%)") +
         theme_classic() +
         theme(legend.position = "none",
               legend.title = element_blank(),
@@ -642,11 +696,11 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         #               color = "watershed level\nSST effect"),alpha=0.5) +
         geom_line(data = global_df, 
                   aes(x = forestry, y = productivity_median, color = "global SST effect"), linewidth = 1) +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = !!sym(ymin_95), ymax = !!sym(ymax_95)),
                     alpha = 0.25, fill = "#C78c63") +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q250, ymax = q750),
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = !!sym(ymin_50), ymax = !!sym(ymax_50)),
                     alpha = 0.65, fill = "#C78c63") +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q100, ymax = q900),
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = !!sym(ymin_80), ymax = !!sym(ymax_80)),
                     alpha = 0.45, fill = "#C78c63") +
         # scale_fill_manual("",values  = c("95% credicle interval" = "gray")) +
         scale_color_manual("",values = c("global SST effect" = "#C78c63")) +
@@ -655,7 +709,7 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         scale_x_continuous(n.breaks = 5, limits = c(10,15)) +
         labs(title = model,
              x = "Spring SST (°C)",
-             y = "Median change\n in productivity (%)") +
+             y = "Median change\n in recruitment (%)") +
         theme_classic() +
         theme(legend.position = "none",
               legend.title = element_blank(),
@@ -673,11 +727,11 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         #               color = "watershed level\nSST effect"),alpha=0.5) +
         geom_line(data = global_df, 
                   aes(x = forestry, y = productivity_median, color = "global NPGO effect"), linewidth = 1) +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q025, ymax = q975),
+        geom_ribbon(data = global_df, aes(x = forestry, ymin =!!sym(ymin_95), ymax = !!sym(ymax_95)),
                     alpha = 0.25, fill = "#829Dc6") +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q250, ymax = q750),
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = !!sym(ymin_50), ymax = !!sym(ymax_50)),
                     alpha = 0.65, fill = "#829Dc6") +
-        geom_ribbon(data = global_df, aes(x = forestry, ymin = q100, ymax = q900),
+        geom_ribbon(data = global_df, aes(x = forestry, ymin = !!sym(ymin_80), ymax = !!sym(ymax_80)),
                     alpha = 0.45, fill = "#829Dc6") +
         # scale_fill_manual("",values  = c("95% credicle interval" = "gray")) +
         scale_color_manual("",values = c("global NPGO effect" = "#829Dc6")) +
@@ -686,7 +740,7 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
         scale_x_continuous(n.breaks = 5, limits = c(-3,3)) +
         labs(title = model,
              x = "NPGO",
-             y = "Median change\n in productivity (%)") +
+             y = "Median change\n in recruitment (%)") +
         theme_classic() +
         theme(legend.position = "none",
               legend.title = element_blank(),
@@ -699,7 +753,13 @@ plot_productivity_decline_manuscript <- function(posterior = bh_chm_eca_sst,
               plot.title = element_text(size = 10, hjust = 0.5))+
         guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
     }
-  }
+    
+    
+    
+      
+    }
+    
+  
   
   return(p1)
   
@@ -996,7 +1056,7 @@ plot_chum_D <- plot_npgo_effect_manuscript(posterior = ric_chm_cpd_ocean_covaria
 
 
 plot_chum_E <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
-                                                    effect = "cpd", model = "Cumulative disturbance")+
+                                                    effect = "cpd", model = "", hd = TRUE)+
   ylim(c(-75,75))+
   labs(y = "Change in recruitment (%)")+
   theme(legend.position = c(0.95,0.99),
@@ -1016,7 +1076,7 @@ plot_chum_E <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocea
 # guides(fill=guide_legend(nrow=1, byrow=TRUE))
 
 plot_chum_F <- plot_productivity_decline_manuscript(posterior = ric_chm_eca_ocean_covariates_logR,
-                                                    effect = "eca", model = "Equivalent clearcut area")+
+                                                    effect = "eca", model = "", hd = TRUE)+
   ylim(c(-75,75))+
   labs(y = "Change in recruitment (%)")+
   theme(axis.title.x = element_text(size = 10),
@@ -1096,7 +1156,7 @@ plot_pink_K <- plot_productivity_decline_manuscript(posterior = ric_pk_cpd_ersst
                                                     species = "pink",
                                                     effect = "cpd", 
                                                     # model = "Ricker model with CPD")
-                                                    model = "Cumulative disturbance")+
+                                                    model = "", hd = TRUE)+
   ylim(c(-75,75))+
   labs(y = "Change in recruitment (%)")+
   theme(axis.title.x = element_text(size = 10),
@@ -1106,7 +1166,7 @@ plot_pink_L <- plot_productivity_decline_manuscript(posterior = ric_pk_eca_ersst
                                                     species = "pink",
                                                     effect = "eca", 
                                                     # model = "Ricker model with ECA")
-                                                    model = "Equivalent clearcut area")+
+                                                    model = "", hd = TRUE)+
   ylim(c(-75,75))+
   labs(y = "Change in recruitment (%)")+
   theme(axis.title.x = element_text(size = 10),
@@ -1143,15 +1203,18 @@ plot_pink2 <- ((plot_pink_G / plot_pink_H / plot_pink_I / plot_pink_J)+ plot_lay
 
 plot_pink_chum_w_title2 <- ((wrap_elements(panel = plot_chum2 + plot_annotation(tag_levels = list(c('A','B','C','D','I','J')), 
                                                                                title = "Chum salmon")& 
-                                             theme(plot.tag = element_text(size = 8)))) / (wrap_elements(panel = plot_pink2+  
-                                                                                                           plot_annotation(tag_levels = list(c('E','F','G','H','K','L')), 
+                                             theme(plot.tag.position = c(0.05, 1),
+                                                   plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")))) / (wrap_elements(panel = plot_pink2+  
+                                                                                                           plot_annotation(tag_levels = list(c('E','F','G','H','K','L')),
+                                                                                                                           # tag_suffix = ')',
                                                                                                                            title = "Pink salmon")& 
-                                                                                                           theme(plot.tag = element_text(size = 8))))) 
+                                                                                                           theme(plot.tag.position = c(0.05, 1),
+                                                                                                                 plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold"))))) 
 plot_pink_chum_w_title2
 
 ##save
 
-ggsave(here('figures','manuscript_nov2025_chum_pink_ricker_only_w_CI_subset.png'),
+ggsave(here('figures','manuscript_dec2025_chum_pink_ricker_only_w_hd_CI.png'),
        plot = plot_pink_chum_w_title2,
        width = 8,
        height = 12,
@@ -1225,6 +1288,8 @@ productivity_decline_cu_df <- function(posterior, effect, species){
                                          productivity_975 = apply(productivity,2,quantile, probs = 0.975),
                                          productivity_025_hdi = apply(productivity,2, hdi, ci = 0.95)[[1]]$CI_low,
                                          productivity_975_hdi = apply(productivity,2, hdi, ci = 0.95)[[1]]$CI_high,
+                                         productivity_25_hdi = apply(productivity,2, hdi, ci = 0.5)[[1]]$CI_low,
+                                         productivity_75_hdi = apply(productivity,2, hdi, ci = 0.5)[[1]]$CI_high,
                                          forestry = cpd_cu$mean,
                                          CU_n = unique(cu_data$CU_n))
     
@@ -1249,12 +1314,12 @@ cu_forest_plot_compare <- ric_chm_cpd_productivity_decline_cu %>%
   mutate(CU2 = factor(CU, levels = CU)) %>% 
   ggplot(aes(x = CU, y = productivity_50)) +
   geom_point(aes(y = productivity_50, x = CU2), color = '#516479',fill = "white", size = 3, alpha = 0.5) +
-  geom_errorbar(aes(ymin = productivity_025, ymax = productivity_975, color = "95% ET\ncredible interval"), width = 0, alpha = 0.5, size = 1) +
-  geom_errorbar(aes(ymin = productivity_025_hdi, ymax = productivity_975_hdi, color = "95% HD\ncredible interval"), width = 0, alpha = 0.5, size = 1) +
-  geom_errorbar(aes(ymin = productivity_25, ymax = productivity_75, color = '50% ET\ncredible interval'), width = 0, alpha = 0.7, size = 2) +
-  scale_color_manual(name = '', values = c('95% ET\ncredible interval' = '#516479', 
-                                                        '50% ET\ncredible interval' = '#516479', 
-                                                        '95% HD\ncredible interval' = '#C8EAD3'))+
+  # geom_errorbar(aes(ymin = productivity_025, ymax = productivity_975, color = "95% ET\ncredible interval"), width = 0, alpha = 0.5, size = 1) +
+  geom_errorbar(aes(ymin = productivity_025_hdi, ymax = productivity_975_hdi, color = "95% credible\ninterval"), width = 0, alpha = 0.5, size = 1) +
+  geom_errorbar(aes(ymin = productivity_25_hdi, ymax = productivity_75_hdi, color = "50% credible\ninterval"), width = 0, alpha = 0.7, size = 2) +
+  # geom_errorbar(aes(ymin = productivity_25, ymax = productivity_75, color = '50% ET\ncredible interval'), width = 0, alpha = 0.7, size = 2) +
+  scale_color_manual(name = '', values = c('95% credible\ninterval' = '#516479', 
+                                           '50% credible\ninterval' = '#516479'))+
   #add estimated median decline to the right of each error bar
   geom_text(aes(label = paste(round(productivity_50,1),"%")), 
             hjust = -0.25, 
@@ -1288,7 +1353,7 @@ cu_forest_plot_compare <- ric_chm_cpd_productivity_decline_cu %>%
 
 cu_forest_plot_compare
 
-ggsave(here("figures","manuscript_nov2025_chum_ricker_cpd_productivity_decline_by_cu_forest_plot_hd_intervals.png"),
+ggsave(here("figures","manuscript_dec2025_chum_ricker_cpd_productivity_decline_by_cu_forest_plot_hd_intervals.png"),
        cu_forest_plot_compare, width = 5, height = 6, bg = "white")
 
 
@@ -1431,6 +1496,76 @@ median(ric_chm_cpd_ocean_covariates_logR$b_for)/median(ric_chm_cpd_ocean_covaria
 median(ric_chm_cpd_ocean_covariates_logR$b_for)/median(ric_chm_cpd_ocean_covariates_logR$b_npgo)
 median(ric_chm_eca_ocean_covariates_logR$b_for)/median(ric_chm_eca_ocean_covariates_logR$b_sst)
 median(ric_chm_eca_ocean_covariates_logR$b_for)/median(ric_chm_eca_ocean_covariates_logR$b_npgo)
+
+
+#theoretical figures of decline
+
+ricker_alpha <- function(St, alpha, beta, Smax, Forestry){
+  log_Rt_St = alpha - St/Smax + beta*Forestry
+  return(cbind(exp(log_Rt_St)*St, log_Rt_St))
+}
+
+
+St <- seq(0,1000,10)
+
+alpha <- 1.2
+
+beta <- -0.5
+
+Smax <- 500
+
+Forestry <- c(-1,0,1)
+
+df_ricker <- data.frame(St = St)
+
+for (i in 1:length(Forestry)){
+  df_ricker[[paste0("Rt_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])[,1]
+  df_ricker[[paste0("ln_Rt_St_",Forestry[i])]] <- ricker_alpha(St, alpha, beta, Smax, Forestry[i])[,2]
+}
+
+df_long_ricker <- df_ricker %>% 
+  pivot_longer(cols = starts_with("Rt_"), names_to = "Forestry", values_to = "Rt", names_prefix = "Rt_") %>% 
+  mutate(Forestry = as.numeric(Forestry)) #%>% 
+  # pivot_longer(cols = starts_with("ln_"), names_to = "Forestry2", values_to = "ln_Rt_St", names_prefix = "ln_Rt_St_") %>% 
+  # mutate(Forestry2 = as.numeric(Forestry2))
+
+#calculate (Rt(forestry = 1)/Rt(forestry = -1) -1)*100
+
+df_ricker_percent_change <- df_ricker %>% 
+  rename("Rt_low_forestry" = "Rt_-1",
+         "Rt_mid_forestry" = "Rt_0",
+         "Rt_high_forestry" = "Rt_1",
+         "ln_Rt_low_forestry" = "ln_Rt_St_-1",
+         "ln_Rt_mid_forestry" = "ln_Rt_St_0",
+         "ln_Rt_high_forestry" = "ln_Rt_St_1") %>%
+  mutate(percent_change_recruit = ((Rt_high_forestry/Rt_low_forestry)-1)*100,
+         percent_productivity = (exp(ln_Rt_high_forestry)/exp(ln_Rt_low_forestry)-1)*100)
+
+
+# plot decline for different values of St
+ggplot(df_ricker_percent_change, aes(x = St)) +
+  geom_line(aes(y = percent_change_recruit), color = 'darkgreen', size = 1) +
+  labs(title = "Theoretical Ricker model decline with forestry",
+       x = "Spawning stock (St)",
+       y = "Percent change in recruitment\n(high forestry vs low forestry)") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+
+
+ggplot(df_ricker_percent_change, aes(x = St)) +
+  geom_line(aes(y = percent_productivity), color = 'darkgreen', size = 1) +
+  labs(title = "Theoretical Ricker model decline with forestry",
+       x = "Spawning stock (St)",
+       y = "Percent change in productivty\n(high forestry vs low forestry)") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+
+
+
 
 
 
