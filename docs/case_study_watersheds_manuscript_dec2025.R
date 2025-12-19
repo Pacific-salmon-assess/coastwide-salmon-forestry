@@ -13,6 +13,9 @@ library(bcmaps)
 library(hues)
 library(GGally)
 library(latex2exp)
+library(bayestestR)
+library(HDInterval)
+
 # Data wrangling
 
 ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed",
@@ -75,6 +78,8 @@ max_cpd_df <- ch20rsc %>%
 
 ric_chm_eca_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR.csv'),check.names=F)
 ric_chm_cpd_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR.csv'),check.names=F)
+ric_chm_eca_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR_long_chain.csv'),check.names=F)
+ric_chm_cpd_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR_long_Chain.csv'),check.names=F)
 
 watersheds <- c("VINER SOUND CREEK","CARNATION CREEK", "PHILLIPS RIVER", "NIMPKISH RIVER", "DEENA CREEK", "NEEKAS CREEK")
 
@@ -549,6 +554,344 @@ plot_both_forestry_effects_river_together <- function(posterior1 = ric_chm_cpd_o
   return(plot1)
 }
 
+
+plot_all_effects_river_together <- function(posterior1 = ric_chm_cpd_ocean_covariates_logR,
+                                            river_name,
+                                            river,
+                                            effect1 = "cpd",
+                                            effect2 = "sst",
+                                            effect3 = "npgo",
+                                            species = "chum", 
+                                            xlim = c(-0.5, 0.5)){
+  
+  
+  
+  
+  posterior_df <- posterior1 %>%
+    select(starts_with('b_for_rv'),starts_with('b_sst_rv'),starts_with('b_npgo_rv')) %>%
+    pivot_longer(cols = everything(),
+                 names_to = c('Effect','River'),
+                 names_pattern = 'b_(.*)_rv(.*)',
+                 values_to = "coefficient") %>%
+    
+    
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) 
+  
+  
+  if(effect1 == "cpd"){
+    posterior_df_river <- posterior_df %>% filter(River_n == river) %>% 
+      mutate(Effect = case_when(Effect == "for" ~ "Cumulative\nDisturbance",
+                                Effect == "sst" ~ "SST",
+                                Effect == "npgo" ~ "NPGO"))
+  } else if(effect1 == "eca"){
+    posterior_df_river <- posterior_df %>% filter(River_n == river) %>% 
+      mutate(Effect = case_when(Effect == "for" ~ "ECA",
+                                Effect == "sst" ~ "SST",
+                                Effect == "npgo" ~ "NPGO"))
+  }
+  
+  
+
+  
+  #color by river
+  plot1 <- ggplot() +
+    stat_density(data= posterior_df_river, aes(coefficient,#!!sym(forestry), 
+                                               
+                                               group = Effect, 
+                                               color = Effect,
+                                               fill = Effect),
+                 geom = 'area', position = 'identity', 
+                 alpha = 0.4, linewidth = 0.8) +
+    
+    geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
+    geom_vline(aes(xintercept = median(posterior_df_river$coefficient[posterior_df_river$Effect == "Cumulative\nDisturbance"]), 
+               color = "Cumulative\nDisturbance"), linetype = "dashed", linewidth = 0.8) +
+    geom_vline(aes(xintercept = median(posterior_df_river$coefficient[posterior_df_river$Effect == "SST"]), 
+               color = "SST"), linetype = "dashed", linewidth = 0.8) +
+    geom_vline(aes(xintercept = median(posterior_df_river$coefficient[posterior_df_river$Effect == "NPGO"]),
+               color = "NPGO"), linetype = "dashed", linewidth = 0.8) +
+    labs(x = "Standardized coefficients", y = "Posterior density", title = river_name) +
+    xlim(xlim[1], xlim[2]) +
+    scale_color_manual(name = "",
+                       values = c("ECA" = "#ADcCA5", 
+                                  "Cumulative\nDisturbance" = "#ADcCA5",
+                                  "SST" = "#C78c63",
+                                  "NPGO" = "#829Dc6")) +
+    scale_fill_manual(name = "",
+                      values = c("ECA" = "#ADcCA5", 
+                                 "Cumulative\nDisturbance" = "#ADcCA5",
+                                 "SST" = "#C78c63",
+                                 "NPGO" = "#829Dc6")) +
+    # scale_color +
+    # geom_density(aes(posterior$b_for), color = 'black', linewidth = 1.2, alpha = 0.2)+
+    #vline at the median value of the posterior
+    theme_classic()+
+    theme(legend.position = c(0.8,0.9),
+          legend.background = element_rect(fill = alpha('white', 0.5)),
+          legend.text = element_text(size = 7),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_blank()
+    )
+  
+  
+  
+  return(plot1)
+}
+
+
+plot_productivity_change_river_together <- function(posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+                                                    posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+                                                    river_name = "CARNATION CREEK",  
+                                                    effect1 = "cpd",
+                                                    effect2 = "eca",
+                                                    species = "chum", 
+                                                    model1 = "CPD",
+                                                    model2 = "ECA"){
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    river_data <- ch20rsc %>% filter(River == river_name)
+    river <- river_data$River_n[1]
+    # df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    river_data <- pk10r %>% filter(River == river_name)
+    river <- river_data$River_n2[1]
+    # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  posterior_df <- posterior1 %>%
+    select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  posterior_df2 <- posterior2 %>% 
+    select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  
+  
+  
+  eca <- seq(0,1,length.out=100)
+  
+  eca_sqrt <- sqrt(eca)
+  
+  eca_sqrt_std <- (eca_sqrt-mean(eca_sqrt))/sd(eca_sqrt)
+  
+  cpd <- seq(0,100,length.out=100)
+  
+  cpd_sqrt <- sqrt(cpd)
+  
+  cpd_sqrt_std <- (cpd_sqrt-mean(cpd_sqrt))/sd(cpd_sqrt)
+  
+  
+  
+  
+  no_eca <- min(eca_sqrt_std)
+  
+  no_cpd <- min(cpd_sqrt_std)
+  
+  
+  
+  # need to change b_rv to posterior 1 and posterior 2 and then make figure
+  
+  productivity_cpd <- (exp(as.matrix(posterior_df[,1])%*%
+                             (cpd_sqrt_std-no_cpd)))*100 - 100
+  
+  productivity_eca <- (exp(as.matrix(posterior_df2[,1])%*%
+                             (eca_sqrt_std-no_eca)))*100 - 100
+  
+  
+  productivity_cpd_df <- data.frame(productivity_cpd_median = apply(productivity_cpd,2,median),
+                                    productivity_cpd_025 = apply(productivity_cpd,2,quantile,c(0.025), 
+                                                                 row.names = c("q025")),
+                                    productivity_cpd_975 = apply(productivity_cpd,2,quantile,c(0.975),
+                                                                 row.names = c("q975")),
+                                    productivity_cpd_100 = apply(productivity_cpd,2,quantile,c(0.1),
+                                                                 row.names = c("q100")),
+                                    productivity_cpd_900 = apply(productivity_cpd,2,quantile,c(0.9),
+                                                                 row.names = c("q900")),
+                                    
+                                    productivity_cpd_025_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.95)[1,],
+                                    productivity_cpd_975_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.95)[2,],
+                                    productivity_cpd_100_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.8)[1,],
+                                    productivity_cpd_900_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.8)[2,],
+                                    productivity_cpd_50_lower_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.5)[1,],
+                                    productivity_cpd_50_upper_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.5)[2,],
+                                    
+                                    
+                                    
+                                    cpd_sqrt_std = cpd_sqrt_std,
+                                    cpd = cpd,
+                                    max_cpd = max(river_data$disturbedarea_prct_cs),
+                                    max_sqrt_cpd = max(river_data$sqrt.CPD),
+                                    model = "CPD"
+  )
+  
+  
+  productivity_eca_df <- data.frame(productivity_eca_median = apply(productivity_eca,2,median),
+                                    productivity_eca_025 = apply(productivity_eca,2,quantile,c(0.025), 
+                                                                 row.names = c("q025")),
+                                    productivity_eca_975 = apply(productivity_eca,2,quantile,c(0.975),
+                                                                 row.names = c("q975")),
+                                    productivity_eca_100 = apply(productivity_eca,2,quantile,c(0.1),
+                                                                 row.names = c("q100")),
+                                    productivity_eca_900 = apply(productivity_eca,2,quantile,c(0.9),
+                                                                 row.names = c("q900")),
+                                    
+                                    productivity_eca_025_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.95)[1,],
+                                    productivity_eca_975_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.95)[2,],
+                                    productivity_eca_100_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.8)[1,],
+                                    productivity_eca_900_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.8)[2,],
+                                    productivity_eca_50_lower_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.5)[1,],
+                                    productivity_eca_50_upper_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.5)[2,],
+                                    
+                                    eca_sqrt_std = eca_sqrt_std,
+                                    eca = eca,
+                                    max_eca = max(river_data$ECA_age_proxy_forested_only),
+                                    max_sqrt_eca = max(river_data$sqrt.ECA),
+                                    model = "ECA"
+  )
+  
+  
+  
+  
+  plot1 <- ggplot(productivity_cpd_df) +
+    geom_line(aes(x = cpd, y = productivity_cpd_median, group = 1,
+                  color = "median"),alpha=0.9, linewidth = 0.8) +
+    geom_ribbon(aes(x = cpd, ymin = productivity_cpd_025_hd, ymax = productivity_cpd_975_hd, fill = "95% credible interval"),
+                alpha = 0.2) +
+    geom_ribbon(aes(x = cpd, ymin = productivity_cpd_100_hd, ymax = productivity_cpd_900_hd, fill = "80% credible interval"),
+                alpha = 0.4) +
+    
+    geom_segment(aes(x = unique(productivity_cpd_df$max_cpd), 
+                     xend = unique(productivity_cpd_df$max_cpd), 
+                     y = -100, 
+                     yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                     color = "gray"), 
+                 linetype = "dashed", linewidth = 0.8) +
+    # add horizontal line 
+    geom_segment(aes(x = 0, 
+                     xend = unique(productivity_cpd_df$max_cpd), 
+                     y = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))], 
+                     yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                     color = "gray"), 
+                 linetype = "dashed", linewidth = 0.8) +
+    annotate("text",x = 50,#unique(productivity_cpd_df$max_cpd), 
+             y = productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+             label = paste0("Max CPD: ",round(unique(productivity_cpd_df$max_cpd),1),"%\n",
+                            "Median change: ",round(productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],1),"%"),
+             vjust = -0.5, color = "black", size = 2, hjust = 0
+    ) +
+    
+    scale_color_manual(name = "Model",
+                       values = c("ECA model" = '#A2C5AC', 
+                                  "median" = '#A2C5AC')) +
+    scale_fill_manual(name = "Model",
+                      values = c("ECA 95% credible interval" = '#A2C5AC', 
+                                 "ECA 80% credible interval" = '#A2C5AC',
+                                 "95% credible interval" = '#A2C5AC', 
+                                 "80% credible interval" = '#A2C5AC')) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5) +
+    labs(x = "Cumulative Disturbance (%)",
+         y = "Change in recruitment (%)") +
+    theme_classic() +
+    theme(legend.position = "none",
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(0.5, "cm"),
+          legend.spacing.y = unit(0.1, "cm"),
+          legend.key.height = unit(0.5, "cm"),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_text(size = 10, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  
+  plot2 <- ggplot(productivity_eca_df)+
+    geom_line(aes(x = eca, y = productivity_eca_median, group = 1,
+                  color = "median"),alpha=0.9, linewidth = 0.8) +
+    geom_ribbon(aes(x = eca, ymin = productivity_eca_025_hd, ymax = productivity_eca_975_hd, fill = "95% credible interval"),
+                alpha = 0.2) +
+    geom_ribbon(aes(x = eca, ymin = productivity_eca_100_hd, ymax = productivity_eca_900_hd, fill = "80% credible interval"),
+                alpha = 0.4) +
+    #add vertical line at max eca - max height should be value of productivity eca median
+    geom_segment(aes(x = unique(productivity_eca_df$max_eca), 
+                     xend = unique(productivity_eca_df$max_eca), 
+                     y = -100, 
+                     yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                     color = "gray"), 
+                 linetype = "dashed", linewidth = 0.8) +
+    # add horizontal line 
+    geom_segment(aes(x = 0, 
+                     xend = unique(productivity_eca_df$max_eca), 
+                     y = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))], 
+                     yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                     color = "gray"), 
+                 linetype = "dashed", linewidth = 0.8) +
+    annotate("text",x = 0.5,#unique(productivity_eca_df$max_eca), 
+             y = productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+             label = paste0("Max ECA: ",round(unique(productivity_eca_df$max_eca),2),"\n",
+                            "Median change: ",round(productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],1),"%"),
+             vjust = -0.5, color = "black", size = 2, hjust = 0
+    ) +
+    
+    
+    scale_color_manual(values = c("median" = '#A2C5AC', 
+                                  "CPD model" = '#A2C5AC')) +
+    scale_fill_manual(values = c("95% credible interval" = '#A2C5AC', 
+                                 "80% credible interval" = '#A2C5AC',
+                                 "CPD model 95% credible interval" = '#A2C5AC', 
+                                 "CPD model 80% credible interval" = '#A2C5AC')) +
+    ylim(-100,100) +
+    scale_x_continuous(n.breaks = 5) +
+    labs(x = "ECA",
+         y = "Change in recruitment (%)") +
+    theme_classic() +
+    theme(legend.position = "inside",
+          legend.justification = c("right", "top"),
+          legend.byrow = FALSE,
+          legend.title = element_blank(),
+          # legend.key.size = unit(0.5, "cm"),
+          legend.key.width = unit(0.5, "cm"),
+          legend.spacing.y = unit(0, "cm"),
+          legend.key.height = unit(0.2, "cm"),
+          legend.text = element_text(size = 6),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_text(size = 10, hjust = 0.5))+
+    guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  
+  return(plot1+plot2 + plot_layout(axes = 'collect') +
+           plot_annotation(title = str_to_title(river_name),tag_level = 'A')&
+           theme(plot.tag.position = c(0.05, 1),
+                 plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")))
+  
+}
+
+
+
 plot_both_forestry_effects_river_together(
   river_name = str_to_title(watersheds[1]),
   river = unique(case_study_watersheds_data$River_n)[1]
@@ -560,5 +903,73 @@ plot_both_forestry_effects_river_together(
   river = unique(case_study_watersheds_data$River_n)[2]
 )
 
+plot_both_forestry_effects_river_together(
+  river_name = str_to_title(watersheds[3]),
+  river = unique(case_study_watersheds_data$River_n)[3]
+)
+
+for(i in watersheds){
+  
+  effects_plot <- plot_all_effects_river_together(
+    posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+    river_name = str_to_title(i),
+    river = unique(case_study_watersheds_data$River_n[case_study_watersheds_data$River == i])
+  )
+  
+  change_plot <- plot_productivity_change_river_together(
+    posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+    posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+    river_name = i,
+    effect1 = "cpd",
+    effect2 = "eca",
+    species = "chum",
+    model1 = "CPD",
+    model2 = "ECA"
+  )
+  
+  
+  ggsave(filename = here("figures",
+                          paste0("case_study_",str_replace_all(str_to_lower(i), " ", "_"),".png")),
+         plot = effects_plot+change_plot + plot_layout(widths = c(1,1.2)) +
+           plot_annotation(tag_levels = 'A',title = str_to_title(i))&
+           theme(plot.tag.position = c(0.0, 1.0),
+                 plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold"),
+                 axis.title = element_text(size = 12),
+                 axis.text = element_text(size = 10)),
+         width = 8,
+         height = 4,
+         units = "in",
+         dpi = 300)
+  
+  
+}
+
+plot_all_effects_river_together(
+  posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+  river_name = str_to_title(watersheds[1]),
+  river = unique(case_study_watersheds_data$River_n)[1]
+)
+
+plot_productivity_change_river_together(
+  posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+  posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+  river_name = "CARNATION CREEK",
+  effect1 = "cpd",
+  effect2 = "eca",
+  species = "chum",
+  model1 = "CPD",
+  model2 = "ECA"
+)
 
 
+
+
+ggsave(filename = here("figures",
+                        paste0("case_study_effects_change_",str_replace_all(str_to_lower(watersheds[1]), " ", ""),".png")),
+       plot = effects_plot+change_plot + plot_layout(widths = c(1,1.4),tag_level = 'new')&
+         plot_annotation(tag_levels = 'A'),
+       width = 8,
+       height = 3,
+       units = "in",
+       dpi = 300)        
+        

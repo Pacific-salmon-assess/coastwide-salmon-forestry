@@ -432,3 +432,14 @@ ric+bh + plot_layout(axes = "collect")
 ggsave(here('figures','alpha0_estimates_bh_ric.png'),
        width = 8, height = 4, dpi = 300)
 
+
+
+file <- 'ric_chm_cpd_ocean_covariates_logR_long_chain.csv'
+
+posterior <- read.csv(here('stan models','outs','posterior',file))
+
+summary <- read.csv(here('stan models','outs','summary',file))
+
+
+
+

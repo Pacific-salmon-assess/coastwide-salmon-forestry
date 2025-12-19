@@ -12,6 +12,7 @@ library(ggrepel)
 library(latex2exp)
 library(ggpubr)
 library(bayestestR)
+library(ggrepel)
 
 # make multiple versions of figure results for the manuscript
 # make one version with no colours of cpd or eca
@@ -1567,5 +1568,130 @@ ggplot(df_ricker_percent_change, aes(x = St)) +
 
 
 
+plot_productivity_decline_manuscript(ric_chm_cpd_ocean_covariates_logR, 
+                                     effect = "cpd", species = "chum",
+                                     model = "Ricker",
+                                     by_river = TRUE)
+
+recruitment_decline_river_df <- function(posterior, effect, species){
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
+  full_productivity <- NULL
+  
+  for (i in 1:length(unique(df$River_n))){
+    
+    river <- unique(df$River_n)[i]
+    
+    river_data <- df %>% filter(River_n == river)
+    
+    b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    eca_sqrt_std_river <- max(river_data$sqrt.ECA.std)
+    #minimum forestry possible -0
+    eca_river <- max(river_data$ECA_age_proxy_forested_only)
+    
+    forestry_eca <- seq(0,1, length.out = 100)
+    
+    cpd_sqrt_std_river <- max(river_data$sqrt.CPD.std)
+    #minimum forestry possible - 0
+    cpd_river <- max(river_data$disturbedarea_prct_cs)
+    
+    forestry_cpd <- seq(0,100, length.out = 100)
+    
+    #to calculate no forestry in the standardized scale
+    forestry_sqrt <- sqrt(forestry_cpd)
+    
+    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
+    
+    no_forestry <- min(forestry_sqrt_std)
+    
+    productivity <- (exp(as.matrix(b_rv[,1])%*%
+                           (cpd_sqrt_std_river-no_forestry)))*100 - 100
+    
+    productivity_median <- apply(productivity,2,median)
+    
+    productivity_median_df <- data.frame(River = unique(river_data$River),
+                                         productivity_50 = apply(productivity,2,median),
+                                         productivity_25 = apply(productivity,2,quantile, probs = 0.25),
+                                         productivity_75 = apply(productivity,2,quantile, probs = 0.75),
+                                         productivity_025 = apply(productivity,2,quantile, probs = 0.025),
+                                         productivity_975 = apply(productivity,2,quantile, probs = 0.975),
+                                         productivity_025_hdi = apply(productivity,2, HDInterval::hdi, credMass = 0.95)[1,],
+                                         productivity_975_hdi = apply(productivity,2, HDInterval::hdi, credMass = 0.95)[2,],
+                                         productivity_25_hdi = apply(productivity,2, HDInterval::hdi, credMass = 0.5)[1,],
+                                         productivity_75_hdi = apply(productivity,2, HDInterval::hdi, credMass = 0.5)[2,],
+                          
+                                         forestry = cpd_river,
+                                         CU = unique(river_data$CU_name)
+    )
+    
+    full_productivity <- rbind(full_productivity, productivity_median_df)
+    
+    
+  }
+  
+  
+  return(full_productivity)
+  
+  
+  
+  
+  
+  
+  
+}
+
+ric_chm_cpd_recruitment_decline_river <- recruitment_decline_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, 
+                                                                        effect = "cpd", species = "chum")
+
+
+important_rivers <- c("Nimpkish River", "Skeena River", "Fraser River", "Capilano River",
+                      "Squamish River", "Cheakamus River", "Pitt River", "Alouette River",
+                      "Chilliwack River", "Vedder River", "Cowichan River", "Koksilah River",
+                      "Goldstream River", "Campbell River", "Qualicum River", "Kingcome River", "Shoal Harbour Creek")
+
+casestudy_watersheds <- c("Carnation Creek", "Viner Sound Creek", 
+                          "Neekas Creek", "Deena Creek", "Phillips River")
+
+
+
+# make forest plot of estimates of decline from highest to lowest rivers
+ric_chm_cpd_recruitment_decline_river %>% 
+  arrange(desc(productivity_50)) %>%
+  mutate(River = str_to_title(River)) %>% 
+  #change River to title case and then compare to important rivers
+  mutate(important = ifelse((River %in% important_rivers | River %in% casestudy_watersheds), "yes", "no")) %>%
+  mutate(River2 = factor(River, levels = River)) %>% 
+  ggplot(aes(x = River, y = productivity_50)) +
+  geom_point(aes(y = productivity_50, x = River2), color = '#516479',fill = "white", size = 1, alpha = 0.5) +
+  geom_errorbar(aes(ymin = productivity_025_hdi, ymax = productivity_975_hdi ), color = '#516479', width = 0, alpha = 0.5) +
+  geom_errorbar(aes(ymin = productivity_25_hdi, ymax = productivity_75_hdi ), color = '#516479', width = 0, alpha = 0.7) +
+  geom_text_repel(color = "gray20", aes(label = ifelse(important == "yes", paste(River,CU, sep = ", "), NA)), 
+                  size = 3, max.overlaps = 20,
+                  direction    = "y", 
+                  box.padding = 0.3, hjust = -1.5) + 
+  coord_flip() +
+  # scale_color_manual(name = 'Model type', values = c('independent alpha' = 'cadetblue', 'hierarchical alpha' = 'coral', 'hierarchical alpha - ricker' = 'darkgoldenrod')) +
+  labs(#title = 'Estimated percent change in river-level productivity',
+    x = 'River',
+    y = 'Change in recruitment (%)') +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        # axis.text.y = element_text(size = 4),
+        plot.title = element_text(hjust = 0.5, size = 18),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
+
+#save 
+ggsave(here("figures","manuscript_dec2025_chum_ricker_cpd_recruitment_decline_by_river_forest_plot.png"), width = 8, height = 10)
 
 
