@@ -221,8 +221,8 @@ if(Sys.info()[7] == "mariakur") {
   
   post_ric_chm_cpd_npgo_sst_mu2=ric_chm_cpd_npgo_sst$draws(variables=c('mu2'),format='draws_matrix')
   
-  write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_long_chain.csv'))
-  write.csv(post_ric_chm_cpd_npgo_sst_mu2,here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_long_chain_mu2.csv'))
+  write.csv(post_ric_chm_cpd_npgo_sst,here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR_long_chain.csv'))
+  write.csv(post_ric_chm_cpd_npgo_sst_mu2,here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR_long_chain_mu2.csv'))
   
 }
 
