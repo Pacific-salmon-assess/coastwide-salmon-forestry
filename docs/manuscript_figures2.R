@@ -1244,40 +1244,114 @@ productivity_decline_cu_df <- function(posterior, effect, species){
     
     cu_data <- df %>% filter(CU_n == cu)
     
-    b_cu <- posterior %>% select(starts_with("b_for_cu")) %>%
-      select(ends_with(paste0("[",cu,"]")))
-    
-    eca_sqrt_std_cu <- max(cu_data$sqrt.ECA.std)
-    #minimum forestry possible -0
-    eca_cu <- max(cu_data$ECA_age_proxy_forested_only)
-    
-    forestry_eca <- seq(0,1, length.out = 100)
-    
-    # cpd_sqrt_std_cu <- max(cu_data$sqrt.CPD.std) # should not be using max from CU
-    #minimum forestry possible - 0
-    cpd_cu <- cu_data %>% group_by(River) %>% 
-      filter(disturbedarea_prct_cs == max(disturbedarea_prct_cs)) %>% 
-      distinct(disturbedarea_prct_cs) %>% 
-      ungroup %>% 
-      summarize(mean = mean(disturbedarea_prct_cs))
-    
-    cpd_sqrt_std_cu <- cu_data %>% group_by(River) %>% 
-      filter(sqrt.CPD.std == max(sqrt.CPD.std)) %>% 
-      distinct(sqrt.CPD.std) %>% 
-      ungroup %>% 
-      summarize(mean = mean(sqrt.CPD.std))
-    
-    forestry_cpd <- seq(0,100, length.out = 100)
-    
-    #to calculate no forestry in the standardized scale
-    forestry_sqrt <- sqrt(forestry_cpd)
-    
-    forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
-    
-    no_forestry <- min(forestry_sqrt_std)
+    if(effect == "cpd"){
+      b_cu <- posterior %>% select(starts_with("b_for_cu")) %>%
+        select(ends_with(paste0("[",cu,"]")))
+      
+      # cpd_sqrt_std_cu <- max(cu_data$sqrt.CPD.std) # should not be using max from CU
+      #minimum forestry possible - 0
+      
+      covariate_cu <- cu_data %>% group_by(River) %>% 
+        filter(disturbedarea_prct_cs == max(disturbedarea_prct_cs)) %>% 
+        distinct(disturbedarea_prct_cs) %>% 
+        ungroup %>% 
+        summarize(mean = mean(disturbedarea_prct_cs))
+      
+      covariate_sqrt_std_cu <- cu_data %>% group_by(River) %>% 
+        filter(sqrt.CPD.std == max(sqrt.CPD.std)) %>% 
+        distinct(sqrt.CPD.std) %>% 
+        ungroup %>% 
+        summarize(mean = mean(sqrt.CPD.std))
+      
+      predicted_covariate <- seq(0,100, length.out = 100)
+      
+      #to calculate no forestry in the standardized scale
+      predicted_covariate_sqrt <- sqrt(predicted_covariate)
+      
+      predicted_covariate_std = (predicted_covariate_sqrt-mean(predicted_covariate_sqrt))/sd(predicted_covariate_sqrt)
+      
+      min_covariate <- min(predicted_covariate_std)
+      
+      
+    } else if(effect == "sst"){
+      b_cu <- posterior %>% select(starts_with("b_sst_cu")) %>%
+        select(ends_with(paste0("[",cu,"]")))
+      
+      covariate_cu <- cu_data %>% group_by(River) %>% 
+        filter(spring_ersst == max(spring_ersst)) %>% 
+        distinct(spring_ersst) %>% 
+        ungroup %>% 
+        summarize(mean = mean(spring_ersst))
+      
+      covariate_sqrt_std_cu <- cu_data %>% group_by(River) %>% 
+        filter(sst.std  == max(sst.std)) %>% 
+        distinct(sst.std) %>% 
+        ungroup %>% 
+        summarize(mean = mean(sst.std))
+      
+      
+      predicted_covariate <- seq(min(cu_data$spring_ersst), max(cu_data$spring_ersst), length.out = 100)
+      
+      
+      
+      
+      predicted_covariate_std = (predicted_covariate-mean(predicted_covariate))/sd(predicted_covariate)
+      
+      min_covariate <- min(predicted_covariate_std)
+      
+    } else if(effect == "npgo"){
+      b_cu <- posterior %>% select(starts_with("b_npgo_cu")) %>%
+        select(ends_with(paste0("[",cu,"]")))
+      
+      covariate_cu <- cu_data %>% group_by(River) %>% 
+        filter(npgo == max(npgo)) %>% 
+        distinct(npgo) %>% 
+        ungroup %>% 
+        summarize(mean = mean(npgo))
+      
+      covariate_sqrt_std_cu <- cu_data %>% group_by(River) %>% 
+        filter(npgo.std == max(npgo.std)) %>% 
+        distinct(npgo.std) %>% 
+        ungroup %>% 
+        summarize(mean = mean(npgo.std))
+      
+      predicted_covariate <- seq(min(cu_data$npgo), max(cu_data$npgo), length.out = 100)
+      
+      predicted_covariate_std <- (predicted_covariate-mean(predicted_covariate))/sd(predicted_covariate)
+      
+      min_covariate <- min(predicted_covariate_std)
+      
+      
+      
+    } else if(effect == "eca"){
+      b_cu <- posterior %>% select(starts_with("b_for_cu")) %>%
+        select(ends_with(paste0("[",cu,"]")))
+      
+      covariate_cu <- cu_data %>% group_by(River) %>%
+        filter(ECA_age_proxy_forested_only == max(ECA_age_proxy_forested_only)) %>% 
+        distinct(ECA_age_proxy_forested_only) %>% 
+        ungroup %>% 
+        summarize(mean = mean(ECA_age_proxy_forested_only))
+      
+      covariate_sqrt_std_cu <- cu_data %>% group_by(River) %>%
+        filter(sqrt.ECA.std  == max(sqrt.ECA.std )) %>% 
+        distinct(sqrt.ECA.std ) %>% 
+        ungroup %>% 
+        summarize(mean = mean(sqrt.ECA.std ))
+      
+      predicted_covariate <- seq(0,1, length.out = 100)
+      
+      predicted_covariate_sqrt = sqrt(predicted_covariate)
+      
+      predicted_covariate_std = (predicted_covariate_sqrt-mean(predicted_covariate_sqrt))/sd(predicted_covariate_sqrt)
+      
+      min_covariate <- min(forestry_sqrt_std)
+      
+      
+    }
     
     productivity <- (exp(as.matrix(b_cu[,1])%*%
-                           (cpd_sqrt_std_cu$mean-no_forestry)))*100 - 100
+                           (covariate_sqrt_std_cu$mean-min_covariate)))*100 - 100
     
     productivity_median <- apply(productivity,2,median)
     
@@ -1287,11 +1361,11 @@ productivity_decline_cu_df <- function(posterior, effect, species){
                                          productivity_75 = apply(productivity,2,quantile, probs = 0.75),
                                          productivity_025 = apply(productivity,2,quantile, probs = 0.025),
                                          productivity_975 = apply(productivity,2,quantile, probs = 0.975),
-                                         productivity_025_hdi = apply(productivity,2, hdi, ci = 0.95)[[1]]$CI_low,
-                                         productivity_975_hdi = apply(productivity,2, hdi, ci = 0.95)[[1]]$CI_high,
-                                         productivity_25_hdi = apply(productivity,2, hdi, ci = 0.5)[[1]]$CI_low,
-                                         productivity_75_hdi = apply(productivity,2, hdi, ci = 0.5)[[1]]$CI_high,
-                                         forestry = cpd_cu$mean,
+                                         productivity_025_hdi = apply(productivity,2, bayestestR::hdi, ci = 0.95)[[1]]$CI_low,
+                                         productivity_975_hdi = apply(productivity,2, bayestestR::hdi, ci = 0.95)[[1]]$CI_high,
+                                         productivity_25_hdi = apply(productivity,2, bayestestR::hdi, ci = 0.5)[[1]]$CI_low,
+                                         productivity_75_hdi = apply(productivity,2, bayestestR::hdi, ci = 0.5)[[1]]$CI_high,
+                                         forestry = covariate_cu$mean,
                                          CU_n = unique(cu_data$CU_n))
     
     full_productivity <- rbind(full_productivity, productivity_median_df)
@@ -1377,7 +1451,7 @@ effect_sizes_cu_df <- function(posterior, effect, species){
     
     cu_data <- df %>% filter(CU_n == cu)
     
-    if(effect == "cpd"){
+    if(effect == "cpd" || effect == "eca"){
       b_cu <- posterior %>% select(starts_with("b_for_cu")) %>%
         select(ends_with(paste0("[",cu,"]")))
       
@@ -1693,5 +1767,132 @@ ric_chm_cpd_recruitment_decline_river %>%
 
 #save 
 ggsave(here("figures","manuscript_dec2025_chum_ricker_cpd_recruitment_decline_by_river_forest_plot.png"), width = 8, height = 10)
+
+
+# table of effect size - cumulative disturbance ---------------------------
+
+effect_chum_cpd_sst_npgo <- effect_sizes_cu_df(ric_chm_cpd_ocean_covariates_logR_long_chain, effect = "cpd", species = "chum") %>% 
+  rename(cpd_effect_median = effect_median) %>%
+  left_join(effect_sizes_cu_df(ric_chm_cpd_ocean_covariates_logR, effect = "sst", species = "chum") %>%
+              rename(sst_effect_median = effect_median), by = "CU") %>%
+  left_join(effect_sizes_cu_df(ric_chm_cpd_ocean_covariates_logR, effect = "npgo", species = "chum") %>%
+              rename(npgo_effect_median = effect_median), by = "CU") 
+
+
+
+#do same for river level effects
+
+effect_sizes_river_df <- function(posterior, effect, species){
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
+  effect_df <- NULL
+  
+  for (i in 1:length(unique(df$River_n))){
+    
+    river <- unique(df$River_n)[i]
+    
+    river_data <- df %>% filter(River_n == river)
+    
+    if(effect == "cpd" || effect == "eca"){
+      b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+      
+    } else if(effect == "sst"){
+      b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+    } else if(effect == "npgo"){
+      b_rv <- posterior %>% select(starts_with("b_npgo_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+    }
+    
+    effect_df_rv <- data.frame(River = unique(river_data$River),
+                               effect_median = round(apply(as.matrix(b_rv[,1]),2,median),2),
+                               CU = unique(river_data$CU_name))
+    # sym(effect)_25 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.25),
+    # sym(effect)_75 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.75),
+    # sym(effect)_025 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.025),
+    # sym(effect)_975 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.975))
+    
+    effect_df <- rbind(effect_df, effect_df_rv)
+  }
+  
+  return(effect_df)
+}
+
+effect_chum_cpd_sst_npgo_rv <- effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, effect = "cpd", species = "chum") %>% 
+  rename(cpd_effect_median = effect_median) %>%
+  left_join(effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR, effect = "sst", species = "chum") %>%
+              rename(sst_effect_median = effect_median), by = c("River","CU")) %>%
+  left_join(effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR, effect = "npgo", species = "chum") %>%
+              rename(npgo_effect_median = effect_median), by = c("River","CU")) 
+
+
+# group by CU and then calculate the proportion of rivers in which effect of cpd is greater in magnitude
+# than effect of NPGO and SST
+
+prop_rivers <- effect_chum_cpd_sst_npgo_rv %>% 
+  mutate(flag = (abs(cpd_effect_median) > abs(sst_effect_median) & abs(cpd_effect_median) > abs(npgo_effect_median))) %>%
+  # filter(CU == "Southwest Vancouver Island") %>% 
+  # View()
+  group_by(CU) %>% 
+  summarize(n_rivers_forestry = sum(flag),
+            n_rivers = n()) %>% 
+  mutate(proportion_forestry_greater = round(n_rivers_forestry/n_rivers,2)) %>%
+  select(CU, proportion_forestry_greater)
+
+#join
+
+effect_chum_cpd_sst_npgo_w_prop <- effect_chum_cpd_sst_npgo %>%
+  left_join(prop_rivers, by = "CU")
+
+
+
+write.csv(effect_chum_cpd_sst_npgo_w_prop,
+          here("tables","manuscript_dec2025_chum_ricker_cpd_sst_npgo_effect_sizes_by_cu_table_w_prop.csv"),
+          row.names = FALSE)
+
+effect_chum_eca_sst_npgo <- effect_sizes_cu_df(ric_chm_eca_ocean_covariates_logR_long_chain, effect = "eca", species = "chum") %>% 
+  rename(eca_effect_median = effect_median) %>%
+  left_join(effect_sizes_cu_df(ric_chm_eca_ocean_covariates_logR, effect = "sst", species = "chum") %>%
+              rename(sst_effect_median = effect_median), by = "CU") %>%
+  left_join(effect_sizes_cu_df(ric_chm_eca_ocean_covariates_logR, effect = "npgo", species = "chum") %>%
+              rename(npgo_effect_median = effect_median), by = "CU") 
+
+
+effect_chum_eca_sst_npgo_rv <- effect_sizes_river_df(ric_chm_eca_ocean_covariates_logR_long_chain, effect = "eca", species = "chum") %>% 
+  rename(eca_effect_median = effect_median) %>%
+  left_join(effect_sizes_river_df(ric_chm_eca_ocean_covariates_logR, effect = "sst", species = "chum") %>%
+              rename(sst_effect_median = effect_median), by = c("River","CU")) %>%
+  left_join(effect_sizes_river_df(ric_chm_eca_ocean_covariates_logR, effect = "npgo", species = "chum") %>%
+              rename(npgo_effect_median = effect_median), by = c("River","CU")) 
+
+
+prop_rivers_eca <- effect_chum_eca_sst_npgo_rv %>% 
+  mutate(flag = (abs(eca_effect_median) > abs(sst_effect_median) & abs(eca_effect_median) > abs(npgo_effect_median))) %>%
+  # filter(CU == "Southwest Vancouver Island") %>% 
+  # View()
+  group_by(CU) %>% 
+  summarize(n_rivers_forestry = sum(flag),
+            n_rivers = n()) %>% 
+  mutate(proportion_forestry_greater = round(n_rivers_forestry/n_rivers,2)) %>%
+  select(CU, proportion_forestry_greater)
+
+#join
+
+effect_chum_eca_sst_npgo_w_prop <- effect_chum_eca_sst_npgo %>%
+  left_join(prop_rivers_eca, by = "CU")
+
+
+write.csv(effect_chum_eca_sst_npgo_w_prop,
+          here("tables","manuscript_dec2025_chum_ricker_eca_sst_npgo_effect_sizes_by_cu_table_w_prop.csv"),
+          row.names = FALSE)
+
+
 
 
