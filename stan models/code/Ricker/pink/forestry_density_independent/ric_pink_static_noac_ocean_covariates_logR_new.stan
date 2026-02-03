@@ -110,6 +110,7 @@ transformed parameters{
   b[j]=1/Smax[j];
   mu1[start_y[j]]= log(S[start_y[j]]) + alpha_j[j]-b[j]*S[start_y[j]]+b_for_rv[R_i[j]]*forest_loss[start_y[j]]+b_npgo_rv[R_i[j]]*npgo[start_y[j]]+b_sst_rv[R_i[j]]*sst[start_y[j]];
   e_t[start_y[j]] = logR[start_y[j]] - mu1[start_y[j]]; //first deviate for stock j
+  mu2[start_y[j]]= mu1[start_y[j]]; //final expectation at starting value for each series
   
   for(t in (start_y[j]+1):(end_y[j])){ //adjust expectation based on autocorrelation
   mu2[t]  = log(S[t]) + alpha_j[j]-b[j]*S[t]+b_for_rv[R_i[j]]*forest_loss[t]+b_npgo_rv[R_i[j]]*npgo[t]+b_sst_rv[R_i[j]]*sst[t];
