@@ -440,6 +440,79 @@ posterior <- read.csv(here('stan models','outs','posterior',file))
 
 summary <- read.csv(here('stan models','outs','summary',file))
 
+summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>% 
+  # filter(startsWith(variable, "alpha")) %>%
+  # filter(startsWith(variable, "sigma")) %>%
+  filter(rhat > 1.01) %>% 
+  #decresing rhat values
+  arrange(-rhat)
+
+# none above 1.01 for cpd
+
+summary_cpd_chum <- summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>%
+  mutate(variable_group = str_replace_all(variable,c("[0-9]"), "")) %>%
+  # mutate(variable_group = str_extract_all(variable,c("[a-z]"))) %>% 
+  # mutate(variable_group = str_replace_all(variable_group,"\[", "")) %>% 
+  group_by(variable_group) %>% 
+  # filter(startsWith(variable, "alpha")) %>% 
+  summarize(mean_rhat =round(mean(rhat),2), median_rhat = round(median(rhat),2), 
+            min_rhat = round(min(rhat),2), max_rhat = round(max(rhat),2),
+            mean_ess = round(mean(ess_bulk)), 
+            median_ess = round(median(ess_bulk)), 
+            min_ess = round(min(ess_bulk)), 
+            max_ess = round(max(ess_bulk)))
+
+#save as csv
+write.csv(summary_cpd_chum, file = here("tables", "summary_cpd_chum.csv"))
+
+
+file  <- 'ric_chm_eca_ocean_covariates_logR_long_chain.csv'
+
+posterior <- read.csv(here('stan models','outs','posterior',file))
+
+summary <- read.csv(here('stan models','outs','summary',file))
+
+summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>% 
+  # filter(startsWith(variable, "alpha")) %>%
+  # filter(startsWith(variable, "sigma")) %>%
+  filter(rhat > 1.01) %>% 
+  #decresing rhat values
+  arrange(-rhat)
+
+# none above 1.01 for eca, chum
+
+file <- 'ric_pk_eca_st_noac_ocean_covariates_logR_long_chain.csv'
+
+summary <- read.csv(here('stan models','outs','summary',file))
+
+summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>% 
+  # filter(startsWith(variable, "alpha")) %>%
+  # filter(startsWith(variable, "sigma")) %>%
+  filter(rhat > 1.01) %>% 
+  #decresing rhat values
+  arrange(-rhat)
+#none
+
+
+file <- 'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain.csv'
+
+summary <- read.csv(here('stan models','outs','summary',file))
+
+summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>% 
+  # filter(startsWith(variable, "alpha")) %>%
+  # filter(startsWith(variable, "sigma")) %>%
+  filter(rhat > 1.01) %>% 
+  #decresing rhat values
+  arrange(-rhat)
+# none
+
+
+
 
 
 

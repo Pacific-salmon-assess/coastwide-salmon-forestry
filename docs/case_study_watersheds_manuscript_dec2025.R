@@ -79,7 +79,7 @@ max_cpd_df <- ch20rsc %>%
 ric_chm_eca_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR.csv'),check.names=F)
 ric_chm_cpd_ocean_covariates_logR=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR.csv'),check.names=F)
 ric_chm_eca_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR_long_chain.csv'),check.names=F)
-ric_chm_cpd_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR_long_Chain.csv'),check.names=F)
+ric_chm_cpd_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR_long_chain.csv'),check.names=F)
 
 watersheds <- c("VINER SOUND CREEK","CARNATION CREEK", "PHILLIPS RIVER", "NIMPKISH RIVER", "DEENA CREEK", "NEEKAS CREEK")
 
@@ -953,6 +953,18 @@ plot_all_effects_river_together(
 plot_productivity_change_river_together(
   posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
   posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+  river_name = "CARNATION CREEK",
+  effect1 = "cpd",
+  effect2 = "eca",
+  species = "chum",
+  model1 = "CPD",
+  model2 = "ECA"
+)
+
+
+plot_productivity_change_river_together(
+  posterior1 = ric_chm_cpd_ocean_covariates_logR,
+  posterior2 = ric_chm_eca_ocean_covariates_logR,
   river_name = "CARNATION CREEK",
   effect1 = "cpd",
   effect2 = "eca",
