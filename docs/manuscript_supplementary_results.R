@@ -263,7 +263,7 @@ recruitment_decline_df <- function(posterior, effect, species, covariate_value){
     forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
     
     no_forestry <- min(forestry_sqrt_std)
-    
+    no_forestry = (min((sqrt(df$disturbedarea_prct_cs)-mean(sqrt(df$disturbedarea_prct_cs)))/sd(sqrt(df$disturbedarea_prct_cs))))
     
     recruitment = (exp(as.matrix(b[,1])%*%
                            (covariate_std - no_forestry)))*100 - 100
@@ -438,6 +438,141 @@ effect_sizes_cu_df <- function(posterior, effect, species){
   
   return(effect_df)
 }
+
+theoretical_cpd = seq(0,100,1)
+
+sqrt_theoretical_cpd = sqrt(theoretical_cpd)
+
+std_sqrt_theoretical_cpd = (sqrt_theoretical_cpd - mean(ch20rsc$sqrt.CPD))/sd(ch20rsc$sqrt.CPD)
+
+cpd = data.frame(theoretical_cpd, sqrt_theoretical_cpd, std_sqrt_theoretical_cpd)
+
+mean(sqrt_theoretical_cpd)
+
+
+
+
+
+# function to calculate % change in recruitemnt (with 95% credible interval) of particular river
+# input posterior of b_for_rv, species, 2 covariate_values
+
+recruitment_decline_river_df2 <- function(River, b_for_rv, forestry_level_high, forestry_level_low){
+  
+  recruitment = (exp(as.matrix(b_for_rv[,1])%*%
+                       (forestry_level_high-forestry_level_low)))*100 - 100
+  
+  return(data.frame(River = River, median_recruitment_change = median(recruitment),
+                    recruitment_025 = quantile(recruitment, 0.025),
+                    recruitment_975 = quantile(recruitment, 0.975)))
+  
+}
+
+river_data <- ch20rsc %>% 
+  filter(River == "CARNATION CREEK")
+
+b_for_rv <- ric_chm_cpd_ocean_covariates_logR_long_chain %>% 
+  select(starts_with(paste0("b_for_rv[",river_data$River_n[1],"]")))
+
+forestry_level_high <- max(river_data$sqrt.CPD.std)
+
+forestry_level_low <- min(river_data$sqrt.CPD.std)
+
+# disturbed_prct_cs value associated with max and min CPD std
+
+river_data$disturbedarea_prct_cs[river_data$sqrt.CPD.std == forestry_level_high]
+river_data$disturbedarea_prct_cs[river_data$sqrt.CPD.std == forestry_level_low]
+
+
+recruitment_decline_river_df2("CARNATION CREEK", b_for_rv, forestry_level_high, forestry_level_low)
+
+
+recruitment_decline_river_df2("CARNATION CREEK", b_for_rv, cpd$std_sqrt_theoretical_cpd[cpd$theoretical_cpd == 70],
+                              cpd$std_sqrt_theoretical_cpd[cpd$theoretical_cpd == 1])
+
+
+# make new ersst figure ---------------------------------------------------
+
+# Load libraries
+
+library(tidyverse)
+library(here)
+library(ersst)
+library(sf)
+library(bcmaps)
+library(ggplot2)
+library(hues)
+
+# Load data
+
+
+#plot
+
+bc_boundary <- bc_bound() %>% st_transform(4326)
+
+sst_df <- read.csv(here("data_processing", "sst_ersst", "sst_ersst_df.csv"))
+
+chum_salmon_data_location <- ch20rsc %>% 
+  select(CU,  Y_LAT, X_LONG, River, GFE_ID) %>% 
+  distinct()
+
+pink_salmon_data_location <- pk10r %>% 
+  select(CU,  Y_LAT, X_LONG, River, GFE_ID) %>% 
+  distinct()
+
+sst_df %>% filter(!is.na(sst), year == 1959 | year == 2014) %>% 
+  select(lat, lon, sst, year, month) %>% 
+  group_by(lat, lon, year) %>% 
+  summarize(sst = mean(sst, na.rm = TRUE)) %>%
+  View()
+
+sst_df %>% filter(!is.na(sst), year == 1955 | year == 1997) %>% 
+  select(lat, lon, sst, year, month) %>% 
+  group_by(lat, lon, year) %>% 
+  summarize(sst = mean(sst, na.rm = TRUE)) %>% 
+  ggplot() +
+  geom_sf(data = bc_boundary, fill = "transparent", color = "slategray", alpha = 0.2, linewidth=0.5) +
+  facet_wrap(~year) +
+  geom_raster(aes(x = lon, y = lat, fill = sst), alpha = 0.5) +
+  #plot locations of sst data
+  geom_point(aes(x = lon, y = lat, shape = "SST data location"), color = "slategray", alpha = 0.8, size = 1.5) +
+  scale_fill_viridis_c() +
+  # geom_point(data = lighthouse_locations, aes(x = long, y = lat), color = "darkred", size = 3, alpha=0.8) +
+  geom_point(data=chum_salmon_data_location, aes(x = X_LONG, y = Y_LAT,  shape = "watershed outlet"), size = 1, alpha=0.6, color = "gray20") +
+  geom_point(data=pink_salmon_data_location, aes(x = X_LONG, y = Y_LAT, shape = "watershed outlet"), size = 1, alpha=0.6, color = "gray20") +
+  # geom_point(data=pko_salmon_data_location, aes(x = X_LONG, y = Y_LAT, color = "pink-odd"), size = 2, alpha=0.2) +
+  # geom_text(data = lighthouse_locations, aes(x = long, y = lat, label = location), 
+  #           nudge_x = -1.5, nudge_y = 0.2, size = 3) +
+  # ggrepel::geom_label_repel(data = lighthouse_locations, aes(x = long, y = lat, label = location),
+  #                           nudge_x = -1.5, nudge_y = 0.2, size = 3, background = "white", alpha = 0.5) +
+  # scale_color_manual(values = c("chum" = "#69C5C5",
+  #                               # "pink-even" = "#C76F6F",
+  #                               "pink" = "#9E70A1")) +
+  scale_shape_manual(values = c("watershed outlet" = 1, "SST data location" = 0)) +
+  scale_color_manual(values = c("watershed outlet" = "gray20")) +
+  scale_x_continuous(limits = c(-133, -122), breaks = seq(-133,-122,5)) +
+  scale_y_continuous(limits = c(47, 58), breaks = seq(47,58,4)) +
+  guides(shape = guide_legend(title = ""), override.aes = list(size = 8, alpha = 1),
+         fill = guide_legend(title = "SST (°C)")) +
+           # labs(title = "Spring Extended Reconstructed Sea-Surface Temperature (ERSST)") + 
+  xlab("Longitude") +
+  ylab("Latitude") +
+  theme_classic()+
+  theme(legend.position = "right",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        title = element_text(size = 14),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 10),
+        #remove white space
+        plot.margin = unit(c(0,0,0,0), "cm")
+  )
+
+ggsave(here("figures", "manuscript_supplementary_feb2026_ersst_1955_1997.png"), width = 8, height = 5, dpi = 300)
+
+
+
 
 
 

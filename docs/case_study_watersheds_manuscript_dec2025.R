@@ -81,6 +81,9 @@ ric_chm_cpd_ocean_covariates_logR=read.csv(here('stan models','outs','posterior'
 ric_chm_eca_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR_long_chain.csv'),check.names=F)
 ric_chm_cpd_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR_long_chain.csv'),check.names=F)
 
+
+
+
 watersheds <- c("VINER SOUND CREEK","CARNATION CREEK", "PHILLIPS RIVER", "NIMPKISH RIVER", "DEENA CREEK", "NEEKAS CREEK")
 
 case_study_watersheds_data <- ch20rsc %>% 
@@ -385,6 +388,17 @@ plot_recruit_spawner_river <- function(data, species = "chum", river_name,  post
   
   recruits_predicted_high_cpd <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
   
+  
+  recruits_predicted_low_cpd_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
+  
+  recruits_predicted_low_cpd_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
+  
+  recruits_predicted_high_cpd_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
+  
+  recruits_predicted_high_cpd_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
+  
+  
+  
   #make dataframe
   
   prediction_df <- data.frame(spawners = spawners_predicted,
@@ -393,6 +407,10 @@ plot_recruit_spawner_river <- function(data, species = "chum", river_name,  post
                               recruits_upper = recruits_predicted_upper,
                               recruits_low_cpd = recruits_predicted_low_cpd,
                               recruits_high_cpd = recruits_predicted_high_cpd,
+                              recruits_low_cpd_lower = recruits_predicted_low_cpd_lower,
+                              recruits_low_cpd_upper = recruits_predicted_low_cpd_upper,
+                              recruits_high_cpd_lower = recruits_predicted_high_cpd_lower,
+                              recruits_high_cpd_upper = recruits_predicted_high_cpd_upper,
                               log_RS = log(recruits_predicted/spawners_predicted))
   
   
@@ -414,13 +432,14 @@ plot_recruit_spawner_river <- function(data, species = "chum", river_name,  post
     geom_line(data = prediction_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1, alpha = 0.5) +
     geom_line(data = prediction_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1, alpha = 0.5) +
     geom_line(data = prediction_df, aes(x = spawners, y = recruits), color = "black", size = 1, alpha = 0.5) +
-    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_lower, ymax = recruits_upper), fill = "gray", alpha = 0.5) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_low_cpd_lower, ymax = recruits_low_cpd_upper), fill ='#35978f', alpha = 0.5) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_high_cpd_lower, ymax = recruits_high_cpd_upper), fill ='#bf812d', alpha = 0.5) +
     #make y log scale
     # scale_y_log10() +
     labs(title = "", x = "Spawners", y = "Recruits") +
     # scale_color_manual(name = "CPD", values = c("Low" = '#35978f', "High" = '#bf812d')) +
-    scale_color_gradient2(name = 'CPD in River (%)',
-                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
+    scale_color_gradient2(name = 'CDA in River (%)',
+                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 20)+
     theme_classic() +
     theme(legend.position = "right",
           legend.key.width = unit(0.5, "cm"),
@@ -445,8 +464,8 @@ plot_recruit_spawner_river <- function(data, species = "chum", river_name,  post
     geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_lower/spawners_predicted), ymax = log(recruits_predicted_upper/spawners_predicted)), fill = "gray", alpha = 0.5) +
     labs(#title = "Ricker model with CPD, NPGO, ERSST", 
       x = "Spawners", y = TeX(r"($\log \left(\frac{Recruits}{Spawners}\right)$)")) +
-    scale_color_gradient2(name = 'CPD in River (%)',
-                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = mid_cpd_real)+
+    scale_color_gradient2(name = 'CDA in River (%)',
+                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 20)+
     theme_classic() +
     theme(legend.position = "right",
           legend.key.width = unit(0.5, "cm"),
@@ -581,7 +600,7 @@ plot_all_effects_river_together <- function(posterior1 = ric_chm_cpd_ocean_covar
   
   if(effect1 == "cpd"){
     posterior_df_river <- posterior_df %>% filter(River_n == river) %>% 
-      mutate(Effect = case_when(Effect == "for" ~ "Cumulative\nDisturbance",
+      mutate(Effect = case_when(Effect == "for" ~ "CDA",
                                 Effect == "sst" ~ "SST",
                                 Effect == "npgo" ~ "NPGO"))
   } else if(effect1 == "eca"){
@@ -605,8 +624,8 @@ plot_all_effects_river_together <- function(posterior1 = ric_chm_cpd_ocean_covar
                  alpha = 0.4, linewidth = 0.8) +
     
     geom_vline(xintercept = 0, color = 'slategray', linewidth = 0.8) +
-    geom_vline(aes(xintercept = median(posterior_df_river$coefficient[posterior_df_river$Effect == "Cumulative\nDisturbance"]), 
-               color = "Cumulative\nDisturbance"), linetype = "dashed", linewidth = 0.8) +
+    geom_vline(aes(xintercept = median(posterior_df_river$coefficient[posterior_df_river$Effect == "CDA"]), 
+               color = "CDA"), linetype = "dashed", linewidth = 0.8) +
     geom_vline(aes(xintercept = median(posterior_df_river$coefficient[posterior_df_river$Effect == "SST"]), 
                color = "SST"), linetype = "dashed", linewidth = 0.8) +
     geom_vline(aes(xintercept = median(posterior_df_river$coefficient[posterior_df_river$Effect == "NPGO"]),
@@ -615,12 +634,12 @@ plot_all_effects_river_together <- function(posterior1 = ric_chm_cpd_ocean_covar
     xlim(xlim[1], xlim[2]) +
     scale_color_manual(name = "",
                        values = c("ECA" = "#ADcCA5", 
-                                  "Cumulative\nDisturbance" = "#ADcCA5",
+                                  "CDA" = "#ADcCA5",
                                   "SST" = "#C78c63",
                                   "NPGO" = "#829Dc6")) +
     scale_fill_manual(name = "",
                       values = c("ECA" = "#ADcCA5", 
-                                 "Cumulative\nDisturbance" = "#ADcCA5",
+                                 "CDA" = "#ADcCA5",
                                  "SST" = "#C78c63",
                                  "NPGO" = "#829Dc6")) +
     # scale_color +
@@ -794,7 +813,7 @@ plot_productivity_change_river_together <- function(posterior1 = ric_chm_cpd_oce
                      yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
                      color = "gray"), 
                  linetype = "dashed", linewidth = 0.8) +
-    annotate("text",x = 50,#unique(productivity_cpd_df$max_cpd), 
+    annotate("text",x = unique(productivity_cpd_df$max_cpd), 
              y = productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
              label = paste0("Max CPD: ",round(unique(productivity_cpd_df$max_cpd),1),"%\n",
                             "Median change: ",round(productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],1),"%"),
@@ -848,7 +867,7 @@ plot_productivity_change_river_together <- function(posterior1 = ric_chm_cpd_oce
                      yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
                      color = "gray"), 
                  linetype = "dashed", linewidth = 0.8) +
-    annotate("text",x = 0.5,#unique(productivity_eca_df$max_eca), 
+    annotate("text",x = unique(productivity_eca_df$max_eca), 
              y = productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
              label = paste0("Max ECA: ",round(unique(productivity_eca_df$max_eca),2),"\n",
                             "Median change: ",round(productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],1),"%"),
@@ -985,3 +1004,820 @@ ggsave(filename = here("figures",
        units = "in",
        dpi = 300)        
         
+# making changes feb 2026 - changing to ET intervals and using long chain posteriors
+
+ric_chm_eca_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_eca_ocean_covariates_logR_long_chain.csv'),check.names=F)
+ric_chm_cpd_ocean_covariates_logR_long_chain=read.csv(here('stan models','outs','posterior','ric_chm_cpd_ocean_covariates_logR_long_chain.csv'),check.names=F)
+
+watersheds <- c("VINER SOUND CREEK","CARNATION CREEK", "PHILLIPS RIVER", "NIMPKISH RIVER", "DEENA CREEK", "NEEKAS CREEK")
+
+case_study_watersheds_data <- ch20rsc %>% 
+  filter(River %in% watersheds)
+
+
+plot_recruit_spawner_river(data = case_study_watersheds_data,
+                           species = "chum",
+                           river_name = watersheds[1],
+                           posterior = ric_chm_cpd_ocean_covariates_logR_long_chain,
+                           posterior_a_t = NULL,
+                           posterior_a_t_bh = NULL)
+
+
+
+plot_all_effects_river_together(
+  posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+  river_name = str_to_title(watersheds[1]),
+  river = unique(case_study_watersheds_data$River_n[case_study_watersheds_data$River == watersheds[1]])
+)
+
+plot_productivity_change_river_together(
+  posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+  posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+  river_name = "CARNATION CREEK",
+  effect1 = "cpd",
+  effect2 = "eca",
+  species = "chum",
+  model1 = "CPD",
+  model2 = "ECA"
+)
+
+plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+                                                   posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+                                                   river_name = "CARNATION CREEK",  
+                                                   effect1 = "cpd",
+                                                   effect2 = "eca",
+                                                   species = "chum", 
+                                                   model1 = "CPD",
+                                                   model2 = "ECA",
+                                                   hd = FALSE){
+  
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    river_data <- ch20rsc %>% filter(River == river_name)
+    river <- river_data$River_n[1]
+    # df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    river_data <- pk10r %>% filter(River == river_name)
+    river <- river_data$River_n2[1]
+    # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  posterior_df <- posterior1 %>%
+    select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  posterior_df2 <- posterior2 %>% 
+    select(starts_with(paste0('b_for_rv[',as.character(river),']'))) %>%
+    pivot_longer(cols = everything(), 
+                 names_to = 'River', 
+                 names_prefix = 'b_for_rv',
+                 values_to = "forestry") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    mutate(River = river)
+  
+  
+  
+  
+  eca <- seq(0,1,length.out=100)
+  
+  eca_sqrt <- sqrt(eca)
+  
+  eca_sqrt_std <- (eca_sqrt-mean(eca_sqrt))/sd(eca_sqrt)
+  
+  cpd <- seq(0,100,length.out=100)
+  
+  cpd_sqrt <- sqrt(cpd)
+  
+  cpd_sqrt_std <- (cpd_sqrt-mean(cpd_sqrt))/sd(cpd_sqrt)
+  
+  
+  
+  
+  no_eca <- min(eca_sqrt_std)
+  
+  no_cpd <- min(cpd_sqrt_std)
+  
+  
+  
+  # need to change b_rv to posterior 1 and posterior 2 and then make figure
+  
+  productivity_cpd <- (exp(as.matrix(posterior_df[,1])%*%
+                             (cpd_sqrt_std-no_cpd)))*100 - 100
+  
+  productivity_eca <- (exp(as.matrix(posterior_df2[,1])%*%
+                             (eca_sqrt_std-no_eca)))*100 - 100
+  
+  
+  productivity_cpd_df <- data.frame(productivity_cpd_median = apply(productivity_cpd,2,median),
+                                    productivity_cpd_025 = apply(productivity_cpd,2,quantile,c(0.025), 
+                                                                 row.names = c("q025")),
+                                    productivity_cpd_975 = apply(productivity_cpd,2,quantile,c(0.975),
+                                                                 row.names = c("q975")),
+                                    productivity_cpd_100 = apply(productivity_cpd,2,quantile,c(0.1),
+                                                                 row.names = c("q100")),
+                                    productivity_cpd_900 = apply(productivity_cpd,2,quantile,c(0.9),
+                                                                 row.names = c("q900")),
+                                    productivity_cpd_250 = apply(productivity_cpd,2,quantile,c(0.25),
+                                                                 row.names = c("q250")),
+                                    productivity_cpd_750 = apply(productivity_cpd,2,quantile,c(0.75),
+                                                                 row.names = c("q750")),
+                                    
+                                    
+                                    productivity_cpd_025_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.95)[1,],
+                                    productivity_cpd_975_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.95)[2,],
+                                    productivity_cpd_100_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.8)[1,],
+                                    productivity_cpd_900_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.8)[2,],
+                                    productivity_cpd_50_lower_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.5)[1,],
+                                    productivity_cpd_50_upper_hd = apply(productivity_cpd,2,HDInterval::hdi, credMass = 0.5)[2,],
+                                    
+                                    
+                                    
+                                    cpd_sqrt_std = cpd_sqrt_std,
+                                    cpd = cpd,
+                                    max_cpd = max(river_data$disturbedarea_prct_cs),
+                                    max_sqrt_cpd = max(river_data$sqrt.CPD),
+                                    model = "CPD"
+  )
+  
+  
+  productivity_eca_df <- data.frame(productivity_eca_median = apply(productivity_eca,2,median),
+                                    productivity_eca_025 = apply(productivity_eca,2,quantile,c(0.025), 
+                                                                 row.names = c("q025")),
+                                    productivity_eca_975 = apply(productivity_eca,2,quantile,c(0.975),
+                                                                 row.names = c("q975")),
+                                    productivity_eca_100 = apply(productivity_eca,2,quantile,c(0.1),
+                                                                 row.names = c("q100")),
+                                    productivity_eca_900 = apply(productivity_eca,2,quantile,c(0.9),
+                                                                 row.names = c("q900")),
+                                    productivity_eca_250 = apply(productivity_eca,2,quantile,c(0.25),
+                                                                 row.names = c("q250")),
+                                    productivity_eca_750 = apply(productivity_eca,2,quantile,c(0.75),
+                                                                 row.names = c("q750")),
+                                    
+                                    productivity_eca_025_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.95)[1,],
+                                    productivity_eca_975_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.95)[2,],
+                                    productivity_eca_100_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.8)[1,],
+                                    productivity_eca_900_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.8)[2,],
+                                    productivity_eca_50_lower_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.5)[1,],
+                                    productivity_eca_50_upper_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.5)[2,],
+                                    
+                                    eca_sqrt_std = eca_sqrt_std,
+                                    eca = eca,
+                                    max_eca = max(river_data$ECA_age_proxy_forested_only),
+                                    max_sqrt_eca = max(river_data$sqrt.ECA),
+                                    model = "ECA"
+  )
+  
+  
+  if(hd == TRUE){
+    
+    plot1 <- ggplot(productivity_cpd_df) +
+      geom_line(aes(x = cpd, y = productivity_cpd_median, group = 1,
+                    color = "median"),alpha=0.9, linewidth = 0.8) +
+      geom_ribbon(aes(x = cpd, ymin = productivity_cpd_025_hd, ymax = productivity_cpd_975_hd, fill = "95% credible interval"),
+                  alpha = 0.2) +
+      geom_ribbon(aes(x = cpd, ymin = productivity_cpd_100_hd, ymax = productivity_cpd_900_hd, fill = "80% credible interval"),
+                  alpha = 0.4) +
+      
+      geom_segment(aes(x = unique(productivity_cpd_df$max_cpd), 
+                       xend = unique(productivity_cpd_df$max_cpd), 
+                       y = -100, 
+                       yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                       color = "gray"), 
+                   linetype = "dashed", linewidth = 0.8) +
+      # add horizontal line 
+      geom_segment(aes(x = 0, 
+                       xend = unique(productivity_cpd_df$max_cpd), 
+                       y = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))], 
+                       yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                       color = "gray"), 
+                   linetype = "dashed", linewidth = 0.8) +
+      annotate("text",x = unique(productivity_cpd_df$max_cpd), 
+               y = productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+               label = paste0("Max CPD: ",round(unique(productivity_cpd_df$max_cpd),1),"%\n",
+                              "Median change: ",round(productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],1),"%"),
+               vjust = -0.5, color = "black", size = 2, hjust = 0
+      ) +
+      
+      scale_color_manual(name = "Model",
+                         values = c("ECA model" = '#A2C5AC', 
+                                    "median" = '#A2C5AC')) +
+      scale_fill_manual(name = "Model",
+                        values = c("ECA 95% credible interval" = '#A2C5AC', 
+                                   "ECA 80% credible interval" = '#A2C5AC',
+                                   "95% credible interval" = '#A2C5AC', 
+                                   "80% credible interval" = '#A2C5AC')) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(x = "CDA (%)",
+           y = "Change in recruitment (%)") +
+      theme_classic() +
+      theme(legend.position = "none",
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(0.5, "cm"),
+            legend.spacing.y = unit(0.1, "cm"),
+            legend.key.height = unit(0.5, "cm"),
+            axis.title.x = element_text(size = 8),
+            axis.title.y = element_text(size = 8),
+            axis.text.x = element_text(size = 8),
+            axis.text.y = element_text(size = 8),
+            plot.title = element_text(size = 10, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    
+    plot2 <- ggplot(productivity_eca_df)+
+      geom_line(aes(x = eca, y = productivity_eca_median, group = 1,
+                    color = "median"),alpha=0.9, linewidth = 0.8) +
+      geom_ribbon(aes(x = eca, ymin = productivity_eca_025_hd, ymax = productivity_eca_975_hd, fill = "95% credible interval"),
+                  alpha = 0.2) +
+      geom_ribbon(aes(x = eca, ymin = productivity_eca_100_hd, ymax = productivity_eca_900_hd, fill = "80% credible interval"),
+                  alpha = 0.4) +
+      #add vertical line at max eca - max height should be value of productivity eca median
+      geom_segment(aes(x = unique(productivity_eca_df$max_eca), 
+                       xend = unique(productivity_eca_df$max_eca), 
+                       y = -100, 
+                       yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                       color = "gray"), 
+                   linetype = "dashed", linewidth = 0.8) +
+      # add horizontal line 
+      geom_segment(aes(x = 0, 
+                       xend = unique(productivity_eca_df$max_eca), 
+                       y = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))], 
+                       yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                       color = "gray"), 
+                   linetype = "dashed", linewidth = 0.8) +
+      annotate("text",x = unique(productivity_eca_df$max_eca), 
+               y = productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+               label = paste0("Max ECA: ",round(unique(productivity_eca_df$max_eca),2),"\n",
+                              "Median change: ",round(productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],1),"%"),
+               vjust = -0.5, color = "black", size = 2, hjust = 0
+      ) +
+      
+      
+      scale_color_manual(values = c("median" = '#A2C5AC', 
+                                    "CDA model" = '#A2C5AC')) +
+      scale_fill_manual(values = c("95% credible interval" = '#A2C5AC', 
+                                   "80% credible interval" = '#A2C5AC',
+                                   "CPD model 95% credible interval" = '#A2C5AC', 
+                                   "CPD model 80% credible interval" = '#A2C5AC')) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(x = "ECA",
+           y = "Change in recruitment (%)") +
+      theme_classic() +
+      theme(legend.position = "inside",
+            legend.justification = c("right", "top"),
+            legend.byrow = FALSE,
+            legend.title = element_blank(),
+            # legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(0.5, "cm"),
+            legend.spacing.y = unit(0, "cm"),
+            legend.key.height = unit(0.2, "cm"),
+            legend.text = element_text(size = 6),
+            axis.title.x = element_text(size = 8),
+            axis.title.y = element_text(size = 8),
+            axis.text.x = element_text(size = 8),
+            axis.text.y = element_text(size = 8),
+            plot.title = element_text(size = 10, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    
+  } else{
+    plot1 <- ggplot(productivity_cpd_df) +
+      geom_line(aes(x = cpd, y = productivity_cpd_median, group = 1,
+                    color = "median"),alpha=0.9, linewidth = 0.8) +
+      geom_ribbon(aes(x = cpd, ymin = productivity_cpd_025, ymax = productivity_cpd_975, fill = "95% credible interval"),
+                  alpha = 0.2) +
+      geom_ribbon(aes(x = cpd, ymin = productivity_cpd_100, ymax = productivity_cpd_900, fill = "80% credible interval"),
+                  alpha = 0.4) +
+      geom_ribbon(aes(x = cpd, ymin = productivity_cpd_250, ymax = productivity_cpd_750, fill = "50% credible interval"),
+                  alpha = 0.6) +
+      
+      geom_segment(aes(x = unique(productivity_cpd_df$max_cpd), 
+                       xend = unique(productivity_cpd_df$max_cpd), 
+                       y = -100, 
+                       yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                       color = "gray"), 
+                   linetype = "dashed", linewidth = 0.8) +
+      # add horizontal line 
+      geom_segment(aes(x = 0, 
+                       xend = unique(productivity_cpd_df$max_cpd), 
+                       y = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))], 
+                       yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                       color = "gray"), 
+                   linetype = "dashed", linewidth = 0.8) +
+      annotate("text",x = unique(productivity_cpd_df$max_cpd), 
+               y = productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+               label = paste0("Max CDA: ",round(unique(productivity_cpd_df$max_cpd),1),"%\n",
+                              "Median change: ",round(productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],1),"%"),
+               vjust = -0.5, color = "black", size = 2, hjust = 0
+      ) +
+      
+      scale_color_manual(name = "Model",
+                         values = c("ECA model" = '#A2C5AC', 
+                                    "median" = '#A2C5AC')) +
+      scale_fill_manual(name = "Model",
+                        values = c("ECA 95% credible interval" = '#A2C5AC', 
+                                   "ECA 80% credible interval" = '#A2C5AC',
+                                   "95% credible interval" = '#A2C5AC', 
+                                   "80% credible interval" = '#A2C5AC',
+                                   "50% credible interval" = '#A2C5AC')) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(x = "CDA (%)",
+           y = "Change in recruitment (%)") +
+      theme_classic() +
+      theme(legend.position = "none",
+            legend.title = element_blank(),
+            legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(0.5, "cm"),
+            legend.spacing.y = unit(0.1, "cm"),
+            legend.key.height = unit(0.5, "cm"),
+            axis.title.x = element_text(size = 8),
+            axis.title.y = element_text(size = 8),
+            axis.text.x = element_text(size = 8),
+            axis.text.y = element_text(size = 8),
+            plot.title = element_text(size = 10, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+    
+    plot2 <- ggplot(productivity_eca_df)+
+      geom_line(aes(x = eca, y = productivity_eca_median, group = 1,
+                    color = "median"),alpha=0.9, linewidth = 0.8) +
+      geom_ribbon(aes(x = eca, ymin = productivity_eca_025, ymax = productivity_eca_975, fill = "95% credible interval"),
+                  alpha = 0.2) +
+      geom_ribbon(aes(x = eca, ymin = productivity_eca_100, ymax = productivity_eca_900, fill = "80% credible interval"),
+                  alpha = 0.4) +
+      geom_ribbon(aes(x = eca, ymin = productivity_eca_250, ymax = productivity_eca_750, fill = "50% credible interval"),
+                  alpha = 0.6) +
+      #add vertical line at max eca - max height should be value of productivity eca median
+      geom_segment(aes(x = unique(productivity_eca_df$max_eca), 
+                       xend = unique(productivity_eca_df$max_eca), 
+                       y = -100, 
+                       yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                       color = "gray"), 
+                   linetype = "dashed", linewidth = 0.8) +
+      # add horizontal line 
+      geom_segment(aes(x = 0, 
+                       xend = unique(productivity_eca_df$max_eca), 
+                       y = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))], 
+                       yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                       color = "gray"), 
+                   linetype = "dashed", linewidth = 0.8) +
+      annotate("text",x = unique(productivity_eca_df$max_eca), 
+               y = productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+               label = paste0("Max ECA: ",round(unique(productivity_eca_df$max_eca),2),"\n",
+                              "Median change: ",round(productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],1),"%"),
+               vjust = -0.5, color = "black", size = 2, hjust = 0
+      ) +
+      
+      
+      scale_color_manual(values = c("median" = '#A2C5AC', 
+                                    "CPD model" = '#A2C5AC')) +
+      scale_fill_manual(values = c("95% credible interval" = '#A2C5AC', 
+                                   "80% credible interval" = '#A2C5AC',
+                                   "50% credible interval" = '#A2C5AC',
+                                   "CPD model 95% credible interval" = '#A2C5AC', 
+                                   "CPD model 80% credible interval" = '#A2C5AC')) +
+      ylim(-100,100) +
+      scale_x_continuous(n.breaks = 5) +
+      labs(x = "ECA",
+           y = "Change in recruitment (%)") +
+      theme_classic() +
+      theme(legend.position = "inside",
+            legend.justification = c("right", "top"),
+            legend.byrow = FALSE,
+            legend.title = element_blank(),
+            # legend.key.size = unit(0.5, "cm"),
+            legend.key.width = unit(0.5, "cm"),
+            legend.spacing.y = unit(0, "cm"),
+            legend.key.height = unit(0.2, "cm"),
+            legend.text = element_text(size = 6),
+            axis.title.x = element_text(size = 8),
+            axis.title.y = element_text(size = 8),
+            axis.text.x = element_text(size = 8),
+            axis.text.y = element_text(size = 8),
+            plot.title = element_text(size = 10, hjust = 0.5))+
+      guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.5)))
+  }
+  
+ 
+  
+  return(plot1+plot2 + plot_layout(axes = 'collect') +
+           plot_annotation(title = str_to_title(river_name),tag_level = 'A')&
+           theme(plot.tag.position = c(0.05, 1),
+                 plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")))
+  
+}
+
+
+plot_recruitment_change_river_together(
+  posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+  posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+  river_name = "CARNATION CREEK",
+  effect1 = "cpd",
+  effect2 = "eca",
+  species = "chum",
+  model1 = "CPD",
+  model2 = "ECA",
+  hd = FALSE
+)
+
+
+plot_recruit_spawner_river(data = case_study_watersheds_data,
+                           species = "chum",
+                           river_name = watersheds[6],
+                           posterior = ric_chm_cpd_ocean_covariates_logR_long_chain,
+                           posterior_a_t = NULL,
+                           posterior_a_t_bh = NULL)
+
+plot_recruit_spawner_river_new <- function(species = "chum", river_name,  posterior){
+  
+  # river_data <- df %>% filter(River_n == river)
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    river_data <- ch20rsc %>% filter(River == river_name)
+    river <- river_data$River_n[1]
+    # df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
+    
+  } else if(species == "pink"){
+    df <- pk10r
+    river_data <- pk10r %>% filter(River == river_name)
+    river <- river_data$River_n2[1]
+    # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  }
+  
+  if(species == "chum"){
+    posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    posterior_rv_S_max <- posterior %>% 
+      select(starts_with('Smax')) %>%
+      select(ends_with(paste0("[",river,"]")))
+    
+    
+  } else if(species == "pink"){
+    
+    river_wo_broodline <- river_data$River_n
+    river_w_broodline <- river_data$River_n2
+    
+    posterior_rv_b_for <- posterior %>% 
+      select(starts_with('b_for_rv')) %>%
+      select(ends_with(paste0("[",river_wo_broodline,"]")))
+    
+    posterior_rv_alpha_j <- posterior %>% 
+      select(starts_with('alpha_j')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    posterior_rv_S_max <- posterior %>% 
+      select(starts_with('Smax')) %>%
+      select(ends_with(paste0("[",river_w_broodline,"]")))
+    
+    
+    
+  }
+  
+  
+  spawners_predicted <- seq(0, max(river_data$Spawners), length.out = 100)
+  
+  # calculate recruit prediction
+  
+  low_cpd <- min(river_data$sqrt.CPD.std)
+  high_cpd <- max(river_data$sqrt.CPD.std)
+  # avg_cpd <- mean(river_data$sqrt.CPD.std)
+  mid_cpd <- min(river_data$sqrt.CPD.std) + (max(river_data$sqrt.CPD.std) - min(river_data$sqrt.CPD.std))/2
+  
+  mid_cpd_real <- min(river_data$disturbedarea_prct_cs) + (max(river_data$disturbedarea_prct_cs) - min(river_data$disturbedarea_prct_cs))/2
+  
+  
+  recruits_predicted_low_cpd <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+  
+  recruits_predicted_high_cpd <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+  
+  
+  recruits_predicted_low_cpd_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
+  
+  recruits_predicted_low_cpd_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
+  
+  recruits_predicted_high_cpd_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
+  
+  recruits_predicted_high_cpd_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
+  
+  
+  
+  #make dataframe
+  
+  prediction_df <- data.frame(spawners = spawners_predicted,
+                              
+                              recruits_low_cpd = recruits_predicted_low_cpd,
+                              recruits_high_cpd = recruits_predicted_high_cpd,
+                              recruits_low_cpd_lower = recruits_predicted_low_cpd_lower,
+                              recruits_low_cpd_upper = recruits_predicted_low_cpd_upper,
+                              recruits_high_cpd_lower = recruits_predicted_high_cpd_lower,
+                              recruits_high_cpd_upper = recruits_predicted_high_cpd_upper)
+  
+  
+  
+  
+  
+  
+  
+  #plot the time varying productivity vs year, with log(R/S) data
+  
+  
+  
+  
+  
+  #plot recruit vs spawner as points
+  
+  p1 <- ggplot() +
+    geom_point(data = river_data,aes(x = Spawners, y = Recruits, color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+    geom_line(data = prediction_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1, alpha = 0.5) +
+    geom_line(data = prediction_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1, alpha = 0.5) +
+    # geom_line(data = prediction_df, aes(x = spawners, y = recruits), color = "black", size = 1, alpha = 0.5) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_low_cpd_lower, ymax = recruits_low_cpd_upper), fill ='#35978f', alpha = 0.1) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_high_cpd_lower, ymax = recruits_high_cpd_upper), fill ='#bf812d', alpha = 0.1) +
+    #make y log scale
+    # scale_y_log10() +
+    labs(title = "", x = "Spawners", y = "Recruits") +
+    # scale_color_manual(name = "CPD", values = c("Low" = '#35978f', "High" = '#bf812d')) +
+    scale_color_gradient2(name = 'CDA (%)', guide = guide_colorbar(barwidth = 3, barheight = 0.5),
+                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 20, n.breaks = 4) +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.9),
+          legend.background = element_rect(fill = alpha('white', 0.5)),
+          legend.direction = "horizontal",
+          legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8, vjust = 1, hjust = 1),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_blank()
+          # legend.key.width = unit(0.5, "cm"),
+          # legend.key.height = unit(1, "lines"),
+          # legend.spacing.y = unit(0.001, "cm")
+    )
+  
+  
+  # p3 log R/s vs spawners
+  
+  p2 <- ggplot(river_data) + 
+    geom_point(aes(x = Spawners, y = log(Recruits/Spawners), color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+    geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_low_cpd/spawners_predicted)), color = '#35978f', size = 1, alpha = 0.5) +
+    geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_high_cpd/spawners_predicted)), color = '#bf812d', size = 1, alpha = 0.5) +
+    # geom_line(data = prediction_df, aes(x = spawners, y = log_RS), color = "black", size = 1, alpha = 0.5) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_low_cpd_lower/spawners_predicted), ymax = log(recruits_predicted_low_cpd_upper/spawners_predicted)), fill = "#35978f", alpha = 0.1) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_high_cpd_lower/spawners_predicted), ymax = log(recruits_predicted_high_cpd_upper/spawners_predicted)), fill = "#bf812d", alpha = 0.1) +
+    labs(#title = "Ricker model with CPD, NPGO, ERSST", 
+      x = "Spawners", y = TeX(r"($\log \left(\frac{Recruits}{Spawners}\right)$)")) +
+    scale_color_gradient2(name = 'CDA (%)',
+                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 20, guide = guide_colorbar(barwidth = 3, barheight = 0.5)) +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.9),
+          legend.background = element_rect(fill = alpha('white', 0.5)),
+          legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_blank(),
+          legend.key.width = unit(0.5, "cm"),
+          legend.key.height = unit(1, "lines"),
+          legend.spacing.y = unit(0.001, "cm")
+    )
+  
+  p3 <- ggplot(river_data) + 
+    geom_point(aes(x = Spawners, y = log(Recruits), color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+    geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_low_cpd)), color = '#35978f', size = 1, alpha = 0.5) +
+    geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_high_cpd)), color = '#bf812d', size = 1, alpha = 0.5) +
+    # geom_line(data = prediction_df, aes(x = spawners, y = log_RS), color = "black", size = 1, alpha = 0.5) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_low_cpd_lower), ymax = log(recruits_predicted_low_cpd_upper)), fill = "#35978f", alpha = 0.1) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_high_cpd_lower), ymax = log(recruits_predicted_high_cpd_upper)), fill = "#bf812d", alpha = 0.1) +
+    labs(#title = "Ricker model with CPD, NPGO, ERSST", 
+      x = "Spawners", y = TeX(r"($\log \left(Recruits\right)$)")) +
+    scale_color_gradient2(name = 'CDA (%)',
+                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 20)+
+    theme_classic() +
+    theme(legend.position = c(0.8,0.9),
+          legend.background = element_rect(fill = alpha('white', 0.5)),
+          legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_blank(),
+          legend.key.width = unit(0.5, "cm"),
+          legend.key.height = unit(1, "lines"),
+          legend.spacing.y = unit(0.001, "cm")
+    )
+  
+  
+  
+  
+  
+  
+  return((p1))
+}
+
+
+
+for(i in watersheds){
+  
+  effects_plot <- plot_all_effects_river_together(
+    posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+    river_name = str_to_title(i),
+    river = unique(case_study_watersheds_data$River_n[case_study_watersheds_data$River == i])
+  )
+  
+  change_plot <- plot_recruitment_change_river_together(
+    posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+    posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+    river_name = i,
+    effect1 = "cpd",
+    effect2 = "eca",
+    species = "chum",
+    model1 = "CPD",
+    model2 = "ECA",
+    hd = FALSE
+  )
+  
+  spawner_recruit_plot <- plot_recruit_spawner_river_new(species = "chum",
+                                 river_name = i,
+                                 posterior = ric_chm_cpd_ocean_covariates_logR_long_chain)
+  
+  ggsave(filename = here("figures",
+                         paste0("case_study_et_w_sr_curves_",str_replace_all(str_to_lower(i), " ", "_"),".png")),
+         plot = ((effects_plot+spawner_recruit_plot + plot_layout(widths = c(1,1.2)))/change_plot) +
+           plot_annotation(tag_levels = 'A',title = str_to_title(i))&
+           theme(plot.tag.position = c(0.0, 1.0),
+                 plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")),
+         width = 7,
+         height = 6,
+         units = "in",
+         dpi = 300)
+  
+  
+}
+
+
+# do same for pink but only for some watersheds - Phillips River, Deena Creek, Neekas
+
+for(i in watersheds){
+  
+  effects_plot <- plot_all_effects_river_together(
+    posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+    river_name = str_to_title(i),
+    river = unique(case_study_watersheds_data$River_n[case_study_watersheds_data$River == i])
+  )
+  
+  change_plot <- plot_recruitment_change_river_together(
+    posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+    posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+    river_name = i,
+    effect1 = "cpd",
+    effect2 = "eca",
+    species = "chum",
+    model1 = "CPD",
+    model2 = "ECA",
+    hd = FALSE
+  )
+  
+  spawner_recruit_plot <- plot_recruit_spawner_river_new(species = "chum",
+                                                         river_name = i,
+                                                         posterior = ric_chm_cpd_ocean_covariates_logR_long_chain)
+  
+  ggsave(filename = here("figures",
+                         paste0("case_study_et_w_sr_curves_",str_replace_all(str_to_lower(i), " ", "_"),".png")),
+         plot = ((effects_plot+spawner_recruit_plot + plot_layout(widths = c(1,1.2)))/change_plot) +
+           plot_annotation(tag_levels = 'A',title = str_to_title(i))&
+           theme(plot.tag.position = c(0.0, 1.0),
+                 plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")),
+         width = 7,
+         height = 6,
+         units = "in",
+         dpi = 300)
+  
+  
+}
+
+#print effect sizes and CIs
+
+
+for(i in watersheds){
+  
+  river_data <- case_study_watersheds_data %>% filter(River == i)
+  river <- river_data$River_n[1]
+  
+  posterior_cpd_df <- ric_chm_cpd_ocean_covariates_logR_long_chain %>%
+    select(starts_with('b_for_rv'),starts_with('b_sst_rv'),starts_with('b_npgo_rv')) %>%
+    pivot_longer(cols = everything(),
+                 names_to = c('Effect','River'),
+                 names_pattern = 'b_(.*)_rv(.*)',
+                 values_to = "coefficient") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    filter(River_n == river)
+  
+  posterior_eca_df <- ric_chm_eca_ocean_covariates_logR_long_chain %>%
+    select(starts_with('b_for_rv'),starts_with('b_sst_rv'),starts_with('b_npgo_rv')) %>%
+    pivot_longer(cols = everything(),
+                 names_to = c('Effect','River'),
+                 names_pattern = 'b_(.*)_rv(.*)',
+                 values_to = "coefficient") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    filter(River_n == river)
+  
+  effect_sizes_cpd <- posterior_cpd_df %>%
+    group_by(Effect) %>%
+    summarise(median = median(coefficient),
+              lower_95 = quantile(coefficient, 0.025),
+              upper_95 = quantile(coefficient, 0.975))
+  
+  effect_sizes_eca <- posterior_eca_df %>%
+    group_by(Effect) %>%
+    summarise(median = median(coefficient),
+              lower_95 = quantile(coefficient, 0.025),
+              upper_95 = quantile(coefficient, 0.975))
+  
+  print(paste0("River: ", i))
+  print("CPD effect sizes:")
+  print(effect_sizes_cpd)
+  print("ECA effect sizes:")
+  print(effect_sizes_eca)
+  
+  #print predicted recruitment change (%) at most recent CPD levels and most recent ECA levels
+  
+  eca <- seq(0,1,length.out=100)
+  
+  eca_sqrt <- sqrt(eca)
+  
+  eca_sqrt_std <- (eca_sqrt-mean(eca_sqrt))/sd(eca_sqrt)
+  
+  cpd <- seq(0,100,length.out=100)
+  
+  cpd_sqrt <- sqrt(cpd)
+  
+  cpd_sqrt_std <- (cpd_sqrt-mean(cpd_sqrt))/sd(cpd_sqrt)
+  
+  
+  
+  
+  no_eca <- min(eca_sqrt_std)
+  
+  no_cpd <- min(cpd_sqrt_std)
+  
+  max_eca <- max(river_data$sqrt.ECA.std)
+  
+  max_cpd <- max(river_data$sqrt.CPD.std)
+  
+  
+  
+  # need to change b_rv to posterior 1 and posterior 2 and then make figure
+  
+  recruitment_cpd <- (exp(as.matrix(posterior_cpd_df %>% filter(Effect == "for") %>% select(coefficient))%*%
+                             (max_cpd-no_cpd)))*100 - 100
+  
+  recruitment_eca <- (exp(as.matrix(posterior_eca_df %>% filter(Effect == "for") %>% select(coefficient))%*%
+                             (max_eca-no_eca)))*100 - 100
+  
+  recruitment_df <- data.frame(
+    model = c("CDA", "ECA"),
+    median = c(median(recruitment_cpd), median(recruitment_eca)),
+    lower_95 = c(quantile(recruitment_cpd, 0.025), quantile(recruitment_eca, 0.025)),
+    upper_95 = c(quantile(recruitment_cpd, 0.975), quantile(recruitment_eca, 0.975))
+  )
+  
+  print("Predicted recruitment change at max CDA and ECA levels:")
+  print(recruitment_df)
+  
+  
+}
+
+  
+  
+
+
+
+plot_recruit_spawner_river_new(species = "chum",
+                           river_name = watersheds[6],
+                           posterior = ric_chm_cpd_ocean_covariates_logR_long_chain)
+
+

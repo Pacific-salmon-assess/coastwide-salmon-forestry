@@ -184,7 +184,7 @@ ric_pk_cpd_ersst_long_chain = read.csv(here('stan models',
 #starting with supplementary figures
 
 
-recruitment_decline_river_df <- function(posterior, effect, species){
+recruitment_decline_river_df_new <- function(posterior, effect, species){
   
   if(species == "chum"){
     df <- ch20rsc 
@@ -221,10 +221,14 @@ recruitment_decline_river_df <- function(posterior, effect, species){
     
     forestry_sqrt_std = (forestry_sqrt-mean(forestry_sqrt))/sd(forestry_sqrt)
     
+    forestry_cpd_df = data.frame(forestry_cpd, forestry_sqrt,forestry_sqrt_std)
+    
+    high_forestry = forestry_cpd_df$forestry_sqrt_std[which.min(abs(forestry_cpd_df$forestry_cpd - cpd_river))]
+    
     no_forestry <- min(forestry_sqrt_std)
     
     productivity <- (exp(as.matrix(b_rv[,1])%*%
-                           (cpd_sqrt_std_river-no_forestry)))*100 - 100
+                           (high_forestry-no_forestry)))*100 - 100
     
     productivity_median <- apply(productivity,2,median)
     
@@ -259,7 +263,7 @@ recruitment_decline_river_df <- function(posterior, effect, species){
   
 }
 
-ric_chm_cpd_recruitment_decline_river <- recruitment_decline_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, 
+ric_chm_cpd_recruitment_decline_river <- recruitment_decline_river_df_new(ric_chm_cpd_ocean_covariates_logR_long_chain, 
                                                                       effect = "cpd", species = "chum")
 
 
@@ -284,10 +288,12 @@ ric_chm_cpd_recruitment_decline_river %>%
   geom_point(aes(y = productivity_50, x = River2), color = '#516479',fill = "white", size = 1, alpha = 0.5) +
   geom_errorbar(aes(ymin = productivity_025, ymax = productivity_975 ), color = '#516479', width = 0, alpha = 0.5) +
   geom_errorbar(aes(ymin = productivity_25, ymax = productivity_75 ), color = '#516479', width = 0, alpha = 0.7) +
-  geom_text_repel(color = "gray20", aes(label = ifelse(important == "yes", paste(River,CU, sep = ", "), NA)), 
+  geom_text_repel(color = "gray20", aes(label = ifelse(important == "yes", paste(River,CU,
+                                                                                 paste0(round(productivity_50,1),"%"), sep = ", "), NA)), 
                   size = 3, max.overlaps = 20,
                   direction    = "y", 
                   box.padding = 0.3, hjust = -1.5) + 
+  geom_hline(yintercept = 0, linetype = 'dashed', color = 'black') +
   coord_flip() +
   # scale_color_manual(name = 'Model type', values = c('independent alpha' = 'cadetblue', 'hierarchical alpha' = 'coral', 'hierarchical alpha - ricker' = 'darkgoldenrod')) +
   labs(#title = 'Estimated percent change in river-level productivity',
@@ -303,7 +309,7 @@ ric_chm_cpd_recruitment_decline_river %>%
         axis.title.y = element_text(size = 16))
 
 #save 
-ggsave(here("figures","manuscript_jan2026_chum_ricker_cpd_recruitment_decline_by_river_forest_plot.png"), width = 8, height = 10)
+ggsave(here("figures","manuscript_feb2026_chum_ricker_cpd_recruitment_decline_by_river_forest_plot.png"), width = 8, height = 10)
 
 
 posterior_mu2 <- read.csv(here('stan models','outs','posterior',
@@ -328,10 +334,10 @@ residual_df <- data.frame(observed = log(ch20rsc$Recruits), forestry = ch20rsc$d
 
 #plot residuals as a function of fitted
 
-ggplot(residual_df)+
+chum_residuals <- ggplot(residual_df)+
   geom_point(aes(x = predicted, y = residual, color = forestry), alpha = 0.2, size = 2) +
   geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
-  labs(title = "", x = TeX(r"(Predicted $\log (Recruits)$)"), y = "Residuals") +
+  labs(title = "Chum", x = TeX(r"(Predicted $\log (Recruits)$)"), y = "Residuals") +
   ylim(-6, 6) +
   theme_classic() +
   scale_color_gradient2(name = 'CDA (%)',
@@ -345,7 +351,7 @@ ggplot(residual_df)+
         axis.title.y = element_text(size = 12),
         axis.text.x = element_text(size = 12),
         axis.text.y = element_text(size = 12),
-        plot.title = element_text(size = 16, hjust = 0.5)
+        plot.title = element_text(size = 16, hjust = 0)
   )
 
 # save
@@ -380,10 +386,10 @@ residual_df_pk <- data.frame(observed = log(pk10r$Recruits), forestry = pk10r$di
 
 #plot residuals as a function of fitted
 
-ggplot(residual_df_pk)+
+pink_residuals <- ggplot(residual_df_pk)+
   geom_point(aes(x = predicted, y = residual, color = forestry), alpha = 0.2, size = 2) +
   geom_hline(yintercept = 0, color = 'black', linetype = 'dashed') +
-  labs(title = "", x = TeX(r"(Predicted $\log (Recruits)$)"), y = "Residuals") +
+  labs(title = "Pink", x = TeX(r"(Predicted $\log (Recruits)$)"), y = "Residuals") +
   ylim(-6, 6) +
   theme_classic() +
   scale_color_gradient2(name = 'CDA (%)',
@@ -397,13 +403,144 @@ ggplot(residual_df_pk)+
         axis.title.y = element_text(size = 12),
         axis.text.x = element_text(size = 12),
         axis.text.y = element_text(size = 12),
-        plot.title = element_text(size = 16, hjust = 0.5)
+        plot.title = element_text(size = 16, hjust = 0)
   )
 
 # save
 
 ggsave(here("figures", "residuals_w_autocorrelation_logR_pink_long_chain.png"),
        width = 6, height = 4, dpi = 300, units = "in")
+
+
+#put them together with titles and save
+
+combined_residuals <- (chum_residuals)/(pink_residuals) + plot_layout(guides = 'collect', axis_titles = 'collect_x')
+
+combined_residuals
+
+ggsave(here("figures", "residuals_w_autocorrelation_logR_chum_pink_long_chain.png"),
+       width = 6, height = 6, dpi = 300, units = "in")
+
+
+
+# redo CU-level estimated recruitment decline figure  ---------------------
+
+productivity_decline_cu_df_new <- function(posterior, effect, species){
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
+  full_productivity <- NULL
+  
+  for (i in 1:length(unique(df$CU_n))){
+    
+    cu <- unique(df$CU_n)[i]
+    
+    cu_data <- df %>% filter(CU_n == cu)
+    
+    b_cu <- posterior %>% select(starts_with("b_for_cu")) %>%
+      select(ends_with(paste0("[",cu,"]")))
+    
+    
+    # cpd_sqrt_std_cu <- max(cu_data$sqrt.CPD.std) # should not be using max from CU
+    #minimum forestry possible - 0
+    real_cpd_cu <- cu_data %>% group_by(River) %>% 
+      filter(disturbedarea_prct_cs == max(disturbedarea_prct_cs)) %>% 
+      distinct(disturbedarea_prct_cs) %>% 
+      ungroup %>% 
+      summarize(mean = mean(disturbedarea_prct_cs))
+    
+    real_cpd_sqrt_std_cu <- cu_data %>% group_by(River) %>% 
+      filter(sqrt.CPD.std == max(sqrt.CPD.std)) %>% 
+      distinct(sqrt.CPD.std) %>% 
+      ungroup %>% 
+      summarize(mean = mean(sqrt.CPD.std))
+    
+    theoretical_cpd <- seq(0,100, length.out = 100)
+    
+    #to calculate no forestry in the standardized scale
+    theoretical_cpd_sqrt <- sqrt(theoretical_cpd)
+    
+    theoretical_cpd_sqrt_std = (theoretical_cpd_sqrt-mean(theoretical_cpd_sqrt))/sd(theoretical_cpd_sqrt)
+    
+    #make df for theoretical values
+    theoretical_df <- data.frame(theoretical_cpd, theoretical_cpd_sqrt_std)
+    
+    current_forestry <- theoretical_df$theoretical_cpd_sqrt_std[which.min(abs(theoretical_df$theoretical_cpd - real_cpd_cu$mean))]
+    
+    no_forestry <- min(theoretical_df$theoretical_cpd_sqrt_std)
+    
+    productivity <- (exp(as.matrix(b_cu[,1])%*%
+                           (current_forestry-no_forestry)))*100 - 100
+    
+    productivity_median <- apply(productivity,2,median)
+    
+    productivity_median_df <- data.frame(CU = unique(cu_data$CU_name),
+                                         productivity_50 = apply(productivity,2,median),
+                                         productivity_25 = apply(productivity,2,quantile, probs = 0.25),
+                                         productivity_75 = apply(productivity,2,quantile, probs = 0.75),
+                                         productivity_025 = apply(productivity,2,quantile, probs = 0.025),
+                                         productivity_975 = apply(productivity,2,quantile, probs = 0.975),
+                                         # productivity_025_hdi = apply(productivity,2, hdi, ci = 0.95)[[1]]$CI_low,
+                                         # productivity_975_hdi = apply(productivity,2, hdi, ci = 0.95)[[1]]$CI_high,
+                                         forestry = real_cpd_cu$mean,
+                                         CU_n = unique(cu_data$CU_n))
+    
+    full_productivity <- rbind(full_productivity, productivity_median_df)
+    
+    
+  }
+  
+  
+  return(full_productivity)
+  
+  
+}
+
+
+ric_chm_cpd_productivity_decline_cu_new <- productivity_decline_cu_df_new(ric_chm_cpd_ocean_covariates_logR_long_chain, 
+                                                                  effect = "cpd", species = "chum")    
+
+cu_forest_plot_new <- ric_chm_cpd_productivity_decline_cu_new %>% 
+  arrange(desc(productivity_50)) %>%
+  mutate(CU2 = factor(CU, levels = CU)) %>% 
+  ggplot(aes(x = CU, y = productivity_50)) +
+  geom_point(aes(y = productivity_50, x = CU2), color = '#516479',fill = "white", size = 3, alpha = 0.5) +
+  geom_errorbar(aes(ymin = productivity_025, ymax = productivity_975 ), color = '#516479', width = 0, alpha = 0.5, size = 1) +
+  geom_errorbar(aes(ymin = productivity_25, ymax = productivity_75 ), color = '#516479', width = 0, alpha = 0.7, size = 2) +
+  #add estimated median decline to the right of each error bar
+  geom_text(aes(label = paste(round(productivity_50,1),"%")), 
+            hjust = -0.25, 
+            vjust = -0.35,
+            size = 3, color = "gray20") +
+  #add dashed v line
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+  coord_flip() +
+  # scale_color_manual(name = 'Model type', values = c('independent alpha' = 'cadetblue', 'hierarchical alpha' = 'coral', 'hierarchical alpha - ricker' = 'darkgoldenrod')) +
+  labs(#title = 'Estimated percent change in CU-level productivity',
+    x = 'Conservation Unit',
+    y = 'Change in recruitment (%)') +
+  theme_classic() +
+  theme(legend.position = "none",
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        axis.text.y = element_text(size = 8),
+        plot.title = element_text(hjust = 0.5, size = 18),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16))
+
+ggsave(here("figures","manuscript_feb2026_chum_ricker_cpd_recruitment_decline_by_cu_forest_plot.png"),
+       cu_forest_plot_new, width = 5, height = 6, bg = "white")
+
+
+
+
+
+
 
 
 

@@ -482,6 +482,26 @@ summary %>%
   #decresing rhat values
   arrange(-rhat)
 
+
+summary_eca_chum <- summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>%
+  mutate(variable_group = str_replace_all(variable,c("[0-9]"), "")) %>%
+  # mutate(variable_group = str_extract_all(variable,c("[a-z]"))) %>% 
+  # mutate(variable_group = str_replace_all(variable_group,"\[", "")) %>% 
+  group_by(variable_group) %>% 
+  # filter(startsWith(variable, "alpha")) %>% 
+  summarize(mean_rhat =round(mean(rhat),2), median_rhat = round(median(rhat),2), 
+            min_rhat = round(min(rhat),2), max_rhat = round(max(rhat),2),
+            mean_ess = round(mean(ess_bulk)), 
+            median_ess = round(median(ess_bulk)), 
+            min_ess = round(min(ess_bulk)), 
+            max_ess = round(max(ess_bulk)))
+
+#save as csv
+write.csv(summary_eca_chum, file = here("tables", "summary_eca_chum.csv"))
+
+
+
 # none above 1.01 for eca, chum
 
 file <- 'ric_pk_eca_st_noac_ocean_covariates_logR_long_chain.csv'
@@ -497,6 +517,24 @@ summary %>%
   arrange(-rhat)
 #none
 
+summary_eca_pink <- summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>%
+  mutate(variable_group = str_replace_all(variable,c("[0-9]"), "")) %>%
+  # mutate(variable_group = str_extract_all(variable,c("[a-z]"))) %>% 
+  # mutate(variable_group = str_replace_all(variable_group,"\[", "")) %>% 
+  group_by(variable_group) %>% 
+  # filter(startsWith(variable, "alpha")) %>% 
+  summarize(mean_rhat =round(mean(rhat),2), median_rhat = round(median(rhat),2), 
+            min_rhat = round(min(rhat),2), max_rhat = round(max(rhat),2),
+            mean_ess = round(mean(ess_bulk)), 
+            median_ess = round(median(ess_bulk)), 
+            min_ess = round(min(ess_bulk)), 
+            max_ess = round(max(ess_bulk)))
+
+#save as csv
+write.csv(summary_eca_pink, file = here("tables", "summary_eca_pink.csv"))
+
+
 
 file <- 'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain.csv'
 
@@ -509,8 +547,26 @@ summary %>%
   filter(rhat > 1.01) %>% 
   #decresing rhat values
   arrange(-rhat)
+
 # none
 
+
+summary_cpd_pink <- summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>%
+  mutate(variable_group = str_replace_all(variable,c("[0-9]"), "")) %>%
+  # mutate(variable_group = str_extract_all(variable,c("[a-z]"))) %>% 
+  # mutate(variable_group = str_replace_all(variable_group,"\[", "")) %>% 
+  group_by(variable_group) %>% 
+  # filter(startsWith(variable, "alpha")) %>% 
+  summarize(mean_rhat =round(mean(rhat),2), median_rhat = round(median(rhat),2), 
+            min_rhat = round(min(rhat),2), max_rhat = round(max(rhat),2),
+            mean_ess = round(mean(ess_bulk)), 
+            median_ess = round(median(ess_bulk)), 
+            min_ess = round(min(ess_bulk)), 
+            max_ess = round(max(ess_bulk)))
+
+#save as csv
+write.csv(summary_cpd_pink, file = here("tables", "summary_cpd_pink.csv"))
 
 
 
