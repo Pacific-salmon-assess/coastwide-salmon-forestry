@@ -370,11 +370,11 @@ n_rows_pk <- nrow(pk10r)
 
 #make df
 
-residual_df_pk <- data.frame(observed = pk10r$ln_RS, residual = NA)
-
-mu_cols <- grep("^mu2\\[", names(posterior_mu2_pk), value = TRUE)
-medians <- vapply(posterior_mu2_pk[mu_cols], median, numeric(1))
-
+# residual_df_pk <- data.frame(observed = pk10r$ln_RS, residual = NA)
+# 
+# mu_cols <- grep("^mu2\\[", names(posterior_mu2_pk), value = TRUE)
+# medians <- vapply(posterior_mu2_pk[mu_cols], median, numeric(1))
+# 
 
 
 
@@ -408,7 +408,7 @@ pink_residuals <- ggplot(residual_df_pk)+
 
 # save
 
-ggsave(here("figures", "residuals_w_autocorrelation_logR_pink_long_chain.png"),
+ggsave(here("figures", "residuals_w_autocorrelation_logR_pink_long_chain_new.png"),
        width = 6, height = 4, dpi = 300, units = "in")
 
 
@@ -418,7 +418,7 @@ combined_residuals <- (chum_residuals)/(pink_residuals) + plot_layout(guides = '
 
 combined_residuals
 
-ggsave(here("figures", "residuals_w_autocorrelation_logR_chum_pink_long_chain.png"),
+ggsave(here("figures", "residuals_w_autocorrelation_logR_chum_pink_long_chain_feb2026.png"),
        width = 6, height = 6, dpi = 300, units = "in")
 
 

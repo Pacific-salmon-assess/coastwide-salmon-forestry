@@ -1,0 +1,406 @@
+---
+title: "diagnostics_table"
+output: html_document
+---
+
+```{r}
+
+library(here)
+library(tidyverse)
+library(DT)
+library(kableExtra)
+
+
+```
+
+
+```{r}
+# read in diagnostics table
+
+file <- 'ric_chm_cpd_ocean_covariates_logR_long_chain.csv'
+
+
+summary_cpd_chm_file <- read.csv(here('stan models','outs','summary',file))
+
+summary_cpd_chum <- summary %>% 
+  select(variable, rhat, median, ess_tail, ess_bulk) %>%
+  mutate(variable_group = str_replace_all(variable,c("[0-9]"), "")) %>%
+  # mutate(variable_group = str_extract_all(variable,c("[a-z]"))) %>% 
+  # mutate(variable_group = str_replace_all(variable_group,"\[", "")) %>% 
+  group_by(variable_group) %>% 
+  # filter(startsWith(variable, "alpha")) %>% 
+  summarize(max_rhat = round(max(rhat),2),
+            min_ess_tail = round(min(ess_tail)),
+            median_estimate = round(median(median),2),
+            n = n()) %>% 
+  #remove mu[], lp__, log_lik
+  filter(!variable_group %in% c("mu[]", "lp__", "log_lik[]","b[]")) %>% 
+  #change "alpha" to "$\alpha$"
+  mutate(variable_group = case_when(variable_group == "alpha" ~ "$\\alpha_0$",
+                                    variable_group == "alpha_cu[]" ~ "$\\alpha_{cu}$",
+                                    variable_group == "alpha_j[]" ~ "$\\alpha_{i}$",
+                                    variable_group == "Smax[]" ~ "$S_{max}$",
+                                    variable_group == "b_for" ~ "$\\beta^{Forestry}_0$",
+                                    variable_group == "b_for_cu[]" ~ "$\\beta^{Forestry}_{CU}$",
+                                    variable_group == "b_for_rv[]" ~ "$\\beta^{Forestry}_{i}$",
+                                    variable_group == "b_npgo" ~ "$\\beta^{NPGO}_{0}$",
+                                    variable_group == "b_npgo_cu[]" ~ "$\\beta^{NPGO}_{CO}$",
+                                    variable_group == "b_npgo_rv[]" ~ "$\\beta^{NPGO}_{i}$",
+                                    variable_group == "b_sst" ~ "$\\beta^{SST}_{0}$",
+                                    variable_group == "b_sst_cu[]" ~ "$\\beta^{SST}_{CU}$",
+                                    variable_group == "b_sst_rv[]" ~ "$\\beta^{SST}_{i}$",
+                                    variable_group == "cu_sigma[]" ~ "$\\sigma_{CU}$",
+                                    variable_group == "mu_sigma" ~ "$\\sigma^{\\mu}$",
+                                    variable_group == "e_t[]" ~ "$\\epsilon_{i,t}$",
+                                    variable_group == "rho[]" ~ "$\\rho_{i}$",
+                                    variable_group == "sigmaAR[]" ~ "$\\sigma^{AR}_{i}$",
+                                    variable_group == "sd_sigma" ~ "$\\sigma^{\\sigma}$",
+                                    variable_group == "sd_sigma_cu" ~ "$\\sigma^{\\sigma}_{CU}$",
+                                    variable_group == "sigma[]" ~ "$\\sigma_i$",
+                                    variable_group == "sigma_a_cu" ~ "$\\sigma^{\\alpha,CU}$",
+                                    variable_group == "sigma_a_rv[]" ~ "$\\sigma^{\\alpha,i}_{CU}$",
+                                    variable_group == "sigma_for_cu" ~ "$\\sigma^{Forestry,CU}$",
+                                    variable_group == "sigma_for_rv" ~ "$\\sigma^{Forestry,i}$",
+                                    variable_group == "sigma_npgo_cu" ~ "$\\sigma^{NPGO,CU}$",
+                                    variable_group == "sigma_npgo_rv" ~ "$\\sigma^{NPGO,i}$",
+                                    variable_group == "sigma_sst_cu" ~ "$\\sigma^{SST,CU}$",
+                                    variable_group == "sigma_sst_rv" ~ "$\\sigma^{SST,i}$",
+                                    variable_group == "z_a_cu[]" ~ "$z^{\\alpha}_{CU}$",
+                                    variable_group == "z_a_rv[]" ~ "$z^{\\alpha}_{i}$",
+                                    variable_group == "z_for_cu[]" ~ "$z^{Forestry}_{CU}$",
+                                    variable_group == "z_for_rv[]" ~ "$z^{Forestry}_{i}$",
+                                    variable_group == "z_npgo_cu[]" ~ "$z^{NPGO}_{CU}$",
+                                    variable_group == "z_npgo_rv[]" ~ "$z^{NPGO}_{i}$",
+                                    variable_group == "z_sst_cu[]" ~ "$z^{SST}_{CU}$",
+                                    variable_group == "z_sst_rv[]" ~ "$z^{SST}_{i}$",
+                                    variable_group == "z_sig_cu[]" ~ "$z^{\\sigma}_{CU}$",
+                                    variable_group == "z_sig_rv[]" ~ "$z^{\\sigma}_{i}$",
+                                    TRUE ~ variable_group)) %>% 
+  #rename columns
+  rename("Parameter group" = variable_group,
+         "Rhat (max)" = max_rhat,
+         "ESS tail (min)" = min_ess_tail,
+         "Estimate (median)" = median_estimate,
+         "N_parameters" = n) 
+
+
+
+glimpse(summary_cpd_chum)
+
+#print table, make background white
+
+knitr::kable(summary_cpd_chum, format = "html", escape = FALSE)
+
+
+
+# write.csv(summary_cpd_chum, here('tables','diagnostics_cpd_chm.csv'), row.names = FALSE)
+
+#save this html table as excel with greek letters
+
+
+
+```
+
+
+```{r}
+#do same for chum model with eca
+
+file <- 'ric_chm_eca_ocean_covariates_logR_long_chain.csv'
+
+summary_eca_chm_file <- read.csv(here('stan models','outs','summary',file))
+
+summary_eca_chum <- summary_eca_chm_file %>% 
+  select(variable, rhat, median, ess_tail, ess_bulk) %>%
+  mutate(variable_group = str_replace_all(variable,c("[0-9]"), "")) %>%
+  # mutate(variable_group = str_extract_all(variable,c("[a-z]"))) %>% 
+  # mutate(variable_group = str_replace_all(variable_group,"\[", "")) %>% 
+  group_by(variable_group) %>% 
+  # filter(startsWith(variable, "alpha")) %>% 
+  summarize(max_rhat = round(max(rhat),2),
+            min_ess_tail = round(min(ess_tail)),
+            median_estimate = round(median(median),2),
+            n = n()) %>% 
+  #remove mu[], lp__, log_lik
+  filter(!variable_group %in% c("mu[]", "lp__", "log_lik[]","b[]")) %>% 
+  #change "alpha" to "$\alpha$"
+  mutate(variable_group = case_when(variable_group == "alpha" ~ "$\\alpha_0$",
+                                    variable_group == "alpha_cu[]" ~ "$\\alpha_{cu}$",
+                                    variable_group == "alpha_j[]" ~ "$\\alpha_{i}$",
+                                    variable_group == "Smax[]" ~ "$S_{max}$",
+                                    variable_group == "b_for" ~ "$\\beta^{Forestry}_0$",
+                                    variable_group == "b_for_cu[]" ~ "$\\beta^{Forestry}_{CU}$",
+                                    variable_group == "b_for_rv[]" ~ "$\\beta^{Forestry}_{i}$",
+                                    variable_group == "b_npgo" ~ "$\\beta^{NPGO}_{0}$",
+                                    variable_group == "b_npgo_cu[]" ~ "$\\beta^{NPGO}_{CO}$",
+                                    variable_group == "b_npgo_rv[]" ~ "$\\beta^{NPGO}_{i}$",
+                                    variable_group == "b_sst" ~ "$\\beta^{SST}_{0}$",
+                                    variable_group == "b_sst_cu[]" ~ "$\\beta^{SST}_{CU}$",
+                                    variable_group == "b_sst_rv[]" ~ "$\\beta^{SST}_{i}$",
+                                    variable_group == "cu_sigma[]" ~ "$\\sigma_{CU}$",
+                                    variable_group == "mu_sigma" ~ "$\\sigma^{\\mu}$",
+                                    variable_group == "e_t[]" ~ "$\\epsilon_{i,t}$",
+                                    variable_group == "rho[]" ~ "$\\rho_{i}$",
+                                    variable_group == "sigmaAR[]" ~ "$\\sigma^{AR}_{i}$",
+                                    variable_group == "sd_sigma" ~ "$\\sigma^{\\sigma}$",
+                                    variable_group == "sd_sigma_cu" ~ "$\\sigma^{\\sigma}_{CU}$",
+                                    variable_group == "sigma[]" ~ "$\\sigma_i$",
+                                    variable_group == "sigma_a_cu" ~ "$\\sigma^{\\alpha,CU}$",
+                                    variable_group == "sigma_a_rv[]" ~ "$\\sigma^{\\alpha,i}_{CU}$",
+                                    variable_group == "sigma_for_cu" ~ "$\\sigma^{Forestry,CU}$",
+                                    variable_group == "sigma_for_rv" ~ "$\\sigma^{Forestry,i}$",
+                                    variable_group == "sigma_npgo_cu" ~ "$\\sigma^{NPGO,CU}$",
+                                    variable_group == "sigma_npgo_rv" ~ "$\\sigma^{NPGO,i}$",
+                                    variable_group == "sigma_sst_cu" ~ "$\\sigma^{SST,CU}$",
+                                    variable_group == "sigma_sst_rv" ~ "$\\sigma^{SST,i}$",
+                                    variable_group == "z_a_cu[]" ~ "$z^{\\alpha}_{CU}$",
+                                    variable_group == "z_a_rv[]" ~ "$z^{\\alpha}_{i}$",
+                                    variable_group == "z_for_cu[]" ~ "$z^{Forestry}_{CU}$",
+                                    variable_group == "z_for_rv[]" ~ "$z^{Forestry}_{i}$",
+                                    variable_group == "z_npgo_cu[]" ~ "$z^{NPGO}_{CU}$",
+                                    variable_group == "z_npgo_rv[]" ~ "$z^{NPGO}_{i}$",
+                                    variable_group == "z_sst_cu[]" ~ "$z^{SST}_{CU}$",
+                                    variable_group == "z_sst_rv[]" ~ "$z^{SST}_{i}$",
+                                    variable_group == "z_sig_cu[]" ~ "$z^{\\sigma}_{CU}$",
+                                    variable_group == "z_sig_rv[]" ~ "$z^{\\sigma}_{i}$",
+                                    TRUE ~ variable_group)) %>% 
+  #rename columns
+  rename("Parameter group" = variable_group,
+         "Rhat (max)" = max_rhat,
+         "ESS tail (min)" = min_ess_tail,
+         "Estimate (median)" = median_estimate,
+         "N_parameters" = n) 
+
+
+knitr::kable(summary_eca_chum, format = "html", escape = FALSE)
+
+
+
+
+```
+
+
+```{r}
+# do same for pink with cpd model
+
+file <- 'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain.csv'
+
+summary_cpd_pk_file <- read.csv(here('stan models','outs','summary',file))
+
+
+summary_cpd_pk <- summary_cpd_pk_file %>% 
+  select(variable, rhat, median, ess_tail, ess_bulk) %>%
+  mutate(variable_group = str_replace_all(variable,c("[0-9]"), "")) %>%
+  # mutate(variable_group = str_extract_all(variable,c("[a-z]"))) %>% 
+  # mutate(variable_group = str_replace_all(variable_group,"\[", "")) %>% 
+  group_by(variable_group) %>% 
+  # filter(startsWith(variable, "alpha")) %>% 
+  summarize(max_rhat = round(max(rhat),2),
+            min_ess_tail = round(min(ess_tail)),
+            median_estimate = round(median(median),2),
+            n = n()) %>% 
+  #remove mu[], lp__, log_lik
+  filter(!variable_group %in% c("mu[]", "lp__", "log_lik[]","b[]")) %>% 
+  #change "alpha" to "$\alpha$"
+  mutate(variable_group = case_when(variable_group == "alpha[]" ~ "$\\alpha_0$",
+                                    variable_group == "alpha_cu[]" ~ "$\\alpha_{cu}$",
+                                    variable_group == "alpha_j[]" ~ "$\\alpha_{i}$",
+                                    variable_group == "Smax[]" ~ "$S_{max}$",
+                                    variable_group == "b_for" ~ "$\\beta^{Forestry}_0$",
+                                    variable_group == "b_for_cu[]" ~ "$\\beta^{Forestry}_{CU}$",
+                                    variable_group == "b_for_rv[]" ~ "$\\beta^{Forestry}_{i}$",
+                                    variable_group == "b_npgo" ~ "$\\beta^{NPGO}_{0}$",
+                                    variable_group == "b_npgo_cu[]" ~ "$\\beta^{NPGO}_{CO}$",
+                                    variable_group == "b_npgo_rv[]" ~ "$\\beta^{NPGO}_{i}$",
+                                    variable_group == "b_sst" ~ "$\\beta^{SST}_{0}$",
+                                    variable_group == "b_sst_cu[]" ~ "$\\beta^{SST}_{CU}$",
+                                    variable_group == "b_sst_rv[]" ~ "$\\beta^{SST}_{i}$",
+                                    variable_group == "cu_sigma[]" ~ "$\\sigma_{CU}$",
+                                    variable_group == "mu_sigma" ~ "$\\sigma^{\\mu}$",
+                                    variable_group == "e_t[]" ~ "$\\epsilon_{i,t}$",
+                                    variable_group == "rho[]" ~ "$\\rho_{i}$",
+                                    variable_group == "sigmaAR[]" ~ "$\\sigma^{AR}_{i}$",
+                                    variable_group == "sd_sigma" ~ "$\\sigma^{\\sigma}$",
+                                    variable_group == "sd_sigma_cu" ~ "$\\sigma^{\\sigma}_{CU}$",
+                                    variable_group == "sigma[]" ~ "$\\sigma_i$",
+                                    variable_group == "sigma_a_cu" ~ "$\\sigma^{\\alpha,CU}$",
+                                    variable_group == "sigma_a_j" ~ "$\\sigma^{\\alpha,i}$",
+                                    variable_group == "sigma_for_cu" ~ "$\\sigma^{Forestry,CU}$",
+                                    variable_group == "sigma_for_rv" ~ "$\\sigma^{Forestry,i}$",
+                                    variable_group == "sigma_npgo_cu" ~ "$\\sigma^{NPGO,CU}$",
+                                    variable_group == "sigma_npgo_rv" ~ "$\\sigma^{NPGO,i}$",
+                                    variable_group == "sigma_sst_cu" ~ "$\\sigma^{SST,CU}$",
+                                    variable_group == "sigma_sst_rv" ~ "$\\sigma^{SST,i}$",
+                                    variable_group == "z_a_cu[]" ~ "$z^{\\alpha}_{CU}$",
+                                    variable_group == "z_a_j[]" ~ "$z^{\\alpha}_{i}$",
+                                    variable_group == "z_for_cu[]" ~ "$z^{Forestry}_{CU}$",
+                                    variable_group == "z_for_rv[]" ~ "$z^{Forestry}_{i}$",
+                                    variable_group == "z_npgo_cu[]" ~ "$z^{NPGO}_{CU}$",
+                                    variable_group == "z_npgo_rv[]" ~ "$z^{NPGO}_{i}$",
+                                    variable_group == "z_sst_cu[]" ~ "$z^{SST}_{CU}$",
+                                    variable_group == "z_sst_rv[]" ~ "$z^{SST}_{i}$",
+                                    variable_group == "z_sig_cu[]" ~ "$z^{\\sigma}_{CU}$",
+                                    variable_group == "z_sig_j[]" ~ "$z^{\\sigma}_{i}$",
+                                    TRUE ~ variable_group)) %>% 
+  #rename columns
+  rename("Parameter group" = variable_group,
+         "Rhat (max)" = max_rhat,
+         "ESS tail (min)" = min_ess_tail,
+         "Estimate (median)" = median_estimate,
+         "N_parameters" = n)
+
+
+
+
+
+
+knitr::kable(summary_cpd_pk, format = "html", escape = FALSE)
+
+
+
+
+
+
+
+```
+
+
+
+```{r}
+
+# do same for pink with eca model
+
+file <- 'ric_pk_eca_st_noac_ocean_covariates_logR_long_chain.csv'
+
+summary_eca_pk_file <- read.csv(here('stan models','outs','summary',file))
+
+
+summary_eca_pk <- summary_eca_pk_file %>% 
+  select(variable, rhat, median, ess_tail, ess_bulk) %>%
+  mutate(variable_group = str_replace_all(variable,c("[0-9]"), "")) %>%
+  # mutate(variable_group = str_extract_all(variable,c("[a-z]"))) %>% 
+  # mutate(variable_group = str_replace_all(variable_group,"\[", "")) %>% 
+  group_by(variable_group) %>% 
+  # filter(startsWith(variable, "alpha")) %>% 
+  summarize(max_rhat = round(max(rhat),2),
+            min_ess_tail = round(min(ess_tail)),
+            median_estimate = round(median(median),2),
+            n = n()) %>% 
+  #remove mu[], lp__, log_lik
+  filter(!variable_group %in% c("mu[]", "lp__", "log_lik[]","b[]")) %>% 
+  #change "alpha" to "$\alpha$"
+  mutate(variable_group = case_when(variable_group == "alpha[]" ~ "$\\alpha_0$",
+                                    variable_group == "alpha_cu[]" ~ "$\\alpha_{cu}$",
+                                    variable_group == "alpha_j[]" ~ "$\\alpha_{i}$",
+                                    variable_group == "Smax[]" ~ "$S_{max}$",
+                                    variable_group == "b_for" ~ "$\\beta^{Forestry}_0$",
+                                    variable_group == "b_for_cu[]" ~ "$\\beta^{Forestry}_{CU}$",
+                                    variable_group == "b_for_rv[]" ~ "$\\beta^{Forestry}_{i}$",
+                                    variable_group == "b_npgo" ~ "$\\beta^{NPGO}_{0}$",
+                                    variable_group == "b_npgo_cu[]" ~ "$\\beta^{NPGO}_{CO}$",
+                                    variable_group == "b_npgo_rv[]" ~ "$\\beta^{NPGO}_{i}$",
+                                    variable_group == "b_sst" ~ "$\\beta^{SST}_{0}$",
+                                    variable_group == "b_sst_cu[]" ~ "$\\beta^{SST}_{CU}$",
+                                    variable_group == "b_sst_rv[]" ~ "$\\beta^{SST}_{i}$",
+                                    variable_group == "cu_sigma[]" ~ "$\\sigma_{CU}$",
+                                    variable_group == "mu_sigma" ~ "$\\sigma^{\\mu}$",
+                                    variable_group == "e_t[]" ~ "$\\epsilon_{i,t}$",
+                                    variable_group == "rho[]" ~ "$\\rho_{i}$",
+                                    variable_group == "sigmaAR[]" ~ "$\\sigma^{AR}_{i}$",
+                                    variable_group == "sd_sigma" ~ "$\\sigma^{\\sigma}$",
+                                    variable_group == "sd_sigma_cu" ~ "$\\sigma^{\\sigma}_{CU}$",
+                                    variable_group == "sigma[]" ~ "$\\sigma_i$",
+                                    variable_group == "sigma_a_cu" ~ "$\\sigma^{\\alpha,CU}$",
+                                    variable_group == "sigma_a_j" ~ "$\\sigma^{\\alpha,i}$",
+                                    variable_group == "sigma_for_cu" ~ "$\\sigma^{Forestry,CU}$",
+                                    variable_group == "sigma_for_rv" ~ "$\\sigma^{Forestry,i}$",
+                                    variable_group == "sigma_npgo_cu" ~ "$\\sigma^{NPGO,CU}$",
+                                    variable_group == "sigma_npgo_rv" ~ "$\\sigma^{NPGO,i}$",
+                                    variable_group == "sigma_sst_cu" ~ "$\\sigma^{SST,CU}$",
+                                    variable_group == "sigma_sst_rv" ~ "$\\sigma^{SST,i}$",
+                                    variable_group == "z_a_cu[]" ~ "$z^{\\alpha}_{CU}$",
+                                    variable_group == "z_a_j[]" ~ "$z^{\\alpha}_{i}$",
+                                    variable_group == "z_for_cu[]" ~ "$z^{Forestry}_{CU}$",
+                                    variable_group == "z_for_rv[]" ~ "$z^{Forestry}_{i}$",
+                                    variable_group == "z_npgo_cu[]" ~ "$z^{NPGO}_{CU}$",
+                                    variable_group == "z_npgo_rv[]" ~ "$z^{NPGO}_{i}$",
+                                    variable_group == "z_sst_cu[]" ~ "$z^{SST}_{CU}$",
+                                    variable_group == "z_sst_rv[]" ~ "$z^{SST}_{i}$",
+                                    variable_group == "z_sig_cu[]" ~ "$z^{\\sigma}_{CU}$",
+                                    variable_group == "z_sig_j[]" ~ "$z^{\\sigma}_{i}$",
+                                    TRUE ~ variable_group)) %>% 
+  #rename columns
+  rename("Parameter group" = variable_group,
+         "Rhat (max)" = max_rhat,
+         "ESS tail (min)" = min_ess_tail,
+         "Estimate (median)" = median_estimate,
+         "N_parameters" = n)
+
+
+
+
+
+
+knitr::kable(summary_eca_pk, format = "html", escape = FALSE)
+
+
+
+
+
+
+
+
+```
+
+```{r}
+
+# merge all the tables together by Parameter Group have merged header for species and model
+
+merged_diagnostic_table <- summary_cpd_chum %>% 
+  # select(-c("Estimate (median)", N_parameters)) %>% 
+  rename("Rhat (max) CPD Chum" = "Rhat (max)",
+         "ESS tail (min) CPD Chum" = "ESS tail (min)",
+         "Estimate (median) CPD Chum" = "Estimate (median)",
+         "N_parameters CPD Chum" = "N_parameters") %>%
+  full_join(summary_eca_chum %>% 
+              # select(-c(Estimate..median., N_parameters)) %>% 
+              rename("Rhat (max) ECA Chum" = "Rhat (max)",
+                     "ESS tail (min) ECA Chum" = "ESS tail (min)",
+                     "Estimate (median) ECA Chum" = "Estimate (median)",
+                     "N_parameters ECA Chum" = "N_parameters"),
+            
+            by = "Parameter group") %>% 
+  full_join(summary_cpd_pk %>% 
+              # select(-c(Estimate..median., N_parameters)) %>% 
+              rename("Rhat (max) CPD Pink" = "Rhat (max)",
+                     "ESS tail (min) CPD Pink" = "ESS tail (min)",
+                     "Estimate (median) CPD Pink" = "Estimate (median)",
+                     "N_parameters CPD Pink" = "N_parameters"
+                     ),
+            by = "Parameter group") %>% 
+  full_join(summary_eca_pk %>% 
+              # select(-c(Estimate..median., N_parameters)) %>% 
+              rename("Rhat (max) ECA Pink" = "Rhat (max)",
+                     "ESS tail (min) ECA Pink" = "ESS tail (min)",
+                     "Estimate (median) ECA Pink" = "Estimate (median)",
+                     "N_parameters ECA Pink" = "N_parameters"),
+            by = "Parameter group")
+
+
+
+knitr::kable(merged_diagnostic_table, format = "html", escape = FALSE) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+

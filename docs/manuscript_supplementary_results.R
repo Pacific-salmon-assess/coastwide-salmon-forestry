@@ -300,15 +300,37 @@ recruitment_decline_df <- function(posterior, effect, species, covariate_value){
 
 # most recent average CPD
 
+
+# chum
+
+df <- ch20rsc
 current_average_cpd <- df %>% 
   group_by(River_n) %>% 
   summarize(max_cpd = max(disturbedarea_prct_cs)) %>% 
   summarize(current_average_cpd = mean(max_cpd))
 
-max_average_cpd <- df %>% 
+max_average_eca <- df %>% 
   group_by(River_n) %>% 
   summarize(max_eca = max(ECA_age_proxy_forested_only)) %>% 
   summarize(max_average_eca = mean(max_eca))
+
+overall_min_cpd <- df %>% 
+  summarize(min_cpd = min(disturbedarea_prct_cs)) 
+
+# pink
+
+df <- pk10r
+current_average_cpd_pink <- df %>% 
+  group_by(River_n) %>% 
+  summarize(max_cpd = max(disturbedarea_prct_cs)) %>% 
+  summarize(current_average_cpd = mean(max_cpd))
+
+max_average_eca_pink <- df %>%
+  group_by(River_n) %>% 
+  summarize(max_eca = max(ECA_age_proxy_forested_only)) %>% 
+  summarize(max_average_eca = mean(max_eca))
+
+
 
 
 #calculate recruitment decline for current_average_cpd and max_average_eca
@@ -550,7 +572,7 @@ sst_df %>% filter(!is.na(sst), year == 1955 | year == 1997) %>%
   scale_shape_manual(values = c("watershed outlet" = 1, "SST data location" = 0)) +
   scale_color_manual(values = c("watershed outlet" = "gray20")) +
   scale_x_continuous(limits = c(-133, -122), breaks = seq(-133,-122,5)) +
-  scale_y_continuous(limits = c(47, 58), breaks = seq(47,58,4)) +
+  scale_y_continuous(limits = c(47, 58), breaks = seq(47,58,2)) +
   guides(shape = guide_legend(title = ""), override.aes = list(size = 8, alpha = 1),
          fill = guide_legend(title = "SST (°C)")) +
            # labs(title = "Spring Extended Reconstructed Sea-Surface Temperature (ERSST)") + 
@@ -572,6 +594,308 @@ sst_df %>% filter(!is.na(sst), year == 1955 | year == 1997) %>%
 ggsave(here("figures", "manuscript_supplementary_feb2026_ersst_1955_1997.png"), width = 8, height = 5, dpi = 300)
 
 
+
+# chum
+
+
+current_average_cpd <- ch20rsc %>% 
+  group_by(River_n) %>% 
+  summarize(max_cpd = max(disturbedarea_prct_cs)) %>% 
+  summarize(current_average_cpd = mean(max_cpd))
+
+max_average_eca <- ch20rsc %>% 
+  group_by(River_n) %>% 
+  summarize(max_eca = max(ECA_age_proxy_forested_only)) %>% 
+  summarize(max_average_eca = mean(max_eca))
+
+overall_min_cpd <- df %>% 
+  summarize(min_cpd = min(disturbedarea_prct_cs)) 
+
+b_cpd_chum <- ric_chm_cpd_ocean_covariates_logR_long_chain %>% 
+  select("b_for")
+
+
+
+b_eca_chum <- ric_chm_eca_ocean_covariates_logR_long_chain %>% 
+  select("b_for")
+
+
+# pink
+
+
+current_average_cpd_pink <- pk10r %>% 
+  group_by(River_n) %>% 
+  summarize(max_cpd = max(disturbedarea_prct_cs)) %>% 
+  summarize(current_average_cpd = mean(max_cpd))
+
+max_average_eca_pink <- pk10r %>%
+  group_by(River_n) %>% 
+  summarize(max_eca = max(ECA_age_proxy_forested_only)) %>% 
+  summarize(max_average_eca = mean(max_eca))
+
+
+
+theoretical_cpd = seq(0,100,1)
+
+sqrt_theoretical_cpd = sqrt(theoretical_cpd)
+
+std_sqrt_theoretical_cpd = (sqrt_theoretical_cpd - mean(sqrt_theoretical_cpd))/sd(sqrt_theoretical_cpd)
+
+cpd = data.frame(theoretical_cpd, sqrt_theoretical_cpd, std_sqrt_theoretical_cpd)
+
+
+recruitment_decline_df2 <- function(b_for, forestry_level_high, forestry_level_low){
+  
+  recruitment = (exp(as.matrix(b_for[,1])%*%
+                       (forestry_level_high-forestry_level_low)))*100 - 100
+  
+  return(data.frame(median_recruitment_change = median(recruitment),
+                    recruitment_025 = quantile(recruitment, 0.025),
+                    recruitment_975 = quantile(recruitment, 0.975)))
+  
+}
+
+
+
+recruitment_decline_df2(b_cpd_chum, cpd$std_sqrt_theoretical_cpd[which.min(abs(cpd$theoretical_cpd-current_average_cpd$current_average_cpd))],
+                        min(cpd$std_sqrt_theoretical_cpd))
+
+
+theoretical_eca <- seq(0,1,0.01)
+
+sqrt_theoretical_eca <- sqrt(theoretical_eca)
+
+std_sqrt_theoretical_eca <- (sqrt_theoretical_eca - mean(sqrt_theoretical_eca))/sd(sqrt_theoretical_eca)
+
+eca <- data.frame(theoretical_eca, sqrt_theoretical_eca, std_sqrt_theoretical_eca)
+
+recruitment_decline_df2(b_eca_chum, eca$std_sqrt_theoretical_eca[which.min(abs(eca$theoretical_eca-max_average_eca$max_average_eca))],
+                        min(eca$std_sqrt_theoretical_eca))
+
+#pink
+
+b_cpd_pink <- ric_pk_cpd_ersst_long_chain %>% 
+  select("b_for")
+
+b_eca_pink <- ric_pk_eca_ersst_long_chain %>% 
+  select("b_for")
+
+
+recruitment_decline_df2(b_cpd_pink, cpd$std_sqrt_theoretical_cpd[which.min(abs(cpd$theoretical_cpd-current_average_cpd_pink$current_average_cpd))],
+                        min(cpd$std_sqrt_theoretical_cpd))
+
+
+recruitment_decline_df2(b_eca_pink, eca$std_sqrt_theoretical_eca[which.min(abs(eca$theoretical_eca-max_average_eca_pink$max_average_eca))],
+                        min(eca$std_sqrt_theoretical_eca))
+
+effect_sizes_river_df <- function(posterior, species, river){
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
+  river_data <- df %>% 
+    filter(River == river)
+  
+  effect_df <- NULL
+  
+  b_for <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river_data$River_n[1],"]")))
+      
+  b_sst <- posterior %>% select(starts_with("b_sst_rv")) %>%
+        select(ends_with(paste0("[",river_data$River_n[1],"]")))
+  
+  b_npgo <- posterior %>% select(starts_with("b_npgo_rv")) %>%
+        select(ends_with(paste0("[",river_data$River_n[1],"]")))
+    
+  effect_df <- data.frame(River = unique(river_data$River),
+                          forestry_effect_median = round(apply(as.matrix(b_for[,1]),2,median),2),
+                          forestry_effect_median_025 = round(apply(as.matrix(b_for[,1]),2,quantile, probs = 0.025),2),
+                          forestry_effect_median_975 = round(apply(as.matrix(b_for[,1]),2,quantile, probs = 0.975),2),
+                          sst_effect_median = round(apply(as.matrix(b_sst[,1]),2,median),2),
+                          sst_effect_median_025 = round(apply(as.matrix(b_sst[,1]),2,quantile, probs = 0.025),2),
+                          sst_effect_median_975 = round(apply(as.matrix(b_sst[,1]),2,quantile, probs = 0.975),2),
+                          npgo_effect_median = round(apply(as.matrix(b_npgo[,1]),2,median),2),
+                          npgo_effect_median_025 = round(apply(as.matrix(b_npgo[,1]),2,quantile, probs = 0.025),2),
+                          npgo_effect_median_975 = round(apply(as.matrix(b_npgo[,1]),2,quantile, probs = 0.975),2)
+                            
+                            )
+                            
+    # sym(effect)_25 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.25),
+    # sym(effect)_75 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.75),
+    # sym(effect)_025 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.025),
+    # sym(effect)_975 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.975))
+    
+    # effect_df <- rbind(effect_df, effect_df_cu)
+  
+  
+  return(effect_df)
+}
+
+
+effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, species = "chum", river = "VINER SOUND CREEK")
+effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, species = "chum", river = "CARNATION CREEK")
+effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, species = "chum", river = "PHILLIPS RIVER")
+effect_sizes_river_df(ric_pk_cpd_ersst_long_chain, species = "pink", river = "PHILLIPS RIVER")
+
+b_eca_chum_phillips_river <- ric_chm_eca_ocean_covariates_logR_long_chain %>% 
+  select(starts_with(paste0("b_for_rv[",ch20rsc$River_n[ch20rsc$River == "PHILLIPS RIVER"][1],"]")))
+
+b_cpd_pink_phillips_river <- ric_pk_cpd_ersst_long_chain %>% 
+  select(starts_with(paste0("b_for_rv[",pk10r$River_n[pk10r$River == "PHILLIPS RIVER"][1],"]")))
+ 
+b_cpd_chum_phillips_river <- ric_chm_cpd_ocean_covariates_logR_long_chain %>% 
+  select(starts_with(paste0("b_for_rv[",ch20rsc$River_n[ch20rsc$River == "PHILLIPS RIVER"][1],"]")))
+
+
+recruitment_decline_df2(b_eca_chum_phillips_river, eca$std_sqrt_theoretical_eca[which.min(abs(eca$theoretical_eca-0.20))],
+                        min(eca$std_sqrt_theoretical_eca))
+
+recruitment_decline_df2(b_eca_chum_phillips_river, eca$std_sqrt_theoretical_eca[which.min(abs(eca$theoretical_eca-0.25))],
+                        min(eca$std_sqrt_theoretical_eca))
+
+recruitment_decline_df2(b_cpd_chum_phillips_river, 
+                        cpd$std_sqrt_theoretical_cpd[which.min(abs(cpd$theoretical_cpd-41.4))],
+                        min(cpd$std_sqrt_theoretical_cpd))
+
+
+current_average_cpd_pink_phillips_river <- max(pk10r$disturbedarea_prct_cs[pk10r$River == "PHILLIPS RIVER"])
+
+
+recruitment_decline_df2(b_cpd_pink_phillips_river, 
+                        cpd$std_sqrt_theoretical_cpd[which.min(abs(cpd$theoretical_cpd-current_average_cpd_pink_phillips_river))],
+                        min(cpd$std_sqrt_theoretical_cpd))
+
+
+
+
+
+# table of effect size - cumulative disturbance ---------------------------
+
+effect_chum_cpd_sst_npgo <- effect_sizes_cu_df(ric_chm_cpd_ocean_covariates_logR_long_chain, effect = "cpd", species = "chum") %>% 
+  rename(cpd_effect_median = effect_median) %>%
+  left_join(effect_sizes_cu_df(ric_chm_cpd_ocean_covariates_logR_long_chain, effect = "sst", species = "chum") %>%
+              rename(sst_effect_median = effect_median), by = "CU") %>%
+  left_join(effect_sizes_cu_df(ric_chm_cpd_ocean_covariates_logR_long_chain, effect = "npgo", species = "chum") %>%
+              rename(npgo_effect_median = effect_median), by = "CU") 
+
+
+
+#do same for river level effects
+
+effect_sizes_river_df <- function(posterior, effect, species){
+  
+  if(species == "chum"){
+    df <- ch20rsc 
+    
+  } else if(species == "pink"){
+    df <- pk10r
+  }
+  
+  effect_df <- NULL
+  
+  for (i in 1:length(unique(df$River_n))){
+    
+    river <- unique(df$River_n)[i]
+    
+    river_data <- df %>% filter(River_n == river)
+    
+    if(effect == "cpd" || effect == "eca"){
+      b_rv <- posterior %>% select(starts_with("b_for_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+      
+    } else if(effect == "sst"){
+      b_rv <- posterior %>% select(starts_with("b_sst_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+    } else if(effect == "npgo"){
+      b_rv <- posterior %>% select(starts_with("b_npgo_rv")) %>%
+        select(ends_with(paste0("[",river,"]")))
+    }
+    
+    effect_df_rv <- data.frame(River = unique(river_data$River),
+                               effect_median = round(apply(as.matrix(b_rv[,1]),2,median),2),
+                               CU = unique(river_data$CU_name))
+    # sym(effect)_25 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.25),
+    # sym(effect)_75 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.75),
+    # sym(effect)_025 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.025),
+    # sym(effect)_975 = apply(as.matrix(b_cu[,1]),2,quantile, probs = 0.975))
+    
+    effect_df <- rbind(effect_df, effect_df_rv)
+  }
+  
+  return(effect_df)
+}
+
+effect_chum_cpd_sst_npgo_rv <- effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, effect = "cpd", species = "chum") %>% 
+  rename(cpd_effect_median = effect_median) %>%
+  left_join(effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, effect = "sst", species = "chum") %>%
+              rename(sst_effect_median = effect_median), by = c("River","CU")) %>%
+  left_join(effect_sizes_river_df(ric_chm_cpd_ocean_covariates_logR_long_chain, effect = "npgo", species = "chum") %>%
+              rename(npgo_effect_median = effect_median), by = c("River","CU")) 
+
+
+# group by CU and then calculate the proportion of rivers in which effect of cpd is greater in magnitude
+# than effect of NPGO and SST
+
+prop_rivers <- effect_chum_cpd_sst_npgo_rv %>% 
+  mutate(flag = (abs(cpd_effect_median) >= abs(sst_effect_median) & abs(cpd_effect_median) >= abs(npgo_effect_median))) %>%
+  # filter(CU == "Southwest Vancouver Island") %>% 
+  # View()
+  group_by(CU) %>% 
+  summarize(n_rivers_forestry = sum(flag),
+            n_rivers = n()) %>% 
+  mutate(proportion_forestry_greater = round(n_rivers_forestry/n_rivers,2)) %>%
+  select(CU, proportion_forestry_greater)
+
+#join
+
+effect_chum_cpd_sst_npgo_w_prop <- effect_chum_cpd_sst_npgo %>%
+  left_join(prop_rivers, by = "CU")
+
+
+
+write.csv(effect_chum_cpd_sst_npgo_w_prop,
+          here("tables","manuscript_feb2026_chum_ricker_cpd_sst_npgo_effect_sizes_by_cu_table_w_prop.csv"),
+          row.names = FALSE)
+
+effect_chum_eca_sst_npgo <- effect_sizes_cu_df(ric_chm_eca_ocean_covariates_logR_long_chain, effect = "eca", species = "chum") %>% 
+  rename(eca_effect_median = effect_median) %>%
+  left_join(effect_sizes_cu_df(ric_chm_eca_ocean_covariates_logR_long_chain, effect = "sst", species = "chum") %>%
+              rename(sst_effect_median = effect_median), by = "CU") %>%
+  left_join(effect_sizes_cu_df(ric_chm_eca_ocean_covariates_logR_long_chain, effect = "npgo", species = "chum") %>%
+              rename(npgo_effect_median = effect_median), by = "CU") 
+
+
+effect_chum_eca_sst_npgo_rv <- effect_sizes_river_df(ric_chm_eca_ocean_covariates_logR_long_chain, effect = "eca", species = "chum") %>% 
+  rename(eca_effect_median = effect_median) %>%
+  left_join(effect_sizes_river_df(ric_chm_eca_ocean_covariates_logR_long_chain, effect = "sst", species = "chum") %>%
+              rename(sst_effect_median = effect_median), by = c("River","CU")) %>%
+  left_join(effect_sizes_river_df(ric_chm_eca_ocean_covariates_logR_long_chain, effect = "npgo", species = "chum") %>%
+              rename(npgo_effect_median = effect_median), by = c("River","CU")) 
+
+
+prop_rivers_eca <- effect_chum_eca_sst_npgo_rv %>% 
+  mutate(flag = (abs(eca_effect_median) >= abs(sst_effect_median) & abs(eca_effect_median) >= abs(npgo_effect_median))) %>%
+  # filter(CU == "Southwest Vancouver Island") %>% 
+  # View()
+  group_by(CU) %>% 
+  summarize(n_rivers_forestry = sum(flag),
+            n_rivers = n()) %>% 
+  mutate(proportion_forestry_greater = round(n_rivers_forestry/n_rivers,2)) %>%
+  select(CU, proportion_forestry_greater)
+
+#join
+
+effect_chum_eca_sst_npgo_w_prop <- effect_chum_eca_sst_npgo %>%
+  left_join(prop_rivers_eca, by = "CU")
+
+
+write.csv(effect_chum_eca_sst_npgo_w_prop,
+          here("tables","manuscript_feb2026_chum_ricker_eca_sst_npgo_effect_sizes_by_cu_table_w_prop.csv"),
+          row.names = FALSE)
 
 
 

@@ -1061,7 +1061,7 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
   } else if(species == "pink"){
     df <- pk10r
     river_data <- pk10r %>% filter(River == river_name)
-    river <- river_data$River_n2[1]
+    river <- river_data$River_n[1]
     # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
   }
   
@@ -1665,7 +1665,7 @@ for(i in watersheds){
   ggsave(filename = here("figures",
                          paste0("case_study_et_w_sr_curves_",str_replace_all(str_to_lower(i), " ", "_"),".png")),
          plot = ((effects_plot+spawner_recruit_plot + plot_layout(widths = c(1,1.2)))/change_plot) +
-           plot_annotation(tag_levels = 'A',title = str_to_title(i))&
+           plot_annotation(tag_levels = 'A',title = paste(str_to_title(i), "- Chum Salmon"))&
            theme(plot.tag.position = c(0.0, 1.0),
                  plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")),
          width = 7,
@@ -1677,38 +1677,371 @@ for(i in watersheds){
 }
 
 
-# do same for pink but only for some watersheds - Phillips River, Deena Creek, Neekas
 
-for(i in watersheds){
+# Pink --------------------------------------------------------------------
+
+
+
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"))
+
+#odd year pinks
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"))
+
+options(mc.cores=8)
+
+# Pink salmon - even/odd croodlines #####
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY cAY CREEK 2',pk10r_o$River)
+pk10r_o$River=ifelse(pk10r_o$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_o$River)
+pk10r_o=pk10r_o[order(factor(pk10r_o$River),pk10r_o$BroodYear),]
+rownames(pk10r_o)=seq(1:nrow(pk10r_o))
+
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='950-169400-00000-00000-0000-0000-000-000-000-000-000-000','SALMON RIVER 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-765500-18600-00000-0000-0000-000-000-000-000-000-000','HEAD CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=='915-488000-41400-00000-0000-0000-000-000-000-000-000-000','WINDY cAY CREEK 2',pk10r_e$River)
+pk10r_e$River=ifelse(pk10r_e$WATERSHED_CDE=="915-486500-05300-00000-0000-0000-000-000-000-000-000-000",'LAGOON CREEK 2',pk10r_e$River)
+pk10r_e=pk10r_e[order(factor(pk10r_e$River),pk10r_e$BroodYear),]
+rownames(pk10r_e)=seq(1:nrow(pk10r_e))
+
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.ECA=sqrt(pk10r_o$ECA_age_proxy_forested_only)
+pk10r_o$sqrt.ECA.std=(pk10r_o$sqrt.ECA-mean(pk10r_o$sqrt.ECA))/sd(pk10r_o$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_o$sqrt.CPD=sqrt(pk10r_o$disturbedarea_prct_cs)
+pk10r_o$sqrt.CPD.std=(pk10r_o$sqrt.CPD-mean(pk10r_o$sqrt.CPD))/sd(pk10r_o$sqrt.CPD)
+
+#normalize ECA 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.ECA=sqrt(pk10r_e$ECA_age_proxy_forested_only)
+pk10r_e$sqrt.ECA.std=(pk10r_e$sqrt.ECA-mean(pk10r_e$sqrt.ECA))/sd(pk10r_e$sqrt.ECA)
+
+#normalize CPD 2 - square root transformation (ie. sqrt(x))
+pk10r_e$sqrt.CPD=sqrt(pk10r_e$disturbedarea_prct_cs)
+pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.CPD)
+
+
+#standardize npgo
+pk10r_o$npgo.std=(pk10r_o$npgo-mean(pk10r_o$npgo))/sd(pk10r_o$npgo)
+pk10r_e$npgo.std=(pk10r_e$npgo-mean(pk10r_e$npgo))/sd(pk10r_e$npgo)
+
+# pk10r_o$sst.std = (pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
+# pk10r_e$sst.std = (pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
+
+pk10r_o$sst.std = (pk10r_o$spring_ersst-mean(pk10r_o$spring_ersst))/sd(pk10r_o$spring_ersst)
+pk10r_e$sst.std = (pk10r_e$spring_ersst-mean(pk10r_e$spring_ersst))/sd(pk10r_e$spring_ersst)
+
+
+pk10r_o$escapement.t_1=pk10r_e$Spawners[match(paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear-1),paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear))]
+pk10r_e$escapement.t_1=pk10r_o$Spawners[match(paste(pk10r_e$WATERSHED_CDE,pk10r_e$BroodYear-1),paste(pk10r_o$WATERSHED_CDE,pk10r_o$BroodYear))]
+
+pk10r_o$Broodline='Odd'
+pk10r_e$Broodline='Even'
+
+L_o=pk10r_o%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_o$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_o$BroodYear))/2)
+L_e=pk10r_e%>%group_by(River)%>%summarize(l=n(),by=min(BroodYear),tmin=(min(BroodYear)-min(pk10r_e$BroodYear))/2+1,tmax=(max(BroodYear)-min(pk10r_e$BroodYear))/2)
+L_o$River2=paste(L_o$River,'Odd',sep='_')
+L_e$River2=paste(L_e$River,'Even',sep='_')
+L_all=rbind(L_e,L_o)
+L_all=L_all[order(factor(L_all$River2)),]
+
+pk10r_o$ii=as.numeric(factor(pk10r_o$BroodYear))
+pk10r_e$ii=as.numeric(factor(pk10r_e$BroodYear))
+
+pk10r=rbind(pk10r_e,pk10r_o)
+pk10r$River2=paste(pk10r$River,pk10r$Broodline,sep='_')
+pk10r=pk10r[order(factor(pk10r$River2),pk10r$BroodYear),]
+
+#extract max S for priors on capacity & eq. recruitment
+smax_prior=pk10r%>%group_by(River2) %>%summarize(m.s=max(Spawners),m.r=max(Recruits))
+
+#ragged start and end points for each SR series
+# N_s=rag_n(pk10r$River2)
+
+#cus by stock
+cu1=distinct(pk10r,CU,.keep_all = T)
+cu2=distinct(pk10r,River,.keep_all = T)
+cu3=distinct(pk10r,River2,.keep_all = T)
+
+pk10r$River_n <- as.numeric(factor(pk10r$River))
+pk10r$River_n2 <- as.numeric(factor(pk10r$River2))
+pk10r$CU_name <- pk10r$CU_NAME
+
+max_eca_pink_df <- pk10r %>% 
+  select(River2, River, River_n, CU, ECA_age_proxy_forested_only) %>%
+  group_by(River) %>%
+  summarize(River = first(River),
+            River_n = first(River_n),
+            CU = first(CU),
+            eca_max = 100*max(ECA_age_proxy_forested_only, na.rm =TRUE)) %>% 
+  mutate(eca_level = case_when(eca_max < 12 ~ 'low',
+                               eca_max >= 12 & eca_max < 24 ~ 'medium',
+                               eca_max >= 24 ~ 'high'))
+
+max_cpd_pink_df <- pk10r %>%
+  select(River2, River, River_n,  CU, disturbedarea_prct_cs) %>%
+  group_by(River) %>% 
+  summarize(River = first(River),
+            River_n = first(River_n),
+            CU = first(CU),
+            cpd_max = max(disturbedarea_prct_cs, na.rm = TRUE))
+
+
+ric_pk_cpd_ersst_long_chain <- read.csv(here('stan models','outs','posterior',"ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain.csv"),
+                                        check.names = FALSE)
+
+ric_pk_eca_ersst_long_chain <- read.csv(here('stan models','outs','posterior',"ric_pk_eca_st_noac_ocean_covariates_logR_long_chain.csv"),
+                                        check.names = FALSE)
+
+
+# do same for pink but only for some watersheds - Phillips River, Deena Creek, Neekas
+pink_watersheds_w_broodline = c("PHILLIPS RIVER_Even", 
+                    "PHILLIPS RIVER_Odd",
+                    "DEENA CREEK_Even",
+                    "DEENA CREEK_Odd", 
+                    "NEEKAS CREEK_Even",
+                    "NEEKAS CREEK_Odd")
+
+pink_watersheds <- c("PHILLIPS RIVER", 
+                    "DEENA CREEK", 
+                    "NEEKAS CREEK")
+
+
+case_study_watersheds_data_pk <- pk10r %>% 
+  filter(River2 %in% pink_watersheds)
+
+
+
+
+
+plot_recruit_spawner_river_pink <- function(species = "pink", river_name,  posterior){
+  
+  # river_data <- df %>% filter(River_n == river)
+  even_or_odd <- str_extract(river_name, "Even|Odd")
+  
+  df <- pk10r
+  river_data <- pk10r %>% filter(River2 == river_name)
+  
+  # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
+  
+  
+  river_wo_broodline <- unique(river_data$River_n)
+  river_w_broodline <- unique(river_data$River_n2)
+  
+  posterior_rv_b_for <- posterior %>% 
+    select(starts_with('b_for_rv')) %>%
+    select(ends_with(paste0("[",river_wo_broodline,"]")))
+  
+  posterior_rv_alpha_j <- posterior %>% 
+    select(starts_with('alpha_j')) %>%
+    select(ends_with(paste0("[",river_w_broodline,"]")))
+  
+  posterior_rv_S_max <- posterior %>% 
+    select(starts_with('Smax')) %>%
+    select(ends_with(paste0("[",river_w_broodline,"]")))
+  
+  # for(river in river_w_broodline_both){
+  #   
+  #   posterior_rv_alpha_j <- posterior %>% 
+  #     select(starts_with('alpha_j')) %>%
+  #     select(ends_with(paste0("[",river_w_broodline,"]")))
+  #   
+  #   posterior_rv_S_max <- posterior %>% 
+  #     select(starts_with('Smax')) %>%
+  #     select(ends_with(paste0("[",river_w_broodline,"]")))
+  #   
+  # }
+  
+  
+  
+  
+  
+  
+  
+  
+  spawners_predicted <- seq(0, max(river_data$Spawners), length.out = 100)
+  
+  # calculate recruit prediction
+  
+  low_cpd <- min(river_data$sqrt.CPD.std)
+  high_cpd <- max(river_data$sqrt.CPD.std)
+  # avg_cpd <- mean(river_data$sqrt.CPD.std)
+  mid_cpd <- min(river_data$sqrt.CPD.std) + (max(river_data$sqrt.CPD.std) - min(river_data$sqrt.CPD.std))/2
+  
+  mid_cpd_real <- min(river_data$disturbedarea_prct_cs) + (max(river_data$disturbedarea_prct_cs) - min(river_data$disturbedarea_prct_cs))/2
+  
+  
+  recruits_predicted_low_cpd <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+  
+  recruits_predicted_high_cpd <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, median))*spawners_predicted
+  
+  
+  recruits_predicted_low_cpd_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
+  
+  recruits_predicted_low_cpd_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*low_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
+  
+  recruits_predicted_high_cpd_lower <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.025)))*spawners_predicted
+  
+  recruits_predicted_high_cpd_upper <- exp(apply((matrix(posterior_rv_alpha_j[,1], ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1])) - as.matrix(1/posterior_rv_S_max)%*%spawners_predicted  + matrix(posterior_rv_b_for[,1]*high_cpd, ncol = length(spawners_predicted), nrow = length(posterior_rv_alpha_j[,1]))), 2, quantile, c(0.975)))*spawners_predicted
+  
+  
+  
+  #make dataframe
+  
+  prediction_df <- data.frame(spawners = spawners_predicted,
+                              
+                              recruits_low_cpd = recruits_predicted_low_cpd,
+                              recruits_high_cpd = recruits_predicted_high_cpd,
+                              recruits_low_cpd_lower = recruits_predicted_low_cpd_lower,
+                              recruits_low_cpd_upper = recruits_predicted_low_cpd_upper,
+                              recruits_high_cpd_lower = recruits_predicted_high_cpd_lower,
+                              recruits_high_cpd_upper = recruits_predicted_high_cpd_upper)
+  
+  
+  
+  
+  
+  
+  
+  #plot the time varying productivity vs year, with log(R/S) data
+  
+  
+  
+  
+  
+  #plot recruit vs spawner as points
+  
+  p1 <- ggplot() +
+    geom_point(data = river_data,aes(x = Spawners, y = Recruits, color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+    geom_line(data = prediction_df, aes(x = spawners, y = recruits_low_cpd), color = '#35978f', size = 1, alpha = 0.5) +
+    geom_line(data = prediction_df, aes(x = spawners, y = recruits_high_cpd), color = '#bf812d', size = 1, alpha = 0.5) +
+    # geom_line(data = prediction_df, aes(x = spawners, y = recruits), color = "black", size = 1, alpha = 0.5) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_low_cpd_lower, ymax = recruits_low_cpd_upper), fill ='#35978f', alpha = 0.1) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = recruits_high_cpd_lower, ymax = recruits_high_cpd_upper), fill ='#bf812d', alpha = 0.1) +
+    #make y log scale
+    # scale_y_log10() +
+    labs(title = even_or_odd, x = "Spawners", y = "Recruits") +
+    # scale_color_manual(name = "CPD", values = c("Low" = '#35978f', "High" = '#bf812d')) +
+    scale_color_gradient2(name = 'CDA (%)', guide = guide_colorbar(barwidth = 3, barheight = 0.5),
+                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 20, n.breaks = 4) +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.9),
+          legend.background = element_rect(fill = alpha('white', 0.5)),
+          legend.direction = "horizontal",
+          legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8, vjust = 1, hjust = 1),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_text(size = 9)
+          # legend.key.width = unit(0.5, "cm"),
+          # legend.key.height = unit(1, "lines"),
+          # legend.spacing.y = unit(0.001, "cm")
+    )
+  
+  
+  # p3 log R/s vs spawners
+  
+  p2 <- ggplot(river_data) + 
+    geom_point(aes(x = Spawners, y = log(Recruits/Spawners), color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+    geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_low_cpd/spawners_predicted)), color = '#35978f', size = 1, alpha = 0.5) +
+    geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_high_cpd/spawners_predicted)), color = '#bf812d', size = 1, alpha = 0.5) +
+    # geom_line(data = prediction_df, aes(x = spawners, y = log_RS), color = "black", size = 1, alpha = 0.5) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_low_cpd_lower/spawners_predicted), ymax = log(recruits_predicted_low_cpd_upper/spawners_predicted)), fill = "#35978f", alpha = 0.1) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_high_cpd_lower/spawners_predicted), ymax = log(recruits_predicted_high_cpd_upper/spawners_predicted)), fill = "#bf812d", alpha = 0.1) +
+    labs(#title = "Ricker model with CPD, NPGO, ERSST", 
+      x = "Spawners", y = TeX(r"($\log \left(\frac{Recruits}{Spawners}\right)$)")) +
+    scale_color_gradient2(name = 'CDA (%)',
+                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 20, guide = guide_colorbar(barwidth = 3, barheight = 0.5)) +
+    theme_classic() +
+    theme(legend.position = c(0.8,0.9),
+          legend.background = element_rect(fill = alpha('white', 0.5)),
+          legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_blank(),
+          legend.key.width = unit(0.5, "cm"),
+          legend.key.height = unit(1, "lines"),
+          legend.spacing.y = unit(0.001, "cm")
+    )
+  
+  p3 <- ggplot(river_data) + 
+    geom_point(aes(x = Spawners, y = log(Recruits), color = disturbedarea_prct_cs), alpha = 0.5, size = 2) +
+    geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_low_cpd)), color = '#35978f', size = 1, alpha = 0.5) +
+    geom_line(data = prediction_df, aes(x = spawners, y = log(recruits_predicted_high_cpd)), color = '#bf812d', size = 1, alpha = 0.5) +
+    # geom_line(data = prediction_df, aes(x = spawners, y = log_RS), color = "black", size = 1, alpha = 0.5) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_low_cpd_lower), ymax = log(recruits_predicted_low_cpd_upper)), fill = "#35978f", alpha = 0.1) +
+    geom_ribbon(data = prediction_df, aes(x = spawners, ymin = log(recruits_predicted_high_cpd_lower), ymax = log(recruits_predicted_high_cpd_upper)), fill = "#bf812d", alpha = 0.1) +
+    labs(#title = "Ricker model with CPD, NPGO, ERSST", 
+      x = "Spawners", y = TeX(r"($\log \left(Recruits\right)$)")) +
+    scale_color_gradient2(name = 'CDA (%)',
+                          low = '#35978f', mid = 'gray', high = '#bf812d', midpoint = 20)+
+    theme_classic() +
+    theme(legend.position = c(0.8,0.9),
+          legend.background = element_rect(fill = alpha('white', 0.5)),
+          legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8),
+          axis.title.x = element_text(size = 8),
+          axis.title.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          plot.title = element_blank(),
+          legend.key.width = unit(0.5, "cm"),
+          legend.key.height = unit(1, "lines"),
+          legend.spacing.y = unit(0.001, "cm")
+    )
+  
+  
+  
+  
+  
+  
+  return((p1))
+}
+
+
+
+
+for(i in pink_watersheds){
   
   effects_plot <- plot_all_effects_river_together(
-    posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
+    posterior1 = ric_pk_cpd_ersst_long_chain,
     river_name = str_to_title(i),
-    river = unique(case_study_watersheds_data$River_n[case_study_watersheds_data$River == i])
+    river = unique(case_study_watersheds_data_pk$River_n[case_study_watersheds_data_pk$River == i])
   )
   
   change_plot <- plot_recruitment_change_river_together(
-    posterior1 = ric_chm_cpd_ocean_covariates_logR_long_chain,
-    posterior2 = ric_chm_eca_ocean_covariates_logR_long_chain,
+    posterior1 = ric_pk_cpd_ersst_long_chain,
+    posterior2 = ric_pk_eca_ersst_long_chain,
     river_name = i,
     effect1 = "cpd",
     effect2 = "eca",
-    species = "chum",
+    species = "pink",
     model1 = "CPD",
     model2 = "ECA",
     hd = FALSE
   )
   
-  spawner_recruit_plot <- plot_recruit_spawner_river_new(species = "chum",
-                                                         river_name = i,
-                                                         posterior = ric_chm_cpd_ocean_covariates_logR_long_chain)
+  spawner_recruit_plot_even <- plot_recruit_spawner_river_pink(species = "pink",
+                                                         river_name = paste0(i,"_Even"),
+                                                         posterior = ric_pk_cpd_ersst_long_chain)
+  spawner_recruit_plot_odd <- plot_recruit_spawner_river_pink(species = "pink",
+                                                        river_name = paste0(i,"_Odd"),
+                                                        posterior = ric_pk_cpd_ersst_long_chain)
   
   ggsave(filename = here("figures",
-                         paste0("case_study_et_w_sr_curves_",str_replace_all(str_to_lower(i), " ", "_"),".png")),
-         plot = ((effects_plot+spawner_recruit_plot + plot_layout(widths = c(1,1.2)))/change_plot) +
-           plot_annotation(tag_levels = 'A',title = str_to_title(i))&
+                         paste0("case_study_pink_et_w_sr_curves_",str_replace_all(str_to_lower(i), " ", "_"),".png")),
+         plot = ((effects_plot+spawner_recruit_plot_even/spawner_recruit_plot_odd + 
+                    plot_layout(widths = c(1,1.2)))/change_plot) + plot_layout(heights = c(1.5,1)) +
+           plot_annotation(tag_levels = 'A',title = paste(str_to_title(i), "- Pink Salmon"))&
            theme(plot.tag.position = c(0.0, 1.0),
-                 plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")),
+                 plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")
+                 ),
          width = 7,
          height = 6,
          units = "in",
@@ -1719,7 +2052,7 @@ for(i in watersheds){
 
 #print effect sizes and CIs
 
-
+all_river_df <- data.frame()
 for(i in watersheds){
   
   river_data <- case_study_watersheds_data %>% filter(River == i)
@@ -1747,21 +2080,21 @@ for(i in watersheds){
   
   effect_sizes_cpd <- posterior_cpd_df %>%
     group_by(Effect) %>%
-    summarise(median = median(coefficient),
-              lower_95 = quantile(coefficient, 0.025),
-              upper_95 = quantile(coefficient, 0.975))
+    summarise(median = round(median(coefficient),2),
+              lower_95 = round(quantile(coefficient, 0.025),2),
+              upper_95 = round(quantile(coefficient, 0.975),2))
   
   effect_sizes_eca <- posterior_eca_df %>%
     group_by(Effect) %>%
-    summarise(median = median(coefficient),
-              lower_95 = quantile(coefficient, 0.025),
-              upper_95 = quantile(coefficient, 0.975))
+    summarise(median = round(median(coefficient),2),
+              lower_95 = round(quantile(coefficient, 0.025),2),
+              upper_95 = round(quantile(coefficient, 0.975),2))
   
-  print(paste0("River: ", i))
-  print("CPD effect sizes:")
-  print(effect_sizes_cpd)
-  print("ECA effect sizes:")
-  print(effect_sizes_eca)
+  # print(paste0("River: ", i))
+  # print("CPD effect sizes:")
+  # print(effect_sizes_cpd)
+  # print("ECA effect sizes:")
+  # print(effect_sizes_eca)
   
   #print predicted recruitment change (%) at most recent CPD levels and most recent ECA levels
   
@@ -1771,11 +2104,19 @@ for(i in watersheds){
   
   eca_sqrt_std <- (eca_sqrt-mean(eca_sqrt))/sd(eca_sqrt)
   
+  eca_df <- data.frame(eca = eca,
+                        eca_sqrt = eca_sqrt,
+                        eca_sqrt_std = eca_sqrt_std)
+  
   cpd <- seq(0,100,length.out=100)
   
   cpd_sqrt <- sqrt(cpd)
   
   cpd_sqrt_std <- (cpd_sqrt-mean(cpd_sqrt))/sd(cpd_sqrt)
+  
+  cpd_df <- data.frame(cpd = cpd,
+                        cpd_sqrt = cpd_sqrt,
+                        cpd_sqrt_std = cpd_sqrt_std)
   
   
   
@@ -1784,9 +2125,9 @@ for(i in watersheds){
   
   no_cpd <- min(cpd_sqrt_std)
   
-  max_eca <- max(river_data$sqrt.ECA.std)
+  max_eca <- eca_df$eca_sqrt_std[which.min(abs(eca_df$eca - max(river_data$ECA_age_proxy_forested_only)))]
   
-  max_cpd <- max(river_data$sqrt.CPD.std)
+  max_cpd <- cpd_df$cpd_sqrt_std[which.min(abs(cpd_df$cpd - max(river_data$disturbedarea_prct_cs)))]
   
   
   
@@ -1799,25 +2140,192 @@ for(i in watersheds){
                              (max_eca-no_eca)))*100 - 100
   
   recruitment_df <- data.frame(
+    Effect = c("Recruitment change at max CPD level", "Recruitment change at max ECA level"),
     model = c("CDA", "ECA"),
-    median = c(median(recruitment_cpd), median(recruitment_eca)),
-    lower_95 = c(quantile(recruitment_cpd, 0.025), quantile(recruitment_eca, 0.025)),
-    upper_95 = c(quantile(recruitment_cpd, 0.975), quantile(recruitment_eca, 0.975))
+    median = c(round(median(recruitment_cpd),1), round(median(recruitment_eca),1)),
+    lower_95 = c(round(quantile(recruitment_cpd, 0.025),1), round(quantile(recruitment_eca, 0.025),2)),
+    upper_95 = c(round(quantile(recruitment_cpd, 0.975),1), round(quantile(recruitment_eca, 0.975),1))
   )
   
-  print("Predicted recruitment change at max CDA and ECA levels:")
-  print(recruitment_df)
+  #put the effect sizes and recuitment df together
+  
+  river_df <- effect_sizes_cpd %>% 
+    mutate(model = "CDA") %>% 
+    rbind(effect_sizes_eca %>% mutate(model = "ECA")) %>% 
+    rbind(recruitment_df) %>% 
+    mutate(River = i, Species = "chum")
+  
+  all_river_df <- rbind(all_river_df, river_df)
   
   
 }
 
   
+# pink watersheds
+
+all_river_df_pk <- data.frame()
+
+for(i in pink_watersheds){
   
+  river_data <- case_study_watersheds_data_pk %>% filter(River == i)
+  river <- river_data$River_n[1]
+  
+  posterior_cpd_df <- ric_pk_cpd_ersst_long_chain %>%
+    select(starts_with('b_for_rv'),starts_with('b_sst_rv'),starts_with('b_npgo_rv')) %>%
+    pivot_longer(cols = everything(),
+                 names_to = c('Effect','River'),
+                 names_pattern = 'b_(.*)_rv(.*)',
+                 values_to = "coefficient") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    filter(River_n == river)
+  
+  posterior_eca_df <- ric_pk_eca_ersst_long_chain %>%
+    select(starts_with('b_for_rv'),starts_with('b_sst_rv'),starts_with('b_npgo_rv')) %>%
+    pivot_longer(cols = everything(),
+                 names_to = c('Effect','River'),
+                 names_pattern = 'b_(.*)_rv(.*)',
+                 values_to = "coefficient") %>%
+    mutate(River_n = as.numeric(str_extract(River, '\\d+'))) %>% 
+    select(-River) %>% 
+    filter(River_n == river)
+  
+  effect_sizes_cpd <- posterior_cpd_df %>%
+    group_by(Effect) %>%
+    summarise(median = round(median(coefficient),2),
+              lower_95 = round(quantile(coefficient, 0.025),2),
+              upper_95 = round(quantile(coefficient, 0.975),2))
+  
+  effect_sizes_eca <- posterior_eca_df %>%
+    group_by(Effect) %>%
+    summarise(median = round(median(coefficient),2),
+              lower_95 = round(quantile(coefficient, 0.025),2),
+              upper_95 = round(quantile(coefficient, 0.975),2))
+  
+  
+  eca <- seq(0,1,length.out=100)
+  
+  eca_sqrt <- sqrt(eca)
+  
+  eca_sqrt_std <- (eca_sqrt-mean(eca_sqrt))/sd(eca_sqrt)
+  
+  eca_df <- data.frame(eca = eca,
+                       eca_sqrt = eca_sqrt,
+                       eca_sqrt_std = eca_sqrt_std)
+  
+  cpd <- seq(0,100,length.out=100)
+  
+  cpd_sqrt <- sqrt(cpd)
+  
+  cpd_sqrt_std <- (cpd_sqrt-mean(cpd_sqrt))/sd(cpd_sqrt)
+  
+  cpd_df <- data.frame(cpd = cpd,
+                       cpd_sqrt = cpd_sqrt,
+                       cpd_sqrt_std = cpd_sqrt_std)
+  
+  
+  
+  
+  no_eca <- min(eca_sqrt_std)
+  
+  no_cpd <- min(cpd_sqrt_std)
+  
+  max_eca <- eca_df$eca_sqrt_std[which.min(abs(eca_df$eca - max(river_data$ECA_age_proxy_forested_only)))]
+  
+  max_cpd <- cpd_df$cpd_sqrt_std[which.min(abs(cpd_df$cpd - max(river_data$disturbedarea_prct_cs)))]
+  
+  
+  
+  # need to change b_rv to posterior 1 and posterior 2 and then make figure
+  
+  recruitment_cpd <- (exp(as.matrix(posterior_cpd_df %>% filter(Effect == "for") %>% select(coefficient))%*%
+                            (max_cpd-no_cpd)))*100 - 100
+  
+  recruitment_eca <- (exp(as.matrix(posterior_eca_df %>% filter(Effect == "for") %>% select(coefficient))%*%
+                            (max_eca-no_eca)))*100 - 100
+  
+  recruitment_df <- data.frame(
+    Effect = c("Recruitment change at max CPD level", "Recruitment change at max ECA level"),
+    model = c("CDA", "ECA"),
+    median = c(round(median(recruitment_cpd),1), round(median(recruitment_eca),1)),
+    lower_95 = c(round(quantile(recruitment_cpd, 0.025),1), round(quantile(recruitment_eca, 0.025),2)),
+    upper_95 = c(round(quantile(recruitment_cpd, 0.975),1), round(quantile(recruitment_eca, 0.975),1))
+  )
+  
+  
+  
+  river_df <- effect_sizes_cpd %>% 
+    mutate(model = "CDA") %>% 
+    rbind(effect_sizes_eca %>% mutate(model = "ECA"))  %>% 
+    rbind(recruitment_df) %>% 
+    mutate(River = i, Species = "pink")
+  
+  all_river_df_pk <- rbind(all_river_df_pk, river_df)
+  
+}
+
+# format table
+
+# make a wide table with rivers-species combination in the columns and "median (lower_95, upper_95)"values
+
+
+all_river_df_chum_pink <- all_river_df %>% 
+  rbind(all_river_df_pk) %>% 
+  mutate(Estimate = paste(median, " (", lower_95, ", ", upper_95, ")", sep = "")) %>%
+  mutate(Effect = case_when(Effect == "for" ~ "Forestry effect size",
+                        Effect == "sst" ~ "SST effect size",
+                        Effect == "npgo" ~ "NPGO effect size",
+                        Effect == "Recruitment change at max CPD level" ~ "Recruitment change",
+                        Effect == "Recruitment change at max ECA level" ~ "Recruitment change")) %>%
+  rename(Model = model) %>%
+  select(River, Species, Effect, Estimate, Model) %>%
+  pivot_wider(#id = c(River, Species, model, Effect),
+              names_from = c(River, Species),
+              values_from = Estimate,
+              names_vary = "slowest"
+              ) %>% 
+  arrange(Model)
+
+# save table
+
+write.csv(all_river_df_chum_pink, here("tables","case_study_effect_sizes_recruitment_chum_pink.csv"), row.names = FALSE)
 
 
 
-plot_recruit_spawner_river_new(species = "chum",
-                           river_name = watersheds[6],
-                           posterior = ric_chm_cpd_ocean_covariates_logR_long_chain)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

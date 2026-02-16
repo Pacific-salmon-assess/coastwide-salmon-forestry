@@ -464,6 +464,7 @@ summary_cpd_chum <- summary %>%
             min_ess = round(min(ess_bulk)), 
             max_ess = round(max(ess_bulk)))
 
+
 #save as csv
 write.csv(summary_cpd_chum, file = here("tables", "summary_cpd_chum.csv"))
 
