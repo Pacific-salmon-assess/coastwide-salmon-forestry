@@ -8,3 +8,7 @@ stan[[:space:]]models/outs/posterior/ric_pk_cpd_st_noac_ocean_covariates_logR_lo
 stan[[:space:]]models/outs/posterior/ric_pk_eca_st_noac_ocean_covariates_logR_long_chain.csv filter=lfs diff=lfs merge=lfs -text
 stan[[:space:]]models/outs/posterior/ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_mu2.csv filter=lfs diff=lfs merge=lfs -text
 stan[[:space:]]models/outs/posterior/ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_mu2.csv filter=lfs diff=lfs merge=lfs -text
+stan[[:space:]]models/outs/posterior/ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv filter=lfs diff=lfs merge=lfs -text
+stan[[:space:]]models/outs/posterior/ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2.csv filter=lfs diff=lfs merge=lfs -text
+stan[[:space:]]models/outs/posterior/ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2.csv filter=lfs diff=lfs merge=lfs -text
+stan[[:space:]]models/outs/posterior/ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv filter=lfs diff=lfs merge=lfs -text
