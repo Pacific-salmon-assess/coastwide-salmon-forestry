@@ -439,7 +439,7 @@ presentation_linear_ric_1 <- df_long_ricker %>%
   labs(#title = "Ricker Spawner Recruit Curve",
        x = "Spawners",
        y = "ln (Recruits/Spawners)")+
-  annotate("text", x = 350, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} + \\beta_{forestry} Forestry$"), parse = TRUE, size = 7)+
+  annotate("text", x = 350, y = -1, label = TeX("$\\ln{\\frac{R}{S}} = \\alpha - \\frac{S}{Smax} + \\beta^{forestry} Forestry$"), parse = TRUE, size = 7)+
   geom_text(aes(label = "High Forestry", x = 100, y= 0), color = '#bf812d',
             size = 5) + 
   geom_text(aes(label = "Low Forestry", x = 100, y= 2), color = '#35978f', size = 5) + 
@@ -452,7 +452,7 @@ ggsave(here("figures", "presentation_ricker_linear_w_forestry.png"),
        plot = presentation_linear_ric_1, 
        width = 8, height = 6, dpi = 300)
 
-ggsave(here("figures", "june2025_presentation_ricker_linear_w_forestry.png"),
+ggsave(here("figures", "march2026_presentation_ricker_linear_w_forestry.png"),
        plot = presentation_linear_ric_1, 
        width = 8, height = 6, dpi = 300)
 

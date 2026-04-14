@@ -571,5 +571,46 @@ write.csv(summary_cpd_pink, file = here("tables", "summary_cpd_pink.csv"))
 
 
 
+# read new pink models results with sigma vector
+
+
+file <- 'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv'
+
+summary <- read.csv(here('stan models','outs','summary',file))
+
+summary %>% 
+  select(variable, rhat, mean, ess_tail, ess_bulk) %>% 
+  # filter(startsWith(variable, "alpha")) %>%
+  # filter(startsWith(variable, "sigma")) %>%
+  filter(rhat > 1.01) %>% 
+  #decresing rhat values
+  arrange(-rhat)
+
+file_old <- 'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain.csv'
+
+summary_old <- read.csv(here('stan models','outs','summary',file_old))
+
+
+summary %>% 
+  select(variable, rhat, mean) %>% 
+  filter(startsWith(variable, "sigma_a_j"))
+
+summary_old %>% 
+  select(variable, rhat, mean) %>% 
+  filter(startsWith(variable, "sigma_a_j"))
+
+summary_old %>% 
+  select(variable, rhat, mean) %>% 
+  filter(startsWith(variable, "b_for_cu"))
+
+
+summary %>% 
+  select(variable, rhat, mean) %>% 
+  filter(startsWith(variable, "b_for_cu"))
+
+
+
+
+
 
 
