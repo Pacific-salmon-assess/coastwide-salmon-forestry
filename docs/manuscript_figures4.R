@@ -1,4 +1,5 @@
-# plot figures with new pink model with sigma vector
+# plot figures with new pink model with sigma vector and (april 21) changing the axis title
+#to cumulative disturbed area
 
 
 library(here);library(dplyr); library(stringr)
@@ -1005,13 +1006,110 @@ ric_pk_cpd_ersst = read.csv(here('stan models',
 
 
 
+#new plot for manuscript without plot numbers, with decline in recruitment, with same y axis for % change
+
+
+
+plot_chum_A <- plot_forestry_effect_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
+                                               effect = "cpd", species = "chum", 
+                                               model = "Cumulative disturbed area", xlim = c(-0.5, 0.5))+
+  theme(legend.position = c(0.8,0.9),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 8))+
+  labs(y = "Posterior density")+
+  theme(axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10))
+
+#add legend for credible intervals for one figure
+plot_chum_B <- plot_forestry_effect_manuscript(posterior = ric_chm_eca_ocean_covariates_logR, 
+                                               effect = "eca", species = "chum", 
+                                               model = "Equivalent clearcut area", xlim = c(-0.5, 0.5))+
+  theme(legend.position = "none")+
+  labs(y = "Posterior density")+
+  theme(axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10))
+
+plot_chum_C <- plot_sst_effect_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
+                                          effect = "sst", species = "chum", 
+                                          model = "Sea-surface temperature", 
+                                          xlim = c(-0.5, 0.5))+
+  theme(legend.position = "none")+
+  labs(y = "Posterior density")+
+  theme(axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10))
+
+plot_chum_D <- plot_npgo_effect_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
+                                           effect = "npgo", species = "chum", 
+                                           model = "North Pacific Gyre Oscillation", 
+                                           xlim = c(-0.5, 0.5))+
+  theme(legend.position = "none")+
+  labs(y = "Posterior density")+
+  theme(axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10))
+
+
+plot_chum_E <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
+                                                    effect = "cpd", model = "", hd = FALSE)+
+  ylim(c(-75,75))+
+  labs(y = "Change in recruitment (%)",
+       x = "Cumulative disturbed area (%)")+
+  theme(legend.position = c(0.95,0.99),
+        legend.direction = "vertical",
+        legend.key.size = unit(0.001, "cm"),
+        legend.key.width = unit(0.5, "cm"),
+        legend.key.height = unit(0.3, "cm"),
+        legend.spacing = unit(0.00, "cm"),
+        legend.justification = c("right", "top"),
+        legend.box.background = element_rect(color = "transparent", fill = "transparent"),
+        legend.box.margin = margin(0,0,0,0),
+        #make it horizontal
+        legend.box = "horizontal",
+        legend.text = element_text(size = 7))+
+  theme(axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10))
+# guides(fill=guide_legend(nrow=1, byrow=TRUE))
+
+plot_chum_F <- plot_productivity_decline_manuscript(posterior = ric_chm_eca_ocean_covariates_logR,
+                                                    effect = "eca", model = "", hd = FALSE)+
+  ylim(c(-75,75))+
+  labs(y = "Change in recruitment (%)")+
+  theme(axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10))
+# 
+# 
+# plot_chum_G <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR,
+#                                                     effect = "sst", model = "Sea-surface temperature")+
+#   ylim(c(-75,75))+
+#   labs(y = "Median change in recruitment (%)")
+# 
+# plot_chum_H <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR,
+#                                                     effect = "npgo", model = "North Pacific Gyre Oscillation")+
+#   ylim(c(-75,75))+
+#   labs(y = "Median change in recruitment (%)")
+
+
+
+# plot_chum <- (plot_chum_a1 / plot_chum_a2 / plot_chum_a3 / plot_chum_a4)+ plot_layout(axes = 'collect') | 
+#   ((plot_chum_c1  + plot_chum_c2 ) + plot_layout(axes = 'collect'))/(
+#     (plot_chum_c3  + plot_chum_c4 ) + plot_layout(axes = 'collect')) 
+
+
+
+
+plot_chum2 <- ((plot_chum_A / plot_chum_B / plot_chum_C / plot_chum_D)+ plot_layout(axes = 'collect') | 
+                 ((plot_chum_E  / plot_chum_F ) + plot_layout(axes = 'collect')) ) + plot_layout(widths = c(1.7,1))
+# plot_chum[[1]] <- plot_chum[[1]] + plot_layout(tag_level = 'new') 
+# 
+
+plot_chum2
+
 
 # Pink 
 
 plot_pink_G <- plot_forestry_effect_manuscript(posterior = ric_pk_cpd_ersst, 
                                                effect = "cpd", species = "pink", 
                                                # model = "Ricker model with CPD", xlim = c(-1, 1))
-                                               model = "Cumulative disturbance", xlim = c(-0.5, 0.5))+
+                                               model = "Cumulative disturbed area", xlim = c(-0.5, 0.5))+
   theme(legend.position = "none")+
   labs(y = "Posterior density")+
   theme(axis.title.x = element_text(size = 10),
@@ -1052,9 +1150,10 @@ plot_pink_K <- plot_productivity_decline_manuscript(posterior = ric_pk_cpd_ersst
                                                     species = "pink",
                                                     effect = "cpd", 
                                                     # model = "Ricker model with CPD")
-                                                    model = "", hd = TRUE)+
+                                                    model = "", hd = FALSE)+
   ylim(c(-75,75))+
-  labs(y = "Change in recruitment (%)")+
+  labs(y = "Change in recruitment (%)",
+       x = "Cumulative disturbed area (%)")+
   theme(axis.title.x = element_text(size = 10),
         axis.title.y = element_text(size = 10))
 
@@ -1062,7 +1161,7 @@ plot_pink_L <- plot_productivity_decline_manuscript(posterior = ric_pk_eca_ersst
                                                     species = "pink",
                                                     effect = "eca", 
                                                     # model = "Ricker model with ECA")
-                                                    model = "", hd = TRUE)+
+                                                    model = "", hd = FALSE)+
   ylim(c(-75,75))+
   labs(y = "Change in recruitment (%)")+
   theme(axis.title.x = element_text(size = 10),
@@ -1074,5 +1173,26 @@ plot_pink2 <- ((plot_pink_G / plot_pink_H / plot_pink_I / plot_pink_J)+ plot_lay
                  ((plot_pink_K  / plot_pink_L ) + plot_layout(axes = 'collect'))) + plot_layout(widths = c(1.7,1))
 
 plot_pink2
+
+plot_pink_chum_w_title2 <- ((wrap_elements(panel = plot_chum2 + plot_annotation(tag_levels = list(c('A','B','C','D','I','J')), 
+                                                                                title = "Chum salmon")& 
+                                             theme(plot.tag.position = c(0.05, 1),
+                                                   plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold")))) / (wrap_elements(panel = plot_pink2+  
+                                                                                                                                                 plot_annotation(tag_levels = list(c('E','F','G','H','K','L')),
+                                                                                                                                                                 # tag_suffix = ')',
+                                                                                                                                                                 title = "Pink salmon")& 
+                                                                                                                                                 theme(plot.tag.position = c(0.05, 1),
+                                                                                                                                                       plot.tag = element_text(size = 10, hjust = 0, vjust = 0, face = "bold"))))) 
+plot_pink_chum_w_title2
+
+##save
+
+ggsave(here('figures','manuscript_april2026_chum_pink_ricker_corrected.png'),
+       plot = plot_pink_chum_w_title2,
+       width = 8,
+       height = 12,
+       units = 'in',
+       dpi = 500)
+
 
 
