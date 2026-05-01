@@ -1,0 +1,14 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+.RDataTmp
+
+# User-specific files
+.Ruserdata
+
+# Specific large data files
+/Ecofish-SCVI-assembly/Data/
+/Ecofish-SCVI-assembly/R_Output/

@@ -1,0 +1,82 @@
+NuSEDS Column Letter,Field Name,Field Definition
+A,AREA,This is the subdistrict. In most cases subdistricts are the same as statistical areas. They mainly differ for streams that eventually drain into the Fraser and for large areas that have been split up and thus have a/b/c... designations. E.g. Statistical area 03 has two subdistricts 3A and 3B.
+B,WATERBODY,This is the name of the waterbody or portion of a waterbody that bounds the population as shown on any given SEN.
+C,GAZETTED_NAME,Provincially recognized name for the waterbody.
+D,LOCAL_NAME_1,Commonly known name for the waterbody.
+E,LOCAL_NAME_2,Second most commonly known name for the waterbody.
+F,WATERSHED_CDE,45 digit hierarchical provincial code unique to the waterbody and its watershed.
+G,WATERBODY_ID,This is a combination of 5 digits that uniquely identify a GIS polygon and four characters that uniquely describe a provincial watershed group.
+H,RAB_CDE,Discontinued Resource Analysis Branch Code unique to each waterbody.
+I,POPULATION,"Default naming originates from previous databases as a concatenation of stream name, subdistrict, species and run type. This is the most important piece of data that all the other SEN data fields refers to."
+J,RUN_TYPE,"Run_Type indicates the run timing for different runs within the same season. In some cases, the runs may be well documented enough to label them as something like ""Spring"" vs. ""Summer"" or ""Early vs. ""Late"". But in other cases there is no documentation other than to indicate that there are distinct runs within a season. In these cases, we used the numeric labelling approach for historic data in order to avoid adding unintentional (and potentially inaccurate) detail."
+K,SPECIES,Species of Fish.
+L,ANALYSIS_YR,This is the year that the estimate is for. Surveys may have continued into the following calendar year.
+M,START_DTT,This is the time stream inspections began e.g. 2000-10-15 means that the first inspection for this season's estimate started on October 15 2000.
+N,END_DTT,This is the time stream inspections ended e.g. 2000-11-15 means that the last inspection for this season's estimate started on November 15 2000.
+O,ESCAPEMENT_ANALYST,Person responsible for estimate(s) on this SEN.
+P,ACCURACY,This is the ability of a measurement to match the actual value of the quantity being measured. Some historical estimates that were imported had reliability data originating from SEDS that may appear here.
+Q,PRECISION,"This is the ability of a measurement to be consistently reproduced, or put another way, the number of significant digits to which a value has been reliably measured."
+R,INDEX_YN,This indicates whether the estimates are for a portion of the population. This is usually due by purposely limiting enumeration to a portion of the spawning habitat or a portion of the duration of the run.
+S,RELIABILITY,"This field was added for the inclusion of historical data from an external source. It is the level of reliability that the person placed in their annual estimate of adults. Since this was only recorded for some historical BC16s it will not be visible in all cases. Values are low, medium low, medium, medium high and high."
+T,ESTIMATE_STAGE,"Preliminary SENs are the first drafts of summary estimate documents. Source data may be incomplete and their accuracy has not been verified. Significant changes from Preliminary estimates are probable.
+Near Final SENs are based on data that have been verified for completeness and accuracy. Further analysis may take place. Final data verification and analysis have not been completed. Minor changes in Near Final estimates are possible.
+Final SENs are released after all data have been incorporated into the analyses and all verification steps have been completed. Changes are not anticipated."
+U,ESTIMATE_CLASSIFICATION,"This categorizes estimates based on their levels of accuracy and precision (Type-1 are the most accurate, Type-6 the least accurate). There are three other classifications that belong to SENs whose source data were migrated from the regional MSAccess SILBC16 database (definitions extracted from that user manual).
+RELATIVE: CONSTANT MULTI-YEAR METHODS and
+RELATIVE: VARYING MULTI-YEAR METHODS: ""This is the case with survey methods restricted to a fraction of the spawning habitat and/or a fraction of the spawning period. There are various types of relative abundance estimates depending on the survey method, the level of standardization of the methods, and the sampling effort.  For our purpose we have retained one type based on between-year consistency of the method where there are two levels.""
+NO SURVEY THIS YEAR: ""stream was not inspected for that species this year"" "
+V,NO_INSPECTIONS_USED,"This is the number of stream inspection logs that are linked to the SEN or were used in the analysis. E.g. 10 stream inspections and a fixed site survey may have been done in the season, but only 7 stream inspections and the fence counts will be used to produce the annual estimate(s), and only these are linked to the SEN. "
+W,ESTIMATE_METHOD,"There are several standard methods to chose from.
+Addition/Subtraction - simple addition or subtraction to provide an estimate. Should be used in conjunction with activity types Adjustment/Calibration and Summary observations. E.g. a population aggregate, the sum of two or more populations, would require the linking of two or more SENs and straight summation of the estimates.
+Multiplication/Division - simple multiplication or division to summary estimates. This method should be used in conjunction with activity type Adjustment/Calibration. E.g. E.g. An annual estimate that was arrived at by Peak Live Plus Dead analysis can be adjusted by some factor to make it equivalent to a Time Series estimate that uses AUC calculations.
+Area Under the Curve - Combining a series of point estimates for abundance to create an estimate for the annual abundance. This is done by determining the total area under a curve of abundance by time then dividing by the survey life (the average length of time that an individual is available to be observed alive i.e. is still within the survey area and is not dead).
+Peak Live Plus Dead - Examine point estimates for abundance, determine the survey when the maximum live count observed; sum the live and dead counts for that survey to create the annual estimate. 
+Peak Live Plus Cumulative Dead - Examine point estimates for abundance, determine the survey when the maximum live count observed. Sum the live count for that survey with the cumulative total of the dead counts prior to and including that survey to create the annual estimate.
+Fixed Site Census - Combining one or more raw observations into a single estimate (e.g. add all daily fence observation SIL to create a single annual estimate).
+Mark and Recapture - Petersen - Use capture and re-capture SIL data to determine an abundance estimate with the Petersen calculation.
+Mark and Recapture - Jolly-Seber - Use capture and re-capture SIL data to determine an abundance estimate with the Jolly-Seber calculation.
+Redd Count - Using counts of redds from SILs and multiplied by a factor such as 2.
+Lake Expansion - expanding the dead recoveries by the recovery effort
+Cumulative New - N/A
+"
+X,STREAM_ARRIVAL_DT_FROM,"This is the start date when the fish first arrive in the water body described on the SEN Details page. Note that the spawn run timings are paired so that Arrival, Start, Peak, and End each have beginning and end date values to represent a date range. The following definition applies to SENs whose source data were migrated from the regional MSAccess SILBC16 database applying mainly to areas 11 to 27, and Fraser chinook/coho, all from 1995 to 2001: ""is defined as the month and days (period) that 5% of the fish arrived in the stream.  If the number at peak spawning is known, you can identify any of your counts that correspond to 5% of that value.  If so the date you made this observation will correspond to the arrival date."""
+Y,STREAM_ARRIVAL_DT_TO,This is the end date of arriving fish to the water body described on the SEN Details page. 
+Z,START_SPAWN_DT_FROM,"This is the spawning start date for a population for the current season where start means fish are beginning to pair on the spawning grounds, schools of fish may be holding (pools or mouth) and there are very few, if any, carcasses or redds. Fish are generally in the lower sections of the normal spawning area and may be bright with no fungus and have no white-coloured, eroded fins. The following definition applies to SENs whose source data were migrated from the regional MSAccess SILBC16 database applying mainly to areas 11 to 27, and Fraser chinook/coho, all from 1995 to 2001: ""month and days (period) when fish are paired and redds are observed. """
+AA,START_SPAWN_DT_TO,This is the end date of the start of spawning period. See above for the definition of this run timing period.  
+AB,PEAK_SPAWN_DT_FROM,"This field records the Spawning Peak date for a population and a given season. Peak means the majority of the fish present are paired and actively spawning with few fish holding. The fish may have fungus or white-coloured, eroded fins. A significant proportion of the spawning grounds should have evidence of redds and the fish should generally be distributed throughout the spawning area. The following definition applies to SENs whose source data were migrated from the regional MSAccess SILBC16 database applying mainly to areas 11 to 27, and Fraser chinook/coho, all from 1995 to 2001: ""month and days (period) when the number of fish spawning reached its maximum. """
+AC,PEAK_SPAWN_DT_TO,This is the end date of the peak of spawning period. See above for the definition of this run timing period.
+AD,END_SPAWN_DT_FROM,"This field records the Spawning End date for a population and a given season. End means very few fish are on the spawning grounds, few unspawned fish are holding and there are lots of carcasses. The remaining fish will likely occupy the upper reaches of the spawning area. The following definition applies to SENs whose source data were migrated from the regional MSAccess SILBC16 database applying mainly to areas 11 to 27, and Fraser chinook/coho, all from 1995 to 2001: ""month and days (period) when virtually all fish have spawned in the stream."" "
+AE,END_SPAWN_DT_TO,This is the end date of the end of spawning period. See above for the definition of this run timing period. 
+AF,ADULT_PRESENCE,"Values are present if adults were observed, none observed if no adults were observed during the stream inspections, not inspected if adults were not looked for, unknown if it is not known whether adults were observed during inspections or not."
+AG,JACK_PRESENCE,"Values are present if jacks were observed, none observed if no jacks were observed during the stream inspections, not inspected if jacks were not looked for, unknown if it is not known whether jacks were observed during inspections or not."
+AH,MAX_ESTIMATE,"Is the maximum estimated number taken from: NATURAL_ADULT_SPAWNERS, NATURAL_JACK_SPAWNERS, NATURAL_SPAWNERS_TOTAL,  ADULT_BROODSTOCK_REMOVALS, JACK_BROODSTOCK_REMOVALS,  TOTAL_BROODSTOCK_REMOVALS, OTHER_REMOVALS, TOTAL_RETURN_TO_RIVER, UNSPECIFIED_RETURNS. "
+AI,NATURAL_ADULT_SPAWNERS,"All salmon that have reached maturity, excluding jacks (jacks are salmon that have matured at an early age). "
+AJ,NATURAL_JACK_SPAWNERS,These are fish that have matured at an early age and are considered precocious. They are usually distinguished from adults by their small size.
+AK,NATURAL_SPAWNERS_TOTAL,This is the sum of adult and jack natural spawners
+AL,ADULT_BROODSTOCK_REMOVALS,"All salmon that have reached maturity, excluding jacks (jacks are salmon that have matured at an early age) that have been removed from the natural environment for artificially pairing and incubation of progeny in an artificial environment for at least some portion of the incubation period. Eg. hatchery broodstock."
+AM,JACK_BROODSTOCK_REMOVALS,these are fish that have matured at an early age and are considered precocious that have been removed from the natural environment for artificially pairing and incubation of progeny in an artificial environment for at least some portion of the incubation period. Eg. hatchery broodstock.
+AN,TOTAL_BROODSTOCK_REMOVALS,This is the sum of adult and jack broodstock removals.
+AO,OTHER_REMOVALS,"Sexually maturing fish that have returned to the artificial / natural spawning grounds and were removed from the natural environment, by humans, prior to spawning for purposes other than collection of gametes. This includes in-river fisheries and surplus hatchery removals (fish that were initially removed for enhancement purposes but were not used for enhancement)."
+AP,TOTAL_RETURN_TO_RIVER,"The complete accounting of sexually maturing fish that have returned to the freshwater environment. Total return to river = natural spawners + artificial spawners (e.g. hatchery broodstock) + other removals (harvest, ESSR)."
+AQ,UNSPECIFIED_RETURNS,"Sexually maturing fish that have returned to the freshwater environment. It is unknown whether this estimate refers to adults or adults and jacks, or whether it refers to the total return to river or a portion of. This is the field occupied by nuSEDS V1.0 estimates and some imported data. It is not a category available to estimates created after 2001."
+AR,ENUMERATION_METHOD1,"The enumeration method used to observe fish. Values are: Bank Walk, Based on Angling Catch, Biologist/Working Group, Boat, Broodstock Removal, Dead Pitch, Electronic Counters, Electroshocking, Enumeration by Hatchery, Fence, Fixed Wing Aircraft, Float, Helicopter, Hydroacoustic Station, Other, Peak Live and Dead Count, Redd Counts, Snorkel, Spot Checks, Stream Walk, Strip Counts, Tag Recovery, Trap, Walk."
+AS,ENUMERATION_METHOD2,If more than one enumeration method was used.
+AT,ENUMERATION_METHOD3,If more than two enumeration methods was used.
+AU,ENUMERATION_METHOD4,If more than three enumeration methods was used.
+AV,ENUMERATION_METHOD5,If more than four enumeration methods was used.
+AW,ENUMERATION_METHOD6,If more than five enumeration methods was used.
+AX,NATURAL_ADULT_FEMALES,"Fraser River Specific field- All female salmon that have reached maturity, excluding jills (jills are female salmon that have matured at an early age)."
+AY,NATURAL_ADULT_MALES,"Fraser River Specific field- All male salmon that have reached maturity, excluding jacks (jacks are male salmon that have matured at an early age)."
+AZ,EFFECTIVE_FEMALES,Fraser River Specific field- Is the number of females estimated to have successfully spawned. This is calculated by multiplying the total female estimate (less removals eg. for fecundity estimation) by the weighted percent spawn. 
+BA,WEIGHTED_PCT_SPAWN,Fraser River Specific field-Created to accommodate Fraser Sockeye data. This is based on evaluations of the success of spawn (fully spawned - 100%; partially spawned - 50%; unspawned - 0%) of individual female carcasses. A daily weighted percent spawn is applied to the total female recoveries for that day. The total effective females across the recovery period are summed and divided by the total female recoveries to calculate the overall weighted percent spawn.
+BB,OTHER_ADULT_REMOVALS,created for South Coast (Somass System Sockeye).
+BC,OTHER_JACK_REMOVALS,created for South Coast ( Somass System Sockeye).
+BD,TOT_ADULT_RET_RIVER,created for South Coast ( Somass System Sockeye).
+BE,TOT_JACK_RET_RIVER,created for South Coast ( Somass System Sockeye).
+BF,JUV_PRES_TYP,"An indication of whether smolts or fry were present during the inspection. This field is from Historical Data (pre-2001) from Aeas 11 to 27, and Fraser chinook/coho, all from 1995 to 2001 ."
+BG,ACT_ID,This is the primary key for the SEN.
+BH,POP_ID,Population ID.
+BI,SPC_ID,Species ID.
+BJ,GFE_ID,Stream ID (Geo_Feature ID).
+BK,CREATED_DTT,The date the SEN was created.
+BL,UPDATED_DTT,The date the SEN was updated.
