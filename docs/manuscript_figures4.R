@@ -1051,8 +1051,9 @@ plot_chum_D <- plot_npgo_effect_manuscript(posterior = ric_chm_cpd_ocean_covaria
 plot_chum_E <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocean_covariates_logR, 
                                                     effect = "cpd", model = "", hd = FALSE)+
   ylim(c(-75,75))+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1, scale = 1))+
   labs(y = "Change in recruitment (%)",
-       x = "Cumulative disturbed area (%)")+
+       x = "Cumulative disturbed area")+
   theme(legend.position = c(0.95,0.99),
         legend.direction = "vertical",
         legend.key.size = unit(0.001, "cm"),
@@ -1072,6 +1073,8 @@ plot_chum_E <- plot_productivity_decline_manuscript(posterior = ric_chm_cpd_ocea
 plot_chum_F <- plot_productivity_decline_manuscript(posterior = ric_chm_eca_ocean_covariates_logR,
                                                     effect = "eca", model = "", hd = FALSE)+
   ylim(c(-75,75))+
+  #change x axis to go from 1 to 100 instead of 0 to 1
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1))+
   labs(y = "Change in recruitment (%)")+
   theme(axis.title.x = element_text(size = 10),
         axis.title.y = element_text(size = 10))
@@ -1097,7 +1100,7 @@ plot_chum_F <- plot_productivity_decline_manuscript(posterior = ric_chm_eca_ocea
 
 
 plot_chum2 <- ((plot_chum_A / plot_chum_B / plot_chum_C / plot_chum_D)+ plot_layout(axes = 'collect') | 
-                 ((plot_chum_E  / plot_chum_F ) + plot_layout(axes = 'collect')) ) + plot_layout(widths = c(1.7,1))
+                 ((plot_chum_E  / plot_chum_F ) ) ) + plot_layout(widths = c(1.7,1))
 # plot_chum[[1]] <- plot_chum[[1]] + plot_layout(tag_level = 'new') 
 # 
 
@@ -1152,8 +1155,9 @@ plot_pink_K <- plot_productivity_decline_manuscript(posterior = ric_pk_cpd_ersst
                                                     # model = "Ricker model with CPD")
                                                     model = "", hd = FALSE)+
   ylim(c(-75,75))+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1, scale = 1))+
   labs(y = "Change in recruitment (%)",
-       x = "Cumulative disturbed area (%)")+
+       x = "Cumulative disturbed area")+
   theme(axis.title.x = element_text(size = 10),
         axis.title.y = element_text(size = 10))
 
@@ -1162,6 +1166,7 @@ plot_pink_L <- plot_productivity_decline_manuscript(posterior = ric_pk_eca_ersst
                                                     effect = "eca", 
                                                     # model = "Ricker model with ECA")
                                                     model = "", hd = FALSE)+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1))+
   ylim(c(-75,75))+
   labs(y = "Change in recruitment (%)")+
   theme(axis.title.x = element_text(size = 10),
@@ -1170,7 +1175,7 @@ plot_pink_L <- plot_productivity_decline_manuscript(posterior = ric_pk_eca_ersst
 
 
 plot_pink2 <- ((plot_pink_G / plot_pink_H / plot_pink_I / plot_pink_J)+ plot_layout(axes = 'collect') |
-                 ((plot_pink_K  / plot_pink_L ) + plot_layout(axes = 'collect'))) + plot_layout(widths = c(1.7,1))
+                 ((plot_pink_K  / plot_pink_L ))) + plot_layout(widths = c(1.7,1))
 
 plot_pink2
 
@@ -1187,12 +1192,20 @@ plot_pink_chum_w_title2
 
 ##save
 
-ggsave(here('figures','manuscript_april2026_chum_pink_ricker_corrected.png'),
+ggsave(here('figures','manuscript_may2026_chum_pink_ricker_new_axis.png'),
        plot = plot_pink_chum_w_title2,
        width = 8,
        height = 12,
        units = 'in',
        dpi = 500)
+
+
+ggsave(here('figures','manuscript_may2026_chum_pink_ricker.pdf'),
+       plot = plot_pink_chum_w_title2,
+       width = 8,
+       height = 12,
+       units = 'in',
+       dpi = 300)
 
 
 

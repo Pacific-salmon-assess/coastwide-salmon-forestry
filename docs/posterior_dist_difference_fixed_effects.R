@@ -704,8 +704,8 @@ ratio_cda_sst_npgo <-  ric_chm_cpd_ocean_covariates_logR_long_chain %>%
   select("b_for","b_sst","b_npgo") %>% 
   #check if there are any zeros
   # filter(b_sst != 0, b_npgo != 0)  #none
-  mutate(ratio_cda_sst = b_for/b_sst,
-         ratio_cda_npgo = b_for/b_npgo)
+  mutate(ratio_cda_sst = abs(b_for)/abs(b_sst),
+         ratio_cda_npgo = abs(b_for)/abs(b_npgo))
   
 ratio_cda_sst_npgo_cu <- ric_chm_cpd_ocean_covariates_logR_long_chain %>% 
     select(starts_with(c("b_for_cu","b_sst_cu","b_npgo_cu"))) %>% 
@@ -718,8 +718,8 @@ ratio_cda_sst_npgo_cu <- ric_chm_cpd_ocean_covariates_logR_long_chain %>%
            CU_n = str_extract(parameter, "\\[(.*?)\\]") %>% str_remove_all("\\[|\\]")) %>%
     select(-c("parameter")) %>% 
     pivot_wider(names_from = effect, values_from = value) %>%
-    mutate(ratio_cda_sst = cda/sst,
-           ratio_cda_npgo = cda/npgo)
+    mutate(ratio_cda_sst = abs(cda)/abs(sst),
+           ratio_cda_npgo = abs(cda)/abs(npgo))
   
 
 
