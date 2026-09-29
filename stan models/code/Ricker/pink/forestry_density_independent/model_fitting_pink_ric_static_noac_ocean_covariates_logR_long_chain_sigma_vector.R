@@ -20,20 +20,19 @@ library(tidyverse)
 library(tictoc)
 library(future)
 library(furrr)
-source(here('stan models','code','funcs.R'))
-
+source(here('salmon_forestry_data_analysis','stan models','code','funcs.R'))
 
 # load Stan model sets####
-file_ric_st=file.path(here('stan models', 'code','Ricker','pink','forestry_density_independent',
-                           'ric_pink_static_noac_ocean_covariates_logR_new_sigma_vector.stan'))
+file_ric_st=file.path(here('salmon_forestry_data_analysis','stan models', 'code','pink',
+                        'ric_pink_static_noac_ocean_covariates_logR_new_sigma_vector.stan'))
 mric_p_st=cmdstanr::cmdstan_model(file_ric_st) #compile stan code to C++
 
 
 #even year pinks
-pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"))
+pk10r_e <-  read.csv(here('salmon_forestry_data_analysis','data',"pke_SR_10_hat_yr_w_ersst_npgo.csv"))
 
 #odd year pinks
-pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"))
+pk10r_o <-  read.csv(here('salmon_forestry_data_analysis','data',"pko_SR_10_hat_yr_w_ersst_npgo.csv"))
 
 options(mc.cores=8)
 
@@ -71,8 +70,8 @@ pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.C
 
 
 #standardize npgo
-pk10r_o$npgo.std=(pk10r_o$npgo-mean(pk10r_o$npgo))/sd(pk10r_o$npgo)
-pk10r_e$npgo.std=(pk10r_e$npgo-mean(pk10r_e$npgo))/sd(pk10r_e$npgo)
+pk10r_o$winter_npgo.std=(pk10r_o$winter_npgo-mean(pk10r_o$winter_npgo))/sd(pk10r_o$winter_npgo)
+pk10r_e$winter_npgo.std=(pk10r_e$winter_npgo-mean(pk10r_e$winter_npgo))/sd(pk10r_e$winter_npgo)
 
 pk10r_o$sst.std = (pk10r_o$spring_ersst-mean(pk10r_o$spring_ersst))/sd(pk10r_o$spring_ersst)
 pk10r_e$sst.std = (pk10r_e$spring_ersst-mean(pk10r_e$spring_ersst))/sd(pk10r_e$spring_ersst)
@@ -131,7 +130,7 @@ dl_pk_eca=list(N=nrow(pk10r),
                S=pk10r$Spawners,
                logR=log(pk10r$Recruits),
                forest_loss=pk10r$sqrt.ECA.std,
-               npgo=pk10r$npgo.std,
+               npgo=pk10r$winter_npgo.std,
                sst=pk10r$sst.std,
                start_y=N_s[,1],
                end_y=N_s[,2],
@@ -156,7 +155,7 @@ dl_pk_cpd=list(N=nrow(pk10r),
                S=pk10r$Spawners,
                logR=log(pk10r$Recruits),
                forest_loss=pk10r$sqrt.CPD.std,
-               npgo=pk10r$npgo.std,
+               npgo=pk10r$winter_npgo.std,
                sst=pk10r$sst.std,
                start_y=N_s[,1],
                end_y=N_s[,2],
@@ -173,13 +172,16 @@ if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_pk_eca_st <- mric_p_st$sample(data=dl_pk_eca,
                                       chains = 1,
-                                      iter_warmup = 20,
-                                      iter_sampling =50,
+                                      iter_warmup = 10,
+                                      iter_sampling =20,
                                       refresh = 10,
                                       adapt_delta = 0.95,
                                       max_treedepth = 20)
-  write.csv(ric_pk_eca_st$summary(),here("stan models","outs","summary","ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.csv"))
-  ric_pk_eca_st$save_object(here("stan models","outs","fits","ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.RDS"))
+  write.csv(ric_pk_eca_st$summary(),
+            here('salmon_forestry_data_analysis',
+                 "stan models","outs","summary","ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.csv"))
+  ric_pk_eca_st$save_object(here('salmon_forestry_data_analysis',"stan models","outs","fits",
+                                 "ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.RDS"))
   
   post_ric_pk_eca_st=ric_pk_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                      'b_npgo','b_npgo_cu','b_npgo_rv',
@@ -188,9 +190,12 @@ if(Sys.info()[7] == "mariakur") {
   
   post_ric_pk_eca_st_mu2 <- ric_pk_eca_st$draws(variables=c('mu2'),format='draws_matrix')
   
-  write.csv(post_ric_pk_eca_st,here('stan models','outs','posterior','ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.csv'))
+  write.csv(post_ric_pk_eca_st,here('salmon_forestry_data_analysis','stan models','outs',
+                                    'posterior','ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.csv'))
   
-  write.csv(post_ric_pk_eca_st_mu2,here('stan models','outs','posterior','ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2_trial.csv'))
+  write.csv(post_ric_pk_eca_st_mu2,here('salmon_forestry_data_analysis',
+                                        'stan models','outs','posterior',
+                                        'ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2_trial.csv'))
   
 } else {
   ric_pk_eca_st <- mric_p_st$sample(data=dl_pk_eca,
@@ -199,11 +204,12 @@ if(Sys.info()[7] == "mariakur") {
                                     iter_sampling = 2000,
                                     refresh = 100,
                                     adapt_delta = 0.95,
-                                    max_treedepth = 20,
-                                    thin = 4)
+                                    max_treedepth = 20)
   
-  write.csv(ric_pk_eca_st$summary(),here("stan models","outs","summary","ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv"))
-  ric_pk_eca_st$save_object(here("stan models","outs","fits","ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector.RDS"))
+  write.csv(ric_pk_eca_st$summary(),here('salmon_forestry_data_analysis',"stan models","outs","summary",
+                                         "ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv"))
+  ric_pk_eca_st$save_object(here('salmon_forestry_data_analysis',"stan models","outs","fits",
+                                 "ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector.RDS"))
   
   post_ric_pk_eca_st=ric_pk_eca_st$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                      'b_npgo','b_npgo_cu','b_npgo_rv',
@@ -212,9 +218,11 @@ if(Sys.info()[7] == "mariakur") {
   
   post_ric_pk_eca_st_mu2 <- ric_pk_eca_st$draws(variables=c('mu2'),format='draws_matrix')
   
-  write.csv(post_ric_pk_eca_st,here('stan models','outs','posterior','ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv'))
+  write.csv(post_ric_pk_eca_st,here('salmon_forestry_data_analysis','stan models','outs','posterior',
+                                    'ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv'))
   
-  write.csv(post_ric_pk_eca_st_mu2,here('stan models','outs','posterior','ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2.csv'))
+  write.csv(post_ric_pk_eca_st_mu2,here('salmon_forestry_data_analysis','stan models','outs','posterior',
+                                        'ric_pk_eca_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2.csv'))
   
 }
 
@@ -224,14 +232,16 @@ if(Sys.info()[7] == "mariakur") {
   print("Running on local machine")
   ric_pk_cpd_st <- mric_p_st$sample(data=dl_pk_cpd,
                                     chains = 1,
-                                    iter_warmup = 20,
-                                    iter_sampling =50,
+                                    iter_warmup = 10,
+                                    iter_sampling =20,
                                     refresh = 10,
                                     adapt_delta = 0.95,
                                     max_treedepth = 20,
                                     thin =2)
-  write.csv(ric_pk_cpd_st$summary(),here("stan models","outs","summary","ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.csv"))
-  ric_pk_cpd_st$save_object(here("stan models","outs","fits","ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.RDS"))
+  write.csv(ric_pk_cpd_st$summary(),here('salmon_forestry_data_analysis',
+                                         "stan models","outs","summary","ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.csv"))
+  ric_pk_cpd_st$save_object(here('salmon_forestry_data_analysis',"stan models","outs","fits",
+                                 "ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.RDS"))
   
   post_ric_pk_cpd_st=ric_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                      'b_npgo','b_npgo_cu','b_npgo_rv',
@@ -240,9 +250,11 @@ if(Sys.info()[7] == "mariakur") {
   
   post_ric_pk_cpd_st_mu2 <- ric_pk_cpd_st$draws(variables=c('mu2'),format='draws_matrix')
   
-  write.csv(post_ric_pk_cpd_st,here('stan models','outs','posterior','ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.csv'))
+  write.csv(post_ric_pk_cpd_st,here('salmon_forestry_data_analysis','stan models','outs','posterior',
+                                    'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_trial.csv'))
   
-  write.csv(post_ric_pk_cpd_st_mu2,here('stan models','outs','posterior','ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2_trial.csv'))
+  write.csv(post_ric_pk_cpd_st_mu2,here('salmon_forestry_data_analysis','stan models','outs','posterior',
+                                        'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2_trial.csv'))
   
 } else {
   ric_pk_cpd_st <- mric_p_st$sample(data=dl_pk_cpd,
@@ -251,11 +263,12 @@ if(Sys.info()[7] == "mariakur") {
                                     iter_sampling = 2000,
                                     refresh = 100,
                                     adapt_delta = 0.95,
-                                    max_treedepth = 20,
-                                    thin = 4)
+                                    max_treedepth = 20)
   
-  write.csv(ric_pk_cpd_st$summary(),here("stan models","outs","summary","ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv"))
-  ric_pk_cpd_st$save_object(here("stan models","outs","fits","ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector.RDS"))
+  write.csv(ric_pk_cpd_st$summary(),here('salmon_forestry_data_analysis',"stan models","outs","summary",
+                                         "ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv"))
+  ric_pk_cpd_st$save_object(here('salmon_forestry_data_analysis',"stan models","outs","fits",
+                                 "ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector.RDS"))
   
   post_ric_pk_cpd_st=ric_pk_cpd_st$draws(variables=c('b_for','b_for_cu','b_for_rv',
                                                      'b_npgo','b_npgo_cu','b_npgo_rv',
@@ -264,8 +277,10 @@ if(Sys.info()[7] == "mariakur") {
   
   post_ric_pk_cpd_st_mu2 = ric_pk_cpd_st$draws(variables=c('mu2'),format='draws_matrix')
   
-  write.csv(post_ric_pk_cpd_st,here('stan models','outs','posterior','ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv'))
-  write.csv(post_ric_pk_cpd_st_mu2,here('stan models','outs','posterior','ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2.csv'))
+  write.csv(post_ric_pk_cpd_st,here('salmon_forestry_data_analysis','stan models','outs','posterior',
+                                    'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector.csv'))
+  write.csv(post_ric_pk_cpd_st_mu2,here('salmon_forestry_data_analysis','stan models','outs','posterior',
+                                        'ric_pk_cpd_st_noac_ocean_covariates_logR_long_chain_sigma_vector_mu2.csv'))
   
 }
 
