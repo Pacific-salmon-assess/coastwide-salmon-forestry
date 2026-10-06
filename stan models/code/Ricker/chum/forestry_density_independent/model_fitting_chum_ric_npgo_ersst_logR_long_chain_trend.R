@@ -38,7 +38,7 @@ ch20r <- read.csv(here('origional-ecofish-data-models','Data',
 lookup <- read.csv(here('origional-ecofish-data-models','Data',"forestry_data", "salmon_watersheds_lookup.csv"))
 
 # Load population sheds ----
-pop_sheds <- st_read(dsn = "origional-ecofish-data-models/Data/forestry_data/Max_ECA_sheds_Nov_2024.gpkg")  # Note that there are 1746 polygons, but only 1745 have VRI information in 2022.
+pop_sheds <- st_read(dsn = here("origional-ecofish-data-models","Data","forestry_data","Max_ECA_sheds_Nov_2024.gpkg"))  # Note that there are 1746 polygons, but only 1745 have VRI information in 2022.
 
 
 
