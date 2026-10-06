@@ -2,7 +2,7 @@
 title: "Forestry Impacts on BC Pacific Salmon"
 subtitle: "Musgamagw Dzawada’enuxw territory watersheds"
 author: 'Maria Kuruvilla'
-date: "March 2026"
+date: "Oct 2026"
 output:
   pdf_document:
     toc: true
@@ -81,18 +81,18 @@ library(ggspatial)
 
 # Introduction
 
-Logging has impacted many rivers in BC that support salmon. Using historical data (1950-2012) of pink salmon abundance in 417 rivers, chum salmon abundance in 374 rivers in BC, and of logging disturbance in these rivers, we estimated the impact that logging has on salmon recruitment (number of salmon produced in the next generation) using a statistical model. The two metrics of logging disturbance that we used are:
+Logging has impacted many rivers in BC that support salmon. Using historical data (1950-2012) of pink salmon abundance in 417 rivers, chum salmon abundance in 374 rivers in BC, and of logging disturbance in these rivers, we estimated the impact that logging has on salmon productivity (number of salmon produced in the next generation per spawner) using a statistical model. The two metrics of logging disturbance that we used are:
 
  1) Cumulative Disturbed Area (CDA) - the percent of area around a river that has been disturbed by human activities or natural disturbances without assuming any recovery within the time period of our dataset (62 years).
  2) Equivalent Clearcut Area (ECA) - proportion of area that has been clearcut around a river after accounting for an expected hydrologic recovery. This metric assumes that the forest is close to 100% recovered roughly 50 years post-logging. 
  
 In addition to logging disturbance, we also used two variables to account for ocean conditions:
 
-3) Sea-Surface Temperature (SST) - the average sea-surface temperature corresponding to the time when the salmon first enters the ocean, which is known to have variable effects on salmon recruitment.
-4) North Pacific Gyre Oscillation (NPGO) - index of primary productivity in the ocean, which is known to have a positive effect on salmon recruitment. 
+3) Sea-Surface Temperature (SST) - the average sea-surface temperature corresponding to the time when the salmon first enters the ocean, which is known to have variable effects on salmon productivity.
+4) North Pacific Gyre Oscillation (NPGO) - index of primary productivity in the ocean, which is known to have a positive effect on salmon productivity. 
  
  
-In this document, we have used the 4 coastwide models (with CDA for chum, with ECA for chum, with CDA for pink, and with ECA for pink) to estimate the impact of logging on some of the rivers within MD territory for which we had data. For each of these rivers, we have plotted the data of logging disturbance as given by the two metrics, ECA and CDA, and the number of salmon recruits with time. We then plotted the results of the model for that river A) the probability distributions of the effect of CDA, NPGO, and SST on salmon recruitment for that river (probability distributions with the peak to the left of 0 indicate a negative effect on salmon recruitment), B) the predicted spawner-recruit relationship for two different levels of logging disturbance experienced by the river, C) the predicted change in recruitment for different theoretical levels of logging disturbance using CDA, and D) using ECA. For figure C, the dashed line corresponds to the most recent (and highest) value of CDA experienced by the river. For figure D, the dashed line corresponds to the highest value of ECA experienced by the river. 
+In this document, we have used the 4 coastwide models (with CDA for chum, with ECA for chum, with CDA for pink, and with ECA for pink) to estimate the impact of logging on some of the rivers within MD territory for which we had data. For each of these rivers, we have plotted the data of logging disturbance as given by the two metrics, ECA and CDA, and the number of salmon recruits with time. We then plotted the results of the model for that river A) the probability distributions of the effect of CDA, NPGO, and SST on salmon productivity for that river (probability distributions with the peak to the left of 0 indicate a negative effect on salmon productivity), B) the predicted spawner-recruit relationship for two different levels of logging disturbance experienced by the river, C) the predicted change in productivity for different theoretical levels of logging disturbance using CDA, and D) using ECA. For figure C, the dashed line corresponds to the value of CDA from 2022 experienced by the river. For figure D, the dashed line corresponds to the highest value of ECA (until 2022) experienced by the river. 
  
 
 
@@ -101,7 +101,7 @@ In this document, we have used the 4 coastwide models (with CDA for chum, with E
 
 
 
-```{r include=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 # Load the sf package
 library(sf)
 # Path to the GDB file
@@ -151,7 +151,7 @@ mdfg_forestry_timeseries_geom <- left_join(x = mdfg_forestry_timeseries,
 
 ```
 
-```{r include=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 # Required packages ----
 list.of.packages <- c("tidyverse", "extrafont", "giscoR", "ggplot2", "sf", "rmapshaper", "rnaturalearth", "patchwork", "here",
@@ -249,12 +249,10 @@ bbox <- st_as_sfc(b)
 
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 
 # Data wrangling
-
-ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed",
-                         "chum_SR_20_hat_yr_w_ocean_covariates.csv"))
+ch20rsc <- read.csv(here("origional-ecofish-data-models","Data","Processed",'chum_SR_20_hat_yr_w_ersst_npgo.csv'))
 
 
 #two rivers with duplicated names:
@@ -274,7 +272,7 @@ ch20rsc$sqrt.ECA.std=(ch20rsc$sqrt.ECA-mean(ch20rsc$sqrt.ECA))/sd(ch20rsc$sqrt.E
 ch20rsc$sqrt.CPD=sqrt(ch20rsc$disturbedarea_prct_cs)
 ch20rsc$sqrt.CPD.std=(ch20rsc$sqrt.CPD-mean(ch20rsc$sqrt.CPD))/sd(ch20rsc$sqrt.CPD)
 
-ch20rsc$npgo.std=(ch20rsc$npgo-mean(ch20rsc$npgo))/sd(ch20rsc$npgo)
+ch20rsc$npgo.std=(ch20rsc$winter_npgo-mean(ch20rsc$winter_npgo))/sd(ch20rsc$winter_npgo)
 ch20rsc$sst.std=(ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
 
 cu = distinct(ch20rsc,.keep_all = T)
@@ -325,17 +323,17 @@ md_watersheds <- ch20rsc %>%
 ```
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 
 
 # Pink --------------------------------------------------------------------
 
 
 
-pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst.csv"))
+pk10r_e <- read.csv(here("origional-ecofish-data-models","Data","Processed","pke_SR_10_hat_yr_w_ersst_npgo.csv"))
 
 #odd year pinks
-pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst.csv"))
+pk10r_o <- read.csv(here("origional-ecofish-data-models","Data","Processed","pko_SR_10_hat_yr_w_ersst_npgo.csv"))
 
 options(mc.cores=8)
 
@@ -373,8 +371,8 @@ pk10r_e$sqrt.CPD.std=(pk10r_e$sqrt.CPD-mean(pk10r_e$sqrt.CPD))/sd(pk10r_e$sqrt.C
 
 
 #standardize npgo
-pk10r_o$npgo.std=(pk10r_o$npgo-mean(pk10r_o$npgo))/sd(pk10r_o$npgo)
-pk10r_e$npgo.std=(pk10r_e$npgo-mean(pk10r_e$npgo))/sd(pk10r_e$npgo)
+pk10r_o$npgo.std=(pk10r_o$winter_npgo-mean(pk10r_o$winter_npgo))/sd(pk10r_o$winter_npgo)
+pk10r_e$npgo.std=(pk10r_e$winter_npgo-mean(pk10r_e$winter_npgo))/sd(pk10r_e$winter_npgo)
 
 # pk10r_o$sst.std = (pk10r_o$spring_lighthouse_temperature-mean(pk10r_o$spring_lighthouse_temperature))/sd(pk10r_o$spring_lighthouse_temperature)
 # pk10r_e$sst.std = (pk10r_e$spring_lighthouse_temperature-mean(pk10r_e$spring_lighthouse_temperature))/sd(pk10r_e$spring_lighthouse_temperature)
@@ -460,12 +458,59 @@ ric_pk_eca_ersst_long_chain <- read.csv(here('stan models','outs','posterior',"r
                                         check.names = FALSE)
 
 
+forestry_data_timeseries <- read.csv(here("origional-ecofish-data-models",
+                                          "Data",
+                                          "forestry_data", 
+                                          "forestry_data_timeseries.csv"))
+
+
+lookup_og <- read.csv(here("origional-ecofish-data-models",
+                           "Data",
+                           "forestry_data", "salmon_watersheds_lookup.csv"))
+
+
+
+forestry_data_timeseries_2022 <- forestry_data_timeseries %>% 
+  group_by(group,LINEAR_FEATURE_ID) %>% 
+  filter(year == max(year)) %>%
+  select(haarea_prct_cs, year, ECA_age_proxy_forested_only) %>% 
+  rename(haarea_prct_cs_2022 = haarea_prct_cs, year_2022 = year,
+         ECA_age_proxy_forested_only_2022 = ECA_age_proxy_forested_only)
+
+
+
+forestry_data_timeseries_max_eca <- forestry_data_timeseries %>% 
+  group_by(group,LINEAR_FEATURE_ID) %>% 
+  select(year, ECA_age_proxy_forested_only) %>% 
+  filter(ECA_age_proxy_forested_only == max(ECA_age_proxy_forested_only)) %>%
+  # if there are multiple years with same max eca, then use the latest year
+  filter(year == max(year)) %>%
+  rename(max_eca_year = year,
+         ECA_age_proxy_forested_only_max = ECA_age_proxy_forested_only)
+
+ch20rsc_2022 <- ch20rsc %>% 
+  left_join(lookup_og %>% 
+              filter(Species == "CM") %>% 
+              select(LINEAR_FEATURE_ID, GFE_ID), by = c("GFE_ID")) %>%
+  left_join(forestry_data_timeseries_2022, by = c("LINEAR_FEATURE_ID")) %>% 
+  left_join(forestry_data_timeseries_max_eca, by = c("LINEAR_FEATURE_ID")) 
+
+#do same for pink dataset
+
+
+pk10r_2022 <- pk10r %>%
+  left_join(lookup_og %>% 
+              filter(Species == "PKO" | Species == "PKE") %>% 
+              select(LINEAR_FEATURE_ID, GFE_ID) %>% distinct(), by = c("GFE_ID")) %>%
+  left_join(forestry_data_timeseries_2022, by = c("LINEAR_FEATURE_ID")) %>% 
+  left_join(forestry_data_timeseries_max_eca %>% distinct(), by = c("LINEAR_FEATURE_ID")) 
+
 
 ```
 
 
 
-```{r fig.height=12, fig.width=10}
+```{r fig.height=12, fig.width=10, message=FALSE, warning=FALSE}
 ggplot() +
   geom_sf(data = bc_boundary, fill = "gray90", color = alpha("slategray",0.1), linewidth = 0.5) +
   # geom_sf(data = Canada, fill = "grey90", color = NA) +
@@ -549,7 +594,7 @@ ggplot() +
 
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 
 plot_all_effects_river_together <- function(posterior1 = ric_chm_cpd_ocean_covariates_logR,
                                             river_name,
@@ -639,7 +684,7 @@ plot_all_effects_river_together <- function(posterior1 = ric_chm_cpd_ocean_covar
 }
 
 
-plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocean_covariates_logR,
+plot_productivity_change_river_together <- function(posterior1 = ric_chm_cpd_ocean_covariates_logR,
                                                    posterior2 = ric_chm_eca_ocean_covariates_logR,
                                                    river_name = "CARNATION CREEK",  
                                                    effect1 = "cpd",
@@ -651,14 +696,14 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
   
   
   if(species == "chum"){
-    df <- ch20rsc 
-    river_data <- ch20rsc %>% filter(River == river_name)
+    df <- ch20rsc_2022
+    river_data <- df %>% filter(River == river_name)
     river <- river_data$River_n[1]
     # df$sst.std <- (ch20rsc$spring_ersst-mean(ch20rsc$spring_ersst))/sd(ch20rsc$spring_ersst)
     
   } else if(species == "pink"){
-    df <- pk10r
-    river_data <- pk10r %>% filter(River == river_name)
+    df <- pk10r_2022
+    river_data <- df %>% filter(River == river_name)
     river <- river_data$River_n[1]
     # df$sst.std <- (pk10r$spring_ersst-mean(pk10r$spring_ersst))/sd(pk10r$spring_ersst)
   }
@@ -686,34 +731,22 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
   
   
   
-  eca <- seq(0,1,length.out=100)
+  eca <- seq(0,1,length.out=500)
   
-  eca_sqrt <- sqrt(eca)
+  cpd <- seq(0,100,length.out=500)
   
-  eca_sqrt_std <- (eca_sqrt-mean(eca_sqrt))/sd(eca_sqrt)
+  eca_diff <- sqrt(eca)/sd(df$sqrt.ECA)
   
-  cpd <- seq(0,100,length.out=100)
-  
-  cpd_sqrt <- sqrt(cpd)
-  
-  cpd_sqrt_std <- (cpd_sqrt-mean(cpd_sqrt))/sd(cpd_sqrt)
-  
-  
-  
-  
-  no_eca <- min(eca_sqrt_std)
-  
-  no_cpd <- min(cpd_sqrt_std)
-  
+  cpd_diff <- sqrt(cpd)/sd(df$sqrt.CPD)
   
   
   # need to change b_rv to posterior 1 and posterior 2 and then make figure
   
   productivity_cpd <- (exp(as.matrix(posterior_df[,1])%*%
-                             (cpd_sqrt_std-no_cpd)))*100 - 100
+                             (cpd_diff)))*100 - 100
   
   productivity_eca <- (exp(as.matrix(posterior_df2[,1])%*%
-                             (eca_sqrt_std-no_eca)))*100 - 100
+                             (eca_diff)))*100 - 100
   
   
   productivity_cpd_df <- data.frame(productivity_cpd_median = apply(productivity_cpd,2,median),
@@ -740,9 +773,10 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
                                     
                                     
                                     
-                                    cpd_sqrt_std = cpd_sqrt_std,
+                                    # cpd_sqrt_std = cpd_sqrt_std,
                                     cpd = cpd,
                                     max_cpd = max(river_data$disturbedarea_prct_cs),
+                                    max_cpd_2022 = max(river_data$haarea_prct_cs_2022),
                                     max_sqrt_cpd = max(river_data$sqrt.CPD),
                                     model = "CPD"
   )
@@ -769,9 +803,10 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
                                     productivity_eca_50_lower_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.5)[1,],
                                     productivity_eca_50_upper_hd = apply(productivity_eca,2,HDInterval::hdi, credMass = 0.5)[2,],
                                     
-                                    eca_sqrt_std = eca_sqrt_std,
+                                    # eca_sqrt_std = eca_sqrt_std,
                                     eca = eca,
                                     max_eca = max(river_data$ECA_age_proxy_forested_only),
+                                    max_eca_2022 = max(river_data$ECA_age_proxy_forested_only_max),
                                     max_sqrt_eca = max(river_data$sqrt.ECA),
                                     model = "ECA"
   )
@@ -787,23 +822,43 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
       geom_ribbon(aes(x = cpd, ymin = productivity_cpd_250, ymax = productivity_cpd_750, fill = "50% credible interval"),
                   alpha = 0.6) +
       
-      geom_segment(aes(x = unique(productivity_cpd_df$max_cpd), 
-                       xend = unique(productivity_cpd_df$max_cpd), 
+      # geom_segment(aes(x = unique(productivity_cpd_df$max_cpd), 
+      #                  xend = unique(productivity_cpd_df$max_cpd), 
+      #                  y = -100, 
+      #                  yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+      #                  color = "gray"), 
+      #              linetype = "dashed", linewidth = 0.8) +
+      # # add horizontal line 
+      # geom_segment(aes(x = 0, 
+      #                  xend = unique(productivity_cpd_df$max_cpd), 
+      #                  y = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))], 
+      #                  yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+      #                  color = "gray"), 
+      #              linetype = "dashed", linewidth = 0.8) +
+      # annotate("text",x = unique(productivity_cpd_df$max_cpd), 
+      #          y = productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+      #          label = paste0("Max CDA: ",round(unique(productivity_cpd_df$max_cpd),1),"%\n",
+      #                         "Median change: ",round(productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],1),"%"),
+      #          vjust = -0.5, color = "black", size = 2, hjust = 0
+      # ) +
+    
+    geom_segment(aes(x = unique(productivity_cpd_df$max_cpd_2022), 
+                       xend = unique(productivity_cpd_df$max_cpd_2022), 
                        y = -100, 
-                       yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                       yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd_2022)))],
                        color = "gray"), 
                    linetype = "dashed", linewidth = 0.8) +
       # add horizontal line 
       geom_segment(aes(x = 0, 
-                       xend = unique(productivity_cpd_df$max_cpd), 
-                       y = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))], 
-                       yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
+                       xend = unique(productivity_cpd_df$max_cpd_2022), 
+                       y = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd_2022)))], 
+                       yend = productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd_2022)))],
                        color = "gray"), 
                    linetype = "dashed", linewidth = 0.8) +
-      annotate("text",x = unique(productivity_cpd_df$max_cpd), 
-               y = productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],
-               label = paste0("Max CDA: ",round(unique(productivity_cpd_df$max_cpd),1),"%\n",
-                              "Median change: ",round(productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd)))],1),"%"),
+      annotate("text",x = unique(productivity_cpd_df$max_cpd_2022), 
+               y = productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd_2022)))],
+               label = paste0("2022 CDA:\n",round(unique(productivity_cpd_df$max_cpd_2022),2),"%\n",
+                              "Median change:\n",round(productivity_cpd_df$productivity_cpd_median[which.min(abs(cpd - unique(productivity_cpd_df$max_cpd_2022)))],2),"%"),
                vjust = -0.5, color = "black", size = 2, hjust = 0
       ) +
       
@@ -819,7 +874,7 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
       ylim(-100,100) +
       scale_x_continuous(n.breaks = 5) +
       labs(x = "CDA (%)",
-           y = "Change in recruitment (%)") +
+           y = "Change in productivity (%)") +
       theme_classic() +
       theme(legend.position = "none",
             legend.title = element_blank(),
@@ -844,23 +899,42 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
       geom_ribbon(aes(x = eca, ymin = productivity_eca_250, ymax = productivity_eca_750, fill = "50% credible interval"),
                   alpha = 0.6) +
       #add vertical line at max eca - max height should be value of productivity eca median
-      geom_segment(aes(x = unique(productivity_eca_df$max_eca), 
-                       xend = unique(productivity_eca_df$max_eca), 
+      # geom_segment(aes(x = unique(productivity_eca_df$max_eca), 
+      #                  xend = unique(productivity_eca_df$max_eca), 
+      #                  y = -100, 
+      #                  yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+      #                  color = "gray"), 
+      #              linetype = "dashed", linewidth = 0.8) +
+      # # add horizontal line 
+      # geom_segment(aes(x = 0, 
+      #                  xend = unique(productivity_eca_df$max_eca), 
+      #                  y = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))], 
+      #                  yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+      #                  color = "gray"), 
+      #              linetype = "dashed", linewidth = 0.8) +
+      # annotate("text",x = unique(productivity_eca_df$max_eca), 
+      #          y = productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+      #          label = paste0("Max ECA: ",round(unique(productivity_eca_df$max_eca),2),"\n",
+      #                         "Median change: ",round(productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],1),"%"),
+      #          vjust = -0.5, color = "black", size = 2, hjust = 0
+      # ) +
+      geom_segment(aes(x = unique(productivity_eca_df$max_eca_2022), 
+                       xend = unique(productivity_eca_df$max_eca_2022), 
                        y = -100, 
-                       yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                       yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca_2022)))],
                        color = "gray"), 
                    linetype = "dashed", linewidth = 0.8) +
       # add horizontal line 
       geom_segment(aes(x = 0, 
-                       xend = unique(productivity_eca_df$max_eca), 
-                       y = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))], 
-                       yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
+                       xend = unique(productivity_eca_df$max_eca_2022), 
+                       y = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca_2022)))], 
+                       yend = productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca_2022)))],
                        color = "gray"), 
                    linetype = "dashed", linewidth = 0.8) +
-      annotate("text",x = unique(productivity_eca_df$max_eca), 
-               y = productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],
-               label = paste0("Max ECA: ",round(unique(productivity_eca_df$max_eca),2),"\n",
-                              "Median change: ",round(productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca)))],1),"%"),
+      annotate("text",x = unique(productivity_eca_df$max_eca_2022), 
+               y = productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca_2022)))],
+               label = paste0("Max ECA:\n",round(unique(productivity_eca_df$max_eca_2022),2),"\n",
+                              "Median change:\n",round(productivity_eca_df$productivity_eca_median[which.min(abs(eca - unique(productivity_eca_df$max_eca_2022)))],2),"%"),
                vjust = -0.5, color = "black", size = 2, hjust = 0
       ) +
       
@@ -875,7 +949,7 @@ plot_recruitment_change_river_together <- function(posterior1 = ric_chm_cpd_ocea
       ylim(-100,100) +
       scale_x_continuous(n.breaks = 5) +
       labs(x = "ECA",
-           y = "Change in recruitment (%)") +
+           y = "Change in productivity (%)") +
       theme_classic() +
       theme(legend.position = "inside",
             legend.justification = c("right", "top"),
@@ -1529,7 +1603,7 @@ plot_predicted_recruits <- function(posterior1 = ric_chm_cpd_ocean_covariates_lo
 # River-level data and model results
 
 
-```{r echo=FALSE, fig.height=5, fig.width=6, results="asis"}
+```{r echo=FALSE, fig.height=6, fig.width=7, message=FALSE, warning=FALSE, results="asis"}
 
 
 
@@ -1619,7 +1693,7 @@ for(river in md_watersheds_total$River){
     river = unique(river_data$River_n)
   )
   
-  change_plot <- plot_recruitment_change_river_together(
+  change_plot <- plot_productivity_change_river_together(
     posterior1 = ric_chm_cpd_ocean_covariates_logR,
     posterior2 = ric_chm_eca_ocean_covariates_logR,
     river_name = river,
@@ -1683,7 +1757,7 @@ for(river in md_watersheds_total$River){
       river = unique(river_data$River_n)
     )
     
-    change_plot <- plot_recruitment_change_river_together(
+    change_plot <- plot_productivity_change_river_together(
     posterior1 = ric_pk_cpd_ersst_long_chain,
     posterior2 = ric_pk_eca_ersst_long_chain,
     river_name = river,
